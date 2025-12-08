@@ -109,6 +109,58 @@ function isSlotBusy(
 }
 
 /**
+ * Create a Date object for a specific time in a specific timezone
+ * This handles the timezone conversion properly regardless of server timezone
+ */
+function createTimeInTimezone(
+  date: Date,
+  hour: number,
+  minute: number,
+  timezone: string
+): Date {
+  // Get the date components in the target timezone
+  const dateStr = date.toLocaleDateString('en-US', { 
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  })
+  
+  // Parse the date parts
+  const [month, day, year] = dateStr.split('/').map(Number)
+  
+  // Create an ISO string for the desired time in the target timezone
+  // We need to calculate what UTC time corresponds to this local time
+  
+  // Create a date string in the format the timezone expects
+  const targetTimeStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`
+  
+  // Create a date in UTC first, then adjust for timezone
+  const utcDate = new Date(targetTimeStr + 'Z')
+  
+  // Get the offset for this timezone at this date
+  // We do this by comparing what time it shows in the timezone vs UTC
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: timezone,
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: false,
+  })
+  
+  // Get the timezone offset by creating a reference date and checking the difference
+  const refDate = new Date(`${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T12:00:00Z`)
+  const refFormatted = formatter.format(refDate)
+  const [refHour] = refFormatted.split(':').map(Number)
+  const offsetHours = refHour - 12 // Difference from UTC noon
+  
+  // Adjust the UTC time by the offset to get the correct moment
+  // If timezone is UTC-6, we need to ADD 6 hours to the local time to get UTC
+  const adjustedUtc = new Date(utcDate.getTime() - offsetHours * 60 * 60 * 1000)
+  
+  return adjustedUtc
+}
+
+/**
  * Generate all possible slots for a day based on availability rules
  */
 function generateDaySlots(
@@ -118,7 +170,16 @@ function generateDaySlots(
   timezone: string
 ): { start: Date; end: Date }[] {
   const slots: { start: Date; end: Date }[] = []
-  const dayOfWeek = date.getDay() // 0 = Sunday
+  
+  // Get the day of week in the target timezone
+  const weekdayStr = date.toLocaleDateString('en-US', { timeZone: timezone, weekday: 'short' })
+  const dayOfWeek = 
+    weekdayStr === 'Sun' ? 0 :
+    weekdayStr === 'Mon' ? 1 :
+    weekdayStr === 'Tue' ? 2 :
+    weekdayStr === 'Wed' ? 3 :
+    weekdayStr === 'Thu' ? 4 :
+    weekdayStr === 'Fri' ? 5 : 6
 
   // Find rules that apply to this day
   const dayRules = rules.filter((r) => r.weekday === dayOfWeek && r.is_active)
@@ -127,12 +188,9 @@ function generateDaySlots(
     const [startHour, startMinute] = rule.start_time.split(':').map(Number)
     const [endHour, endMinute] = rule.end_time.split(':').map(Number)
 
-    // Create start and end times for this rule
-    const ruleStart = new Date(date)
-    ruleStart.setHours(startHour, startMinute, 0, 0)
-
-    const ruleEnd = new Date(date)
-    ruleEnd.setHours(endHour, endMinute, 0, 0)
+    // Create start and end times for this rule in the correct timezone
+    const ruleStart = createTimeInTimezone(date, startHour, startMinute, timezone)
+    const ruleEnd = createTimeInTimezone(date, endHour, endMinute, timezone)
 
     // Generate slots within this time window
     let slotStart = new Date(ruleStart)
