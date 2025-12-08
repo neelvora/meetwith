@@ -308,3 +308,202 @@ export async function sendBookingEmails(details: BookingDetails): Promise<{
 
   return { attendeeEmailSent, hostEmailSent }
 }
+
+interface CancellationDetails {
+  hostName: string
+  hostEmail: string
+  attendeeName: string
+  attendeeEmail: string
+  eventName: string
+  startTime: Date
+  endTime: Date
+  timezone?: string
+  cancelledBy: 'host' | 'attendee'
+  reason?: string
+}
+
+export async function sendCancellationToAttendee(details: CancellationDetails): Promise<boolean> {
+  if (!resend) {
+    console.log('Email skipped (Resend not configured):', details.attendeeEmail)
+    return false
+  }
+
+  try {
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: details.attendeeEmail,
+      subject: `Cancelled: ${details.eventName} with ${details.hostName}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Booking Cancelled</title>
+          </head>
+          <body style="margin: 0; padding: 0; background-color: #0f0f0f; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+              <tr>
+                <td>
+                  <div style="text-align: center; margin-bottom: 32px;">
+                    <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #ffffff;">
+                      <span style="color: #8b5cf6;">Meet</span>With
+                    </h1>
+                  </div>
+                  
+                  <div style="text-align: center; margin-bottom: 24px;">
+                    <div style="display: inline-block; padding: 8px 16px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 9999px;">
+                      <span style="color: #ef4444; font-size: 14px; font-weight: 600;">✕ Booking Cancelled</span>
+                    </div>
+                  </div>
+                  
+                  <div style="background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 32px;">
+                    <h2 style="margin: 0 0 24px 0; font-size: 20px; color: #ffffff; text-align: center;">
+                      ${details.eventName}
+                    </h2>
+                    
+                    <p style="color: #9ca3af; font-size: 14px; text-align: center; margin-bottom: 24px;">
+                      Your meeting with ${details.hostName} on ${formatDateTime(details.startTime, details.timezone)} has been cancelled${details.cancelledBy === 'host' ? ' by the host' : ''}.
+                    </p>
+                    
+                    ${details.reason ? `
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+                      <p style="margin: 0 0 4px 0; color: #f87171; font-size: 12px; font-weight: 600; text-transform: uppercase;">Reason</p>
+                      <p style="margin: 0; color: #d1d5db; font-size: 14px;">${details.reason}</p>
+                    </div>
+                    ` : ''}
+                  </div>
+                  
+                  <div style="text-align: center; margin-top: 32px;">
+                    <p style="color: #4b5563; font-size: 11px; margin: 0;">
+                      Powered by <a href="https://meetwith.dev" style="color: #8b5cf6; text-decoration: none;">MeetWith</a>
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
+      `,
+    })
+
+    if (error) {
+      console.error('Error sending cancellation email to attendee:', error)
+      return false
+    }
+
+    return true
+  } catch (error) {
+    console.error('Error sending cancellation email to attendee:', error)
+    return false
+  }
+}
+
+export async function sendCancellationToHost(details: CancellationDetails): Promise<boolean> {
+  if (!resend) {
+    console.log('Email skipped (Resend not configured):', details.hostEmail)
+    return false
+  }
+
+  try {
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: details.hostEmail,
+      subject: `Cancelled: ${details.eventName} with ${details.attendeeName}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Booking Cancelled</title>
+          </head>
+          <body style="margin: 0; padding: 0; background-color: #0f0f0f; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+              <tr>
+                <td>
+                  <div style="text-align: center; margin-bottom: 32px;">
+                    <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #ffffff;">
+                      <span style="color: #8b5cf6;">Meet</span>With
+                    </h1>
+                  </div>
+                  
+                  <div style="text-align: center; margin-bottom: 24px;">
+                    <div style="display: inline-block; padding: 8px 16px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 9999px;">
+                      <span style="color: #ef4444; font-size: 14px; font-weight: 600;">✕ Booking Cancelled</span>
+                    </div>
+                  </div>
+                  
+                  <div style="background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 32px;">
+                    <h2 style="margin: 0 0 8px 0; font-size: 20px; color: #ffffff; text-align: center;">
+                      ${details.attendeeName}
+                    </h2>
+                    <p style="margin: 0 0 24px 0; color: #9ca3af; font-size: 14px; text-align: center;">
+                      cancelled their ${details.eventName}
+                    </p>
+                    
+                    <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px;">
+                      <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td style="padding: 8px 0;">
+                            <span style="color: #9ca3af; font-size: 14px;">📅 Was scheduled for</span>
+                          </td>
+                          <td style="padding: 8px 0; text-align: right;">
+                            <span style="color: #ffffff; font-size: 14px;">${formatDateTime(details.startTime, details.timezone)}</span>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 8px 0;">
+                            <span style="color: #9ca3af; font-size: 14px;">📧 Contact</span>
+                          </td>
+                          <td style="padding: 8px 0; text-align: right;">
+                            <a href="mailto:${details.attendeeEmail}" style="color: #8b5cf6; font-size: 14px; text-decoration: none;">${details.attendeeEmail}</a>
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+                    
+                    ${details.reason ? `
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; padding: 16px; margin-top: 16px;">
+                      <p style="margin: 0 0 4px 0; color: #f87171; font-size: 12px; font-weight: 600; text-transform: uppercase;">Reason</p>
+                      <p style="margin: 0; color: #d1d5db; font-size: 14px;">${details.reason}</p>
+                    </div>
+                    ` : ''}
+                  </div>
+                  
+                  <div style="text-align: center; margin-top: 32px;">
+                    <p style="color: #4b5563; font-size: 11px; margin: 0;">
+                      Powered by <a href="https://meetwith.dev" style="color: #8b5cf6; text-decoration: none;">MeetWith</a>
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
+      `,
+    })
+
+    if (error) {
+      console.error('Error sending cancellation email to host:', error)
+      return false
+    }
+
+    return true
+  } catch (error) {
+    console.error('Error sending cancellation email to host:', error)
+    return false
+  }
+}
+
+export async function sendCancellationEmails(details: CancellationDetails): Promise<{
+  attendeeEmailSent: boolean
+  hostEmailSent: boolean
+}> {
+  const [attendeeEmailSent, hostEmailSent] = await Promise.all([
+    sendCancellationToAttendee(details),
+    sendCancellationToHost(details),
+  ])
+
+  return { attendeeEmailSent, hostEmailSent }
+}

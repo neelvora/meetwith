@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { signIn } from 'next-auth/react'
 import { Calendar } from 'lucide-react'
 import { Button } from '@/components/ui'
@@ -65,9 +66,9 @@ export default function SignInPage() {
 
         {/* Back to home */}
         <p className="mt-6 text-center">
-          <a href="/" className="text-sm text-gray-400 hover:text-white transition-colors">
+          <Link href="/" className="text-sm text-gray-400 hover:text-white transition-colors">
             ← Back to home
-          </a>
+          </Link>
         </p>
       </div>
     </div>

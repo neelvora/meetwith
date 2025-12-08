@@ -159,7 +159,7 @@ export default function SettingsClient({ initialProfile }: Props) {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center gap-4">
             {profile.image ? (
               <img 
                 src={profile.image} 
@@ -176,7 +176,7 @@ export default function SettingsClient({ initialProfile }: Props) {
             </Button>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Input 
               label="Name" 
               value={profile.name}
@@ -283,14 +283,14 @@ export default function SettingsClient({ initialProfile }: Props) {
             { key: 'cancellations' as const, label: 'Cancellations', description: 'Get notified when bookings are cancelled' },
             { key: 'marketing' as const, label: 'Marketing emails', description: 'Product updates and tips' },
           ].map((item) => (
-            <div key={item.key} className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
-              <div>
+            <div key={item.key} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 gap-3">
+              <div className="flex-1">
                 <p className="font-medium text-white">{item.label}</p>
                 <p className="text-sm text-gray-500">{item.description}</p>
               </div>
               <button 
                 onClick={() => toggleNotification(item.key)}
-                className={`w-12 h-7 rounded-full transition-all relative ${
+                className={`w-12 h-7 rounded-full transition-all relative shrink-0 self-end sm:self-auto ${
                   profile.notifications[item.key] ? 'bg-violet-500' : 'bg-gray-700'
                 }`}
               >
@@ -325,12 +325,12 @@ export default function SettingsClient({ initialProfile }: Props) {
           <CardDescription>Irreversible actions</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between p-4 rounded-xl bg-red-500/5 border border-red-500/20">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-red-500/5 border border-red-500/20 gap-4">
             <div>
               <p className="font-medium text-white">Delete Account</p>
               <p className="text-sm text-gray-500">Permanently delete your account and all data</p>
             </div>
-            <Button variant="secondary" className="text-red-400 border-red-500/30 hover:bg-red-500/10">
+            <Button variant="secondary" className="text-red-400 border-red-500/30 hover:bg-red-500/10 w-full sm:w-auto">
               Delete Account
             </Button>
           </div>

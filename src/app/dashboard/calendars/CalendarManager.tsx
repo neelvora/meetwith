@@ -243,9 +243,9 @@ export default function CalendarManager() {
       {hasConnectedGoogle && (
         <Card variant="glass" className="border-violet-500/30">
           <CardContent className="py-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center shrink-0">
                   <Eye className="w-5 h-5 text-violet-400" />
                 </div>
                 <div>
@@ -273,29 +273,29 @@ export default function CalendarManager() {
               <CardContent className="p-0">
                 {/* Account Header */}
                 <div
-                  className="flex items-center justify-between p-4 cursor-pointer hover:bg-white/5 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 cursor-pointer hover:bg-white/5 transition-colors gap-3"
                   onClick={() => toggleAccountExpand(account.id)}
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
-                      <Calendar className="w-6 h-6 text-white" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shrink-0">
+                      <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-white flex items-center gap-2">
-                        {account.provider === 'google' ? 'Google Calendar' : account.provider}
+                    <div className="min-w-0">
+                      <h3 className="font-semibold text-white flex flex-wrap items-center gap-2">
+                        <span className="truncate">{account.provider === 'google' ? 'Google Calendar' : account.provider}</span>
                         {account.is_primary && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30">
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30 shrink-0">
                             Primary
                           </span>
                         )}
                       </h3>
-                      <p className="text-sm text-gray-400">{account.account_email}</p>
+                      <p className="text-sm text-gray-400 truncate">{account.account_email}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 self-end sm:self-auto">
                     <div className="flex items-center gap-1.5 text-sm text-green-400">
                       <Check className="w-4 h-4" />
-                      Connected
+                      <span className="hidden sm:inline">Connected</span>
                     </div>
                     {expandedAccount === account.id ? (
                       <ChevronUp className="w-5 h-5 text-gray-400" />
@@ -337,7 +337,7 @@ export default function CalendarManager() {
                           return (
                             <div
                               key={cal.id}
-                              className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                              className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg border transition-all gap-3 ${
                                 selected 
                                   ? 'bg-violet-500/10 border-violet-500/30' 
                                   : 'bg-white/5 border-white/10 hover:border-white/20'
@@ -345,17 +345,17 @@ export default function CalendarManager() {
                             >
                               <div className="flex items-center gap-3">
                                 <div
-                                  className="w-3 h-3 rounded-full"
+                                  className="w-3 h-3 rounded-full shrink-0"
                                   style={{ backgroundColor: cal.backgroundColor || '#7c3aed' }}
                                 />
-                                <div>
-                                  <p className="text-sm font-medium text-white">{cal.summary}</p>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium text-white truncate">{cal.summary}</p>
                                   {cal.primary && (
                                     <p className="text-xs text-gray-500">Primary calendar</p>
                                   )}
                                 </div>
                               </div>
-                              <div className="flex items-center gap-3">
+                              <div className="flex items-center gap-3 justify-end">
                                 {/* Write Calendar Button */}
                                 <button
                                   onClick={(e) => {
@@ -363,7 +363,7 @@ export default function CalendarManager() {
                                     if (!isWrite) setWriteCalendar(cal.id)
                                   }}
                                   disabled={isSaving}
-                                  className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-all ${
+                                  className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-all whitespace-nowrap ${
                                     isWrite
                                       ? 'bg-green-500/20 text-green-400 border border-green-500/30'
                                       : 'text-gray-500 hover:text-white hover:bg-white/10'
@@ -376,7 +376,7 @@ export default function CalendarManager() {
                                 
                                 {/* Include in Availability Toggle */}
                                 <label className="flex items-center gap-2 cursor-pointer">
-                                  <span className="text-xs text-gray-400">Check busy</span>
+                                  <span className="text-xs text-gray-400 hidden sm:inline">Check busy</span>
                                   <div className="relative">
                                     <input
                                       type="checkbox"

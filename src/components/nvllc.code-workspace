@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "../../../neelvora.com"
+		},
+		{
+			"path": "../.."
+		}
+	],
+	"settings": {
+		"lando-ui.workspaceFolder.default": "/Users/neelvora/projects/nvllc/neelvora.com"
+	}
+}

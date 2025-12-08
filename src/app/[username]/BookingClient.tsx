@@ -70,16 +70,16 @@ export default function BookingClient({ username, user, eventTypes }: BookingCli
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
-      <div className="max-w-xl mx-auto px-4 py-16">
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 pt-4 sm:pt-0">
+      <div className="max-w-xl mx-auto px-4 py-6 sm:py-16">
         {/* Profile Header - always visible */}
-        <div className="text-center mb-8">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 mx-auto mb-4 flex items-center justify-center text-2xl font-bold text-white">
+        <div className="text-center mb-6 sm:mb-8">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 mx-auto mb-3 sm:mb-4 flex items-center justify-center text-xl sm:text-2xl font-bold text-white">
             {user.name.charAt(0)}
           </div>
-          <h1 className="text-2xl font-bold text-white mb-1">{user.name}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-white mb-1">{user.name}</h1>
           {step === 'select-event' && (
-            <p className="text-gray-400 text-sm max-w-md mx-auto">{user.welcomeMessage}</p>
+            <p className="text-gray-400 text-sm max-w-md mx-auto px-4">{user.welcomeMessage}</p>
           )}
         </div>
 
@@ -160,7 +160,7 @@ export default function BookingClient({ username, user, eventTypes }: BookingCli
 
         {/* Footer */}
         {step !== 'confirmed' && (
-          <div className="text-center mt-12 text-gray-500 text-sm">
+          <div className="text-center mt-8 sm:mt-12 text-gray-500 text-sm">
             <p className="flex items-center justify-center gap-2">
               <Globe className="w-4 h-4" />
               America/Chicago

@@ -196,14 +196,14 @@ export default function EventTypesClient({ username }: Props) {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Event Types</h1>
-          <p className="text-gray-400">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Event Types</h1>
+          <p className="text-gray-400 text-sm sm:text-base">
             Create different meeting types for people to book with you.
           </p>
         </div>
-        <Button onClick={openCreateModal}>
+        <Button onClick={openCreateModal} className="w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-2" />
           New Event Type
         </Button>
@@ -244,13 +244,16 @@ export default function EventTypesClient({ username }: Props) {
         ) : (
           eventTypes.map((eventType) => (
             <Card key={eventType.id} variant="glass" className="hover:border-white/20 transition-all">
-              <CardContent className="flex items-center gap-4">
-                {/* Color indicator */}
-                <div className={`w-2 h-16 rounded-full bg-gradient-to-b ${getColorGradient(eventType.color)}`} />
+              <CardContent className="flex flex-col sm:flex-row sm:items-center gap-4">
+                {/* Color indicator - hidden on mobile, shown on larger screens */}
+                <div className={`hidden sm:block w-2 h-16 rounded-full bg-gradient-to-b ${getColorGradient(eventType.color)}`} />
+                
+                {/* Mobile color bar */}
+                <div className={`sm:hidden w-full h-1 rounded-full bg-gradient-to-r ${getColorGradient(eventType.color)}`} />
                 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
                     <h3 className="font-semibold text-white">{eventType.name}</h3>
                     <button
                       onClick={() => toggleActive(eventType)}
@@ -277,7 +280,7 @@ export default function EventTypesClient({ username }: Props) {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 justify-end">
                   <Button 
                     variant="ghost" 
                     size="sm" 
@@ -306,19 +309,21 @@ export default function EventTypesClient({ username }: Props) {
               </CardContent>
 
               {/* Link preview */}
-              <div className="px-6 pb-4">
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-white/5 border border-white/5">
-                  <LinkIcon className="w-4 h-4 text-gray-500" />
-                  <span className="text-sm text-gray-400 truncate">
-                    meetwith.dev/{username}/{eventType.slug}
-                  </span>
+              <div className="px-4 sm:px-6 pb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-lg bg-white/5 border border-white/5">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <LinkIcon className="w-4 h-4 text-gray-500 shrink-0" />
+                    <span className="text-sm text-gray-400 truncate">
+                      meetwith.dev/{username}/{eventType.slug}
+                    </span>
+                  </div>
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="ml-auto text-xs"
+                    className="text-xs w-full sm:w-auto"
                     onClick={() => copyLink(eventType.slug, eventType.id)}
                   >
-                    {copiedId === eventType.id ? 'Copied!' : 'Copy'}
+                    {copiedId === eventType.id ? 'Copied!' : 'Copy Link'}
                   </Button>
                 </div>
               </div>

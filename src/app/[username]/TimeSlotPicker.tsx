@@ -178,7 +178,7 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
       </div>
 
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2">
         {weekDays.map((day) => {
           const dateKey = getDateKey(day)
           const daySlots = slots[dateKey] || []
@@ -197,23 +197,24 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
                 }
               }}
               disabled={!hasSlots || past}
+              type="button"
               className={`
-                p-3 rounded-xl text-center transition-all
+                p-2 sm:p-3 rounded-lg sm:rounded-xl text-center transition-all touch-manipulation
                 ${past ? 'opacity-30 cursor-not-allowed' : ''}
                 ${isSelected ? 'bg-violet-500 text-white' : ''}
-                ${!isSelected && hasSlots && !past ? 'bg-white/5 hover:bg-white/10 cursor-pointer' : ''}
+                ${!isSelected && hasSlots && !past ? 'bg-white/5 hover:bg-white/10 active:bg-white/20 cursor-pointer' : ''}
                 ${!hasSlots && !past ? 'bg-transparent opacity-50 cursor-not-allowed' : ''}
                 ${today && !isSelected ? 'ring-2 ring-violet-500/50' : ''}
               `}
             >
-              <div className="text-xs text-gray-400 mb-1">
-                {day.toLocaleDateString('en-US', { weekday: 'short' })}
+              <div className="text-[10px] sm:text-xs text-gray-400 mb-0.5 sm:mb-1">
+                {day.toLocaleDateString('en-US', { weekday: 'narrow' })}
               </div>
-              <div className={`text-lg font-semibold ${isSelected ? 'text-white' : 'text-white'}`}>
+              <div className={`text-sm sm:text-lg font-semibold ${isSelected ? 'text-white' : 'text-white'}`}>
                 {day.getDate()}
               </div>
               {hasSlots && !past && (
-                <div className="text-xs text-gray-400 mt-1">
+                <div className="text-[9px] sm:text-xs text-gray-400 mt-0.5 sm:mt-1 hidden sm:block">
                   {daySlots.length} slots
                 </div>
               )}
@@ -238,18 +239,19 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
               return new Date(year, month - 1, day).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
             })()}
           </h3>
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-64 overflow-y-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-64 overflow-y-auto">
             {(slots[selectedDate] || []).map((slot, i) => {
               const isSelected = selectedSlot?.start === slot.start
               return (
                 <button
                   key={i}
                   onClick={() => setSelectedSlot(slot)}
+                  type="button"
                   className={`
-                    px-3 py-2 rounded-lg text-sm font-medium transition-all
+                    px-3 py-2.5 rounded-lg text-sm font-medium transition-all touch-manipulation
                     ${isSelected 
                       ? 'bg-violet-500 text-white' 
-                      : 'bg-white/5 text-white hover:bg-white/10 border border-white/10'
+                      : 'bg-white/5 text-white hover:bg-white/10 active:bg-white/20 border border-white/10'
                     }
                   `}
                 >
@@ -264,7 +266,7 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
       {/* Confirm Button */}
       {selectedSlot && (
         <Card variant="glass">
-          <CardContent className="flex items-center justify-between">
+          <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <p className="text-white font-medium">
                 {new Date(selectedSlot.start).toLocaleDateString('en-US', { 
@@ -277,7 +279,7 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
                 {formatTime(selectedSlot.start)} - {formatTime(selectedSlot.end)}
               </p>
             </div>
-            <Button onClick={handleConfirm}>
+            <Button onClick={handleConfirm} className="w-full sm:w-auto">
               <Check className="w-4 h-4 mr-2" />
               Confirm
             </Button>

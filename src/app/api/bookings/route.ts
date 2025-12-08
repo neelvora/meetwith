@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { randomBytes } from 'crypto'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { createCalendarEvent } from '@/lib/calendar/googleClient'
 import { sendBookingEmails } from '@/lib/email'
@@ -166,6 +167,7 @@ Manage this booking at https://www.meetwith.dev/dashboard
       }
 
       // 5. Store the booking in database
+      const cancellationToken = randomBytes(32).toString('hex')
       const { data: booking, error: bookingError } = await supabaseAdmin
         .from('bookings')
         .insert({
@@ -181,6 +183,7 @@ Manage this booking at https://www.meetwith.dev/dashboard
           location: meetLink || null,
           notes: notes || null,
           status: 'confirmed',
+          cancellation_token: cancellationToken,
         })
         .select()
         .single()

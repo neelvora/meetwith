@@ -157,19 +157,19 @@ export default function CalendarOverlapView() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Button variant="ghost" size="sm" onClick={goToPrevWeek}>
             <ChevronLeft className="w-4 h-4" />
           </Button>
-          <h2 className="text-lg font-semibold text-white min-w-[200px] text-center">
+          <h2 className="text-base sm:text-lg font-semibold text-white min-w-[160px] sm:min-w-[200px] text-center">
             {weekStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
           </h2>
           <Button variant="ghost" size="sm" onClick={goToNextWeek}>
             <ChevronRight className="w-4 h-4" />
           </Button>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 justify-end">
           <Button variant="secondary" size="sm" onClick={goToToday}>
             Today
           </Button>
@@ -196,23 +196,23 @@ export default function CalendarOverlapView() {
 
       {/* Calendar Grid */}
       <Card variant="glass" className="overflow-hidden">
-        <CardContent className="p-0">
+        <CardContent className="p-0 overflow-x-auto">
           {loading ? (
             <div className="flex items-center justify-center h-96">
               <RefreshCw className="w-6 h-6 text-violet-400 animate-spin" />
             </div>
           ) : (
-            <div className="flex">
+            <div className="flex min-w-[700px]">
               {/* Time Column */}
-              <div className="w-16 shrink-0 border-r border-white/10">
+              <div className="w-12 sm:w-16 shrink-0 border-r border-white/10">
                 <div className="h-14 border-b border-white/10" /> {/* Header spacer */}
                 <div className="relative">
                   {HOURS.map((hour) => (
                     <div
                       key={hour}
-                      className="h-[60px] border-b border-white/5 text-xs text-gray-500 pr-2 text-right pt-[-6px]"
+                      className="h-[60px] border-b border-white/5 text-[10px] sm:text-xs text-gray-500 pr-1 sm:pr-2 text-right pt-[-6px]"
                     >
-                      {hour === 0 ? '12 AM' : hour < 12 ? `${hour} AM` : hour === 12 ? '12 PM' : `${hour - 12} PM`}
+                      {hour === 0 ? '12a' : hour < 12 ? `${hour}a` : hour === 12 ? '12p' : `${hour - 12}p`}
                     </div>
                   ))}
                 </div>
@@ -225,7 +225,7 @@ export default function CalendarOverlapView() {
                   const today = isToday(date)
 
                   return (
-                    <div key={dayIndex} className="flex-1 min-w-[100px] border-r border-white/10 last:border-r-0">
+                    <div key={dayIndex} className="flex-1 min-w-[80px] sm:min-w-[100px] border-r border-white/10 last:border-r-0">
                       {/* Day Header */}
                       <div className={`h-14 border-b border-white/10 p-2 text-center ${today ? 'bg-violet-500/10' : ''}`}>
                         <p className="text-xs text-gray-500">{DAYS[date.getDay()]}</p>

@@ -194,18 +194,18 @@ export default function AvailabilityClient() {
 
       {/* Timezone */}
       <Card variant="glass" className="mb-6">
-        <CardContent className="flex items-center justify-between">
+        <CardContent className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <Clock className="w-5 h-5 text-gray-400" />
+            <Clock className="w-5 h-5 text-gray-400 shrink-0" />
             <div>
               <p className="text-sm font-medium text-white">Timezone</p>
-              <p className="text-xs text-gray-500">{timezone}</p>
+              <p className="text-xs text-gray-500 hidden sm:block">{timezone}</p>
             </div>
           </div>
           <select
             value={timezone}
             onChange={(e) => setTimezone(e.target.value)}
-            className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+            className="w-full sm:w-auto px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
           >
             {TIMEZONES.map(tz => (
               <option key={tz.value} value={tz.value}>{tz.label}</option>
@@ -228,16 +228,16 @@ export default function AvailabilityClient() {
               return (
                 <div 
                   key={weekday} 
-                  className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
+                  className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border transition-all gap-3 ${
                     slot.is_active 
                       ? 'bg-white/5 border-white/10' 
                       : 'bg-transparent border-white/5 opacity-50'
                   }`}
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
                     <button 
                       onClick={() => toggleDay(weekday)}
-                      className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+                      className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
                         slot.is_active 
                           ? 'bg-violet-500 border-violet-500' 
                           : 'border-gray-600 hover:border-gray-500'
@@ -245,15 +245,15 @@ export default function AvailabilityClient() {
                     >
                       {slot.is_active && <Check className="w-4 h-4 text-white" />}
                     </button>
-                    <span className="font-medium text-white w-28">{DAYS[weekday]}</span>
+                    <span className="font-medium text-white sm:w-28">{DAYS[weekday]}</span>
                   </div>
                   
                   {slot.is_active ? (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
                       <select 
                         value={slot.start_time}
                         onChange={(e) => updateSlot(weekday, 'start_time', e.target.value)}
-                        className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                        className="flex-1 sm:flex-initial px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
                       >
                         {TIME_OPTIONS.map(opt => (
                           <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -263,7 +263,7 @@ export default function AvailabilityClient() {
                       <select 
                         value={slot.end_time}
                         onChange={(e) => updateSlot(weekday, 'end_time', e.target.value)}
-                        className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                        className="flex-1 sm:flex-initial px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
                       >
                         {TIME_OPTIONS.map(opt => (
                           <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -271,7 +271,7 @@ export default function AvailabilityClient() {
                       </select>
                     </div>
                   ) : (
-                    <span className="text-sm text-gray-500">Unavailable</span>
+                    <span className="text-sm text-gray-500 sm:text-right">Unavailable</span>
                   )}
                 </div>
               )
@@ -301,7 +301,7 @@ export default function AvailabilityClient() {
           <CardDescription>Fine-tune your availability preferences</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 gap-3">
             <div>
               <p className="font-medium text-white">Buffer time</p>
               <p className="text-sm text-gray-500">Add time between meetings</p>
@@ -309,7 +309,7 @@ export default function AvailabilityClient() {
             <select 
               value={bufferTime}
               onChange={(e) => setBufferTime(Number(e.target.value))}
-              className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
+              className="w-full sm:w-auto px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
             >
               <option value="0">No buffer</option>
               <option value="5">5 minutes</option>
@@ -319,7 +319,7 @@ export default function AvailabilityClient() {
             </select>
           </div>
 
-          <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 gap-3">
             <div>
               <p className="font-medium text-white">Minimum notice</p>
               <p className="text-sm text-gray-500">How far in advance can people book</p>
@@ -327,7 +327,7 @@ export default function AvailabilityClient() {
             <select 
               value={minNotice}
               onChange={(e) => setMinNotice(Number(e.target.value))}
-              className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
+              className="w-full sm:w-auto px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
             >
               <option value="0">No minimum</option>
               <option value="1">1 hour</option>
@@ -337,7 +337,7 @@ export default function AvailabilityClient() {
             </select>
           </div>
 
-          <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 gap-3">
             <div>
               <p className="font-medium text-white">Daily meeting limit</p>
               <p className="text-sm text-gray-500">Maximum meetings per day</p>
@@ -345,7 +345,7 @@ export default function AvailabilityClient() {
             <select 
               value={dailyLimit}
               onChange={(e) => setDailyLimit(Number(e.target.value))}
-              className="px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
+              className="w-full sm:w-auto px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
             >
               <option value="0">No limit</option>
               <option value="3">3 meetings</option>

@@ -69,7 +69,7 @@ export default async function DashboardPage() {
       {/* Quick Actions */}
       <div className="mb-8">
         <h2 className="text-xl font-semibold text-white mb-4">Get Started</h2>
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {quickActions.map((action) => {
             const Icon = action.icon
             return (
@@ -100,11 +100,11 @@ export default async function DashboardPage() {
             <CardDescription>Share this link to let others book time with you</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <div className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 text-sm truncate">
                 meetwith.app/{session.user?.email?.split('@')[0] || 'you'}
               </div>
-              <Button variant="secondary" size="sm">Copy</Button>
+              <Button variant="secondary" size="sm" className="w-full sm:w-auto">Copy</Button>
             </div>
             <p className="mt-3 text-xs text-gray-500">
               Create an event type first to enable your booking page.
