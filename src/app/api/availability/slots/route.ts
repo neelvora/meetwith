@@ -62,10 +62,18 @@ export async function GET(request: NextRequest) {
     const availableSlots = slots.filter((s) => s.available)
 
     // Group by date for easier consumption
+    // Use timezone-aware date formatting to avoid UTC offset issues
     const groupedSlots: Record<string, { start: string; end: string }[]> = {}
+    const timezone = 'America/Chicago'
 
     for (const slot of availableSlots) {
-      const dateKey = slot.start.toISOString().split('T')[0]
+      // Get the date in the user's timezone, not UTC
+      const localDate = new Date(slot.start.toLocaleString('en-US', { timeZone: timezone }))
+      const year = localDate.getFullYear()
+      const month = String(localDate.getMonth() + 1).padStart(2, '0')
+      const day = String(localDate.getDate()).padStart(2, '0')
+      const dateKey = `${year}-${month}-${day}`
+      
       if (!groupedSlots[dateKey]) {
         groupedSlots[dateKey] = []
       }

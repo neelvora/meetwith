@@ -89,6 +89,7 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
+      timeZone: 'America/Chicago',
     })
   }
 
@@ -103,7 +104,11 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
   }
 
   function getDateKey(date: Date): string {
-    return date.toISOString().split('T')[0]
+    // Use local date to avoid timezone issues
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
   }
 
   function isToday(date: Date): boolean {
@@ -228,7 +233,10 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
       {selectedDate && !loading && (
         <div className="space-y-3">
           <h3 className="text-sm font-medium text-gray-400">
-            Available times for {new Date(selectedDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            Available times for {(() => {
+              const [year, month, day] = selectedDate.split('-').map(Number)
+              return new Date(year, month - 1, day).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+            })()}
           </h3>
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-64 overflow-y-auto">
             {(slots[selectedDate] || []).map((slot, i) => {
