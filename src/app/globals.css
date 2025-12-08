@@ -1,35 +1,144 @@
 @import "tailwindcss";
 
-:root {
-  --background: #030712;
-  --foreground: #f9fafb;
+/* Enable class-based dark mode for Tailwind v4 */
+@variant dark (&:where(.dark, .dark *));
+
+/* ============================================================================
+   THEME CONFIGURATION
+   ============================================================================ */
+
+@theme {
+  /* Colors */
+  --color-primary: #7c3aed;
+  --color-primary-hover: #6d28d9;
+  --color-secondary: #8b5cf6;
+  --color-accent: #a855f7;
+  
+  /* Fonts */
+  --font-sans: var(--font-inter), "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: var(--font-jakarta), "Plus Jakarta Sans", system-ui, sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
+/* ============================================================================
+   LIGHT / DARK MODE CSS VARIABLES
+   ============================================================================ */
+
+:root {
+  /* Light mode defaults */
+  --background: #ffffff;
+  --background-secondary: #f9fafb;
+  --foreground: #111827;
+  --foreground-muted: #6b7280;
+  --border: #e5e7eb;
+  --border-hover: #d1d5db;
+  --card: #ffffff;
+  --card-hover: #f9fafb;
+  
+  /* Glass effect - light */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.1);
+  --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  
+  /* Accent colors */
+  --violet-glow: rgba(139, 92, 246, 0.15);
+}
+
+.dark {
+  --background: #030712;
+  --background-secondary: #0f172a;
+  --foreground: #f9fafb;
+  --foreground-muted: #9ca3af;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-hover: rgba(255, 255, 255, 0.2);
+  --card: rgba(255, 255, 255, 0.03);
+  --card-hover: rgba(255, 255, 255, 0.06);
+  
+  /* Glass effect - dark */
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+  
+  /* Accent colors */
+  --violet-glow: rgba(139, 92, 246, 0.3);
+}
+
+/* ============================================================================
+   BASE STYLES
+   ============================================================================ */
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-sans);
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  letter-spacing: -0.011em;
+  line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Glass morphism utilities */
+/* ============================================================================
+   TYPOGRAPHY - Premium, Modern, Crisp
+   ============================================================================ */
+
+/* Headings - Plus Jakarta Sans for display, tighter tracking */
+h1, h2, h3, h4, h5, h6,
+.text-4xl, .text-5xl, .text-6xl, .text-7xl, .text-8xl {
+  font-family: var(--font-display);
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  font-weight: 700;
+}
+
+h1, .text-5xl, .text-6xl, .text-7xl, .text-8xl {
+  letter-spacing: -0.035em;
+  font-weight: 800;
+}
+
+/* ============================================================================
+   GLASS MORPHISM - Premium Effect
+   ============================================================================ */
+
 .glass {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--glass-bg);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
 }
 
 .glass-hover:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--card-hover);
+  border-color: var(--border-hover);
 }
 
-/* Gradient text */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 1rem;
+  box-shadow: 
+    var(--glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+}
+
+/* ============================================================================
+   GRADIENT EFFECTS
+   ============================================================================ */
+
 .gradient-text {
   background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #c084fc 100%);
   -webkit-background-clip: text;
@@ -37,22 +146,80 @@ body {
   background-clip: text;
 }
 
-/* Glow effects */
+.gradient-border {
+  position: relative;
+  background: var(--background);
+  border-radius: 1rem;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, #8b5cf6, #a855f7, #c084fc);
+  -webkit-mask: 
+    linear-gradient(#fff 0 0) content-box, 
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ============================================================================
+   GLOW EFFECTS
+   ============================================================================ */
+
 .glow-violet {
-  box-shadow: 0 0 40px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 0 40px var(--violet-glow);
 }
 
 .glow-violet-sm {
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.2);
+  box-shadow: 0 0 20px var(--violet-glow);
 }
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
+/* ============================================================================
+   SCROLLBAR - Subtle & Clean
+   ============================================================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-/* Selection color */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-hover);
+}
+
+/* Selection */
 ::selection {
   background: rgba(139, 92, 246, 0.3);
-  color: white;
+  color: var(--foreground);
+}
+
+/* Utility classes */
+.bg-background {
+  background-color: var(--background);
+}
+
+.text-foreground {
+  color: var(--foreground);
+}
+
+.text-muted {
+  color: var(--foreground-muted);
+}
+
+.border-default {
+  border-color: var(--border);
 }

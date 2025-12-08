@@ -30,8 +30,8 @@ export function SetupChecklist({ status, dismissible, onDismiss }: SetupChecklis
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-white">Complete your setup</h3>
-                <p className="text-sm text-gray-400">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Complete your setup</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   {status.completedSteps} of {status.totalSteps} steps complete
                 </p>
               </div>
@@ -39,7 +39,7 @@ export function SetupChecklist({ status, dismissible, onDismiss }: SetupChecklis
             {dismissible && onDismiss && (
               <button
                 onClick={onDismiss}
-                className="text-gray-500 hover:text-gray-300 text-sm"
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-sm"
               >
                 Dismiss
               </button>
@@ -47,7 +47,7 @@ export function SetupChecklist({ status, dismissible, onDismiss }: SetupChecklis
           </div>
 
           {/* Progress bar */}
-          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+          <div className="h-2 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-violet-500 to-purple-500 rounded-full transition-all duration-500"
               style={{ width: `${progress}%` }}
@@ -56,18 +56,18 @@ export function SetupChecklist({ status, dismissible, onDismiss }: SetupChecklis
         </div>
 
         {/* Steps */}
-        <div className="border-t border-white/10">
+        <div className="border-t border-gray-200 dark:border-white/10">
           {status.steps.map((step, index) => (
             <Link
               key={step.id}
               href={step.href}
               className={`flex items-center gap-4 px-6 py-4 transition-colors ${
                 step.completed 
-                  ? 'bg-white/5 opacity-60' 
+                  ? 'bg-gray-50 dark:bg-white/5 opacity-60' 
                   : step === nextStep
                     ? 'bg-violet-500/10 hover:bg-violet-500/15'
-                    : 'hover:bg-white/5'
-              } ${index !== status.steps.length - 1 ? 'border-b border-white/5' : ''}`}
+                    : 'hover:bg-gray-50 dark:hover:bg-white/5'
+              } ${index !== status.steps.length - 1 ? 'border-b border-gray-100 dark:border-white/5' : ''}`}
             >
               {/* Checkbox */}
               <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -75,12 +75,12 @@ export function SetupChecklist({ status, dismissible, onDismiss }: SetupChecklis
                   ? 'bg-green-500'
                   : step === nextStep
                     ? 'bg-violet-500'
-                    : 'bg-white/10 border border-white/20'
+                    : 'bg-gray-100 dark:bg-white/10 border border-gray-300 dark:border-white/20'
               }`}>
                 {step.completed ? (
                   <Check className="w-4 h-4 text-white" />
                 ) : (
-                  <span className="text-xs font-medium text-white">
+                  <span className="text-xs font-medium text-gray-600 dark:text-white">
                     {index + 1}
                   </span>
                 )}
@@ -88,7 +88,7 @@ export function SetupChecklist({ status, dismissible, onDismiss }: SetupChecklis
 
               {/* Content */}
               <div className="flex-1 min-w-0">
-                <p className={`font-medium ${step.completed ? 'text-gray-400 line-through' : 'text-white'}`}>
+                <p className={`font-medium ${step.completed ? 'text-gray-400 line-through' : 'text-gray-900 dark:text-white'}`}>
                   {step.title}
                 </p>
                 <p className="text-sm text-gray-500 truncate">{step.description}</p>
@@ -97,7 +97,7 @@ export function SetupChecklist({ status, dismissible, onDismiss }: SetupChecklis
               {/* Arrow */}
               {!step.completed && (
                 <ChevronRight className={`w-5 h-5 ${
-                  step === nextStep ? 'text-violet-400' : 'text-gray-600'
+                  step === nextStep ? 'text-violet-500 dark:text-violet-400' : 'text-gray-400 dark:text-gray-600'
                 }`} />
               )}
             </Link>

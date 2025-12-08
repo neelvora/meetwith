@@ -42,8 +42,8 @@ export function BetaSignupForm() {
         <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
           <Check className="w-6 h-6 text-green-400" />
         </div>
-        <h3 className="text-lg font-semibold text-white mb-2">You&apos;re on the list!</h3>
-        <p className="text-gray-400 text-sm">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">You&apos;re on the list!</h3>
+        <p className="text-gray-600 dark:text-gray-400 text-sm">
           Check your email for confirmation. I&apos;ll add you to the beta shortly.
         </p>
       </div>
@@ -58,7 +58,7 @@ export function BetaSignupForm() {
           placeholder="Your name (optional)"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="flex-1 px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+          className="flex-1 px-4 py-3 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
         />
         <input
           type="email"
@@ -66,7 +66,7 @@ export function BetaSignupForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="flex-1 px-4 py-3 rounded-lg bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+          className="flex-1 px-4 py-3 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
         />
       </div>
       <Button 
@@ -89,7 +89,7 @@ export function BetaSignupForm() {
         )}
       </Button>
       {status === 'error' && (
-        <p className="text-red-400 text-sm text-center">{errorMessage}</p>
+        <p className="text-red-500 dark:text-red-400 text-sm text-center">{errorMessage}</p>
       )}
       <p className="text-gray-500 text-xs text-center">
         We&apos;re in private beta. Request access and I&apos;ll add you within 24 hours.

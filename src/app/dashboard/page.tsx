@@ -100,10 +100,10 @@ export default async function DashboardPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Welcome Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 font-display">
           Welcome back, {session.user?.name?.split(' ')[0] || 'there'}!
         </h1>
-        <p className="text-gray-400">
+        <p className="text-gray-600 dark:text-gray-400">
           Here&apos;s an overview of your scheduling dashboard.
         </p>
       </div>
@@ -123,8 +123,8 @@ export default async function DashboardPage() {
         ].map((stat) => (
           <Card key={stat.label} variant="glass">
             <CardContent>
-              <p className="text-sm text-gray-400 mb-1">{stat.label}</p>
-              <p className="text-3xl font-bold text-white">{stat.value}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">{stat.label}</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
               <p className="text-xs text-gray-500">{stat.subtext}</p>
             </CardContent>
           </Card>
@@ -133,22 +133,22 @@ export default async function DashboardPage() {
 
       {/* Quick Actions */}
       <div className="mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4">Get Started</h2>
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Get Started</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
           {quickActions.map((action) => {
             const Icon = action.icon
             return (
               <Link key={action.href} href={action.href}>
-                <Card variant="glass" className="h-full hover:border-white/20 transition-all cursor-pointer group">
+                <Card variant="glass" className="h-full hover:border-violet-500/30 dark:hover:border-white/20 transition-all cursor-pointer group">
                   <CardContent>
                     <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${action.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                       <Icon className="w-5 h-5 text-white" />
                     </div>
-                    <h3 className="font-semibold text-white mb-1 flex items-center gap-2">
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
                       {action.title}
                       <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </h3>
-                    <p className="text-sm text-gray-400">{action.description}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">{action.description}</p>
                   </CardContent>
                 </Card>
               </Link>
@@ -166,7 +166,7 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <div className="flex-1 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 text-sm truncate">
+              <div className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 text-sm truncate">
                 meetwith.app/{session.user?.email?.split('@')[0] || 'you'}
               </div>
               <Button variant="secondary" size="sm" className="w-full sm:w-auto">Copy</Button>
@@ -184,10 +184,10 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center mb-3">
-                <Calendar className="w-6 h-6 text-gray-500" />
+              <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center mb-3">
+                <Calendar className="w-6 h-6 text-gray-400 dark:text-gray-500" />
               </div>
-              <p className="text-gray-400 text-sm">No activity yet</p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">No activity yet</p>
               <p className="text-gray-500 text-xs mt-1">
                 Bookings will appear here once you start scheduling
               </p>

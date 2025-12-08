@@ -65,21 +65,21 @@ export function FeedbackButton() {
           />
           
           {/* Modal Content */}
-          <div className="relative w-full max-w-md bg-gray-900 border border-white/10 rounded-2xl shadow-2xl">
+          <div className="relative w-full max-w-md bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-white/10">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-white/10">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center">
-                  <MessageSquare className="w-5 h-5 text-violet-400" />
+                  <MessageSquare className="w-5 h-5 text-violet-500 dark:text-violet-400" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-white">Send Feedback</h3>
-                  <p className="text-xs text-gray-400">Help us improve MeetWith</p>
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Send Feedback</h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Help us improve MeetWith</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 text-gray-400 hover:text-gray-700 dark:hover:text-white transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -92,13 +92,13 @@ export function FeedbackButton() {
                   <div className="w-16 h-16 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
                     <Check className="w-8 h-8 text-green-400" />
                   </div>
-                  <h4 className="text-lg font-semibold text-white mb-2">Thanks for your feedback!</h4>
-                  <p className="text-gray-400 text-sm">We&apos;ll review it and get back to you if needed.</p>
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Thanks for your feedback!</h4>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm">We&apos;ll review it and get back to you if needed.</p>
                 </div>
               ) : (
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       What&apos;s on your mind?
                     </label>
                     <textarea
@@ -106,13 +106,13 @@ export function FeedbackButton() {
                       onChange={(e) => setFeedback(e.target.value)}
                       placeholder="Found a bug? Have a feature request? Let us know..."
                       rows={4}
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none"
+                      className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Your email <span className="text-gray-500">(optional)</span>
                     </label>
                     <input
@@ -120,7 +120,7 @@ export function FeedbackButton() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="For follow-up questions"
-                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                      className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                     />
                   </div>
 
@@ -130,7 +130,7 @@ export function FeedbackButton() {
                   </div>
 
                   {status === 'error' && (
-                    <p className="text-red-400 text-sm">{errorMessage}</p>
+                    <p className="text-red-500 dark:text-red-400 text-sm">{errorMessage}</p>
                   )}
 
                   <Button
