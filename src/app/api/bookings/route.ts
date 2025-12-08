@@ -9,6 +9,7 @@ import { validateSlot } from '@/lib/availability/validateSlot'
 import { trackBookingEvent } from '@/lib/analytics'
 import { checkRateLimit, getClientId, RATE_LIMITS } from '@/lib/rateLimit'
 import { generateAndStoreFollowUp } from '@/lib/ai/followUp'
+import { validateBookingRequest } from '@/lib/booking/validateRequest'
 import type { CalendarAccount, AvailabilityRule } from '@/types'
 
 interface BookingResponse {
@@ -17,6 +18,7 @@ interface BookingResponse {
   message: string
   meetLink?: string
   calendarEventId?: string
+  warnings?: string[]
 }
 
 export async function POST(request: NextRequest) {
@@ -42,6 +44,16 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
+    
+    // Validate request with comprehensive checks
+    const validation = validateBookingRequest(body)
+    if (!validation.valid || !validation.data) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: validation.errors },
+        { status: 400 }
+      )
+    }
+
     const {
       username,
       eventTypeId,
@@ -51,15 +63,7 @@ export async function POST(request: NextRequest) {
       attendeeEmail,
       attendeeTimezone,
       notes,
-    } = body
-
-    // Validate required fields
-    if (!username || !startTime || !endTime || !attendeeName || !attendeeEmail) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
-    }
+    } = validation.data
 
     // Default response for when DB is not configured
     let response: BookingResponse = {
@@ -180,9 +184,13 @@ export async function POST(request: NextRequest) {
       )
 
       // 4. Create Google Calendar event with Google Meet
+      // External failures should NOT block booking creation
       let calendarEvent = null
       let meetLink: string | undefined
       let calendarEventId: string | undefined
+      let externalStatus: 'created' | 'failed' | 'not_applicable' = 'not_applicable'
+      let externalError: string | undefined
+      const warnings: string[] = []
 
       if (calendarAccount) {
         console.log('Creating calendar event on:', calendarAccount.account_email, calendarAccount.calendar_id)
@@ -222,37 +230,52 @@ ${attendeeTimezone ? `\nAttendee Timezone: ${attendeeTimezone}` : ''}
 Manage this booking at https://www.meetwith.dev/dashboard
         `.trim()
 
-        calendarEvent = await createCalendarEvent(
-          account,
-          calendarAccount.calendar_id || 'primary',
-          {
-            summary: eventTitle,
-            description: eventDescription,
-            start: new Date(startTime),
-            end: new Date(endTime),
-            attendees: [attendeeEmail],
-            conferenceDataVersion: 1, // Auto-create Google Meet
-          }
-        )
+        try {
+          calendarEvent = await createCalendarEvent(
+            account,
+            calendarAccount.calendar_id || 'primary',
+            {
+              summary: eventTitle,
+              description: eventDescription,
+              start: new Date(startTime),
+              end: new Date(endTime),
+              attendees: [attendeeEmail],
+              conferenceDataVersion: 1, // Auto-create Google Meet
+            }
+          )
 
-        console.log('Calendar event created:', calendarEvent ? 'success' : 'failed')
+          console.log('Calendar event created:', calendarEvent ? 'success' : 'failed')
 
-        if (calendarEvent) {
-          calendarEventId = calendarEvent.id
-          // Extract Google Meet link from conference data
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const conferenceData = (calendarEvent as any).conferenceData
-          if (conferenceData?.entryPoints) {
-            const videoEntry = conferenceData.entryPoints.find(
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (ep: any) => ep.entryPointType === 'video'
-            )
-            meetLink = videoEntry?.uri
+          if (calendarEvent) {
+            calendarEventId = calendarEvent.id
+            externalStatus = 'created'
+            // Extract Google Meet link from conference data
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const conferenceData = (calendarEvent as any).conferenceData
+            if (conferenceData?.entryPoints) {
+              const videoEntry = conferenceData.entryPoints.find(
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (ep: any) => ep.entryPointType === 'video'
+              )
+              meetLink = videoEntry?.uri
+            }
+            console.log('Meet link:', meetLink)
+          } else {
+            // createCalendarEvent returned null/undefined
+            externalStatus = 'failed'
+            externalError = 'Calendar event creation returned empty result'
+            warnings.push('Calendar event could not be created, but booking was saved')
           }
-          console.log('Meet link:', meetLink)
+        } catch (calendarError) {
+          // Log and continue - booking should still succeed
+          console.error('Calendar event creation failed:', calendarError)
+          externalStatus = 'failed'
+          externalError = calendarError instanceof Error ? calendarError.message : 'Unknown calendar error'
+          warnings.push('Calendar event could not be created, but booking was saved')
         }
       } else {
         console.log('No write calendar configured - skipping calendar event creation')
+        externalStatus = 'not_applicable'
       }
 
       // 5. Store the booking in database
@@ -273,6 +296,9 @@ Manage this booking at https://www.meetwith.dev/dashboard
           notes: notes || null,
           status: 'confirmed',
           cancellation_token: cancellationToken,
+          external_status: externalStatus,
+          external_error: externalError || null,
+          external_retry_count: 0,
         })
         .select()
         .single()
@@ -286,9 +312,12 @@ Manage this booking at https://www.meetwith.dev/dashboard
       response = {
         success: true,
         bookingId: booking?.id || `booking_${Date.now()}`,
-        message: 'Booking created successfully',
+        message: warnings.length > 0 
+          ? 'Booking created with warnings' 
+          : 'Booking created successfully',
         meetLink,
         calendarEventId,
+        warnings: warnings.length > 0 ? warnings : undefined,
       }
 
       // 6. Send confirmation emails

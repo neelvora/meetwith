@@ -60,10 +60,14 @@ export interface Booking {
   external_event_id?: string
   attendee_name: string
   attendee_email: string
+  attendee_timezone?: string
   start_time: string
   end_time: string
   duration_minutes: number
   status: 'pending' | 'confirmed' | 'cancelled'
+  external_status?: 'pending' | 'created' | 'failed' | 'not_applicable'
+  external_error?: string
+  external_retry_count?: number
   notes?: string
   created_at: string
 }
