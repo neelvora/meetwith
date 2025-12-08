@@ -66,6 +66,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard/calendars?error=token_exchange', request.url))
     }
 
+    // Check granted scopes - users can uncheck permissions in granular consent
+    const grantedScopes = tokens.scope || ''
+    const hasCalendarReadScope = grantedScopes.includes('calendar.readonly') || grantedScopes.includes('calendar.events')
+    const hasCalendarWriteScope = grantedScopes.includes('calendar.events')
+    
+    // If user didn't grant calendar write permission, redirect with warning
+    if (!hasCalendarWriteScope) {
+      console.warn('User did not grant calendar write permission. Scopes:', grantedScopes)
+      return NextResponse.redirect(new URL('/dashboard/calendars?error=missing_write_permission', request.url))
+    }
+
     // Get user info from Google (for the NEW account being connected)
     const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
       headers: { Authorization: `Bearer ${tokens.access_token}` },

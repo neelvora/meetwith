@@ -54,6 +54,7 @@ export default function CalendarManager() {
         no_email: 'Could not get email from Google',
         db_error: 'Failed to save account',
         unknown: 'An unknown error occurred',
+        missing_write_permission: 'You must check BOTH permission boxes on the Google consent screen to allow MeetWith to create calendar events for your bookings. Please try again and select all permissions.',
       }
       setNotification({ 
         type: 'error', 
@@ -63,10 +64,12 @@ export default function CalendarManager() {
     }
   }, [searchParams])
 
-  // Auto-dismiss notification
+  // Auto-dismiss notification - but keep permission errors longer
   useEffect(() => {
     if (notification) {
-      const timer = setTimeout(() => setNotification(null), 5000)
+      // Keep permission-related errors visible longer (15s vs 5s)
+      const timeout = notification.message.includes('permission') ? 15000 : 5000
+      const timer = setTimeout(() => setNotification(null), timeout)
       return () => clearTimeout(timer)
     }
   }, [notification])
@@ -605,13 +608,16 @@ export default function CalendarManager() {
               <Calendar className="w-8 h-8 text-gray-400 dark:text-gray-500" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No calendars connected</h3>
-            <p className="text-gray-600 dark:text-gray-400 text-sm max-w-sm mb-6">
+            <p className="text-gray-600 dark:text-gray-400 text-sm max-w-sm mb-4">
               Connect your Google Calendar to automatically check availability and create events.
             </p>
             <Button onClick={handleConnectGoogle}>
               <Plus className="w-4 h-4 mr-2" />
               Connect Google Calendar
             </Button>
+            <p className="text-xs text-gray-500 dark:text-gray-500 mt-4 max-w-xs">
+              <span className="font-medium">Important:</span> On the Google consent screen, check <span className="font-medium">both permission boxes</span> to allow calendar read and write access.
+            </p>
           </CardContent>
         </Card>
       )}
@@ -754,13 +760,13 @@ export default function CalendarManager() {
           <CardTitle>How it works</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4 text-sm text-gray-400">
+          <div className="space-y-4 text-sm text-gray-600 dark:text-gray-400">
             <div className="flex gap-3">
               <div className="w-6 h-6 rounded-full bg-violet-500/20 flex items-center justify-center shrink-0 mt-0.5">
                 <span className="text-xs text-violet-400 font-bold">1</span>
               </div>
               <p>
-                <strong className="text-white">Check availability:</strong> We scan your connected
+                <strong className="text-gray-900 dark:text-white">Check availability:</strong> We scan your connected
                 calendars to find times when you&apos;re free. Only busy/free information is used — we
                 never read event details.
               </p>
@@ -770,7 +776,7 @@ export default function CalendarManager() {
                 <span className="text-xs text-violet-400 font-bold">2</span>
               </div>
               <p>
-                <strong className="text-white">Create events:</strong> When someone books a meeting,
+                <strong className="text-gray-900 dark:text-white">Create events:</strong> When someone books a meeting,
                 we create a calendar event with all the details and send invites.
               </p>
             </div>
@@ -779,10 +785,21 @@ export default function CalendarManager() {
                 <span className="text-xs text-violet-400 font-bold">3</span>
               </div>
               <p>
-                <strong className="text-white">Stay in sync:</strong> Cancellations and
+                <strong className="text-gray-900 dark:text-white">Stay in sync:</strong> Cancellations and
                 reschedulings automatically update your calendar.
               </p>
             </div>
+          </div>
+          
+          {/* Permission tip */}
+          <div className="mt-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+            <p className="text-sm text-amber-600 dark:text-amber-400">
+              <strong>Tip:</strong> When connecting your Google account, make sure to check <strong>both permission boxes</strong> on the consent screen:
+            </p>
+            <ul className="mt-2 text-sm text-amber-600/80 dark:text-amber-400/80 list-disc list-inside space-y-1">
+              <li>&quot;View and edit events on all your calendars&quot; — required to create bookings</li>
+              <li>&quot;See and download any calendar&quot; — required to check for conflicts</li>
+            </ul>
           </div>
         </CardContent>
       </Card>
