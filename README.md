@@ -1,6 +1,6 @@
 # MeetWith
 
-An open source, AI-powered scheduling platform. Better than Calendly.
+An open source, AI-powered scheduling platform. Alternative to Calendly.
 
 ## Features
 
