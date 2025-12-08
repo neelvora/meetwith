@@ -21,11 +21,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard/calendars?error=missing_params', request.url))
   }
 
-  // Decode state to get user ID
-  let userId: string
+  // Decode state to get user ID and email
+  let googleUserId: string
+  let userEmail: string | undefined
   try {
     const decoded = JSON.parse(Buffer.from(state, 'base64').toString())
-    userId = decoded.userId
+    googleUserId = decoded.userId
+    userEmail = decoded.userEmail
     
     // Check timestamp to prevent replay attacks (30 min window)
     if (Date.now() - decoded.timestamp > 30 * 60 * 1000) {
@@ -64,7 +66,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard/calendars?error=token_exchange', request.url))
     }
 
-    // Get user info from Google
+    // Get user info from Google (for the NEW account being connected)
     const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
       headers: { Authorization: `Bearer ${tokens.access_token}` },
     })
@@ -74,12 +76,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard/calendars?error=no_email', request.url))
     }
 
-    // Store the calendar account in database
+    // Find the logged-in user in our database by their email
+    const { data: dbUser, error: userLookupError } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .eq('email', userEmail)
+      .single()
+
+    if (userLookupError || !dbUser) {
+      console.error('User not found in database:', userEmail, userLookupError)
+      return NextResponse.redirect(new URL('/dashboard/calendars?error=user_not_found', request.url))
+    }
+
+    // Store the calendar account in database using the DB user ID
     const { error: upsertError } = await supabaseAdmin
       .from('calendar_accounts')
       .upsert(
         {
-          user_id: userId,
+          user_id: dbUser.id, // Use the UUID from our database
           provider: 'google',
           provider_account_id: userInfo.id || userInfo.email,
           account_email: userInfo.email,

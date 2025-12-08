@@ -20,9 +20,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Google OAuth not configured' }, { status: 500 })
   }
 
-  // Build OAuth URL with state containing user ID
+  // Build OAuth URL with state containing user ID and email
   const state = Buffer.from(JSON.stringify({
     userId: session.user.id,
+    userEmail: session.user.email,
     timestamp: Date.now(),
   })).toString('base64')
 
