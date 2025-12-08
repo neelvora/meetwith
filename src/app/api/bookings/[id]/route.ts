@@ -98,6 +98,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
         cancelled_at: new Date().toISOString(),
       })
       .eq('id', id)
+      .eq('user_id', user.id)
 
     if (updateError) {
       console.error('Error updating booking:', updateError)

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Link as LinkIcon, Plus, Clock, Video, ExternalLink, X, Check, Loader2, Trash2, GripVertical, ChevronUp, ChevronDown } from 'lucide-react'
+import { Link as LinkIcon, Plus, Clock, Video, ExternalLink, X, Check, Loader2, Trash2, GripVertical, ChevronUp, ChevronDown, Sparkles } from 'lucide-react'
 import { Button, Card, CardContent, Input } from '@/components/ui'
 
 interface EventType {
@@ -37,6 +37,7 @@ export default function EventTypesClient({ username }: Props) {
   const [saving, setSaving] = useState(false)
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [generatingDescription, setGeneratingDescription] = useState(false)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -178,6 +179,40 @@ export default function EventTypesClient({ username }: Props) {
     navigator.clipboard.writeText(link)
     setCopiedId(id)
     setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  async function generateAIDescription() {
+    if (!formData.name) {
+      setNotification({ type: 'error', message: 'Please enter an event name first' })
+      setTimeout(() => setNotification(null), 3000)
+      return
+    }
+
+    setGeneratingDescription(true)
+    try {
+      const res = await fetch('/api/ai/event-description', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: formData.name,
+          durationMinutes: formData.duration,
+        }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to generate description')
+      }
+
+      const data = await res.json()
+      setFormData(prev => ({ ...prev, description: data.description }))
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to generate description'
+      setNotification({ type: 'error', message })
+      setTimeout(() => setNotification(null), 3000)
+    } finally {
+      setGeneratingDescription(false)
+    }
   }
 
   async function moveEventType(id: string, direction: 'up' | 'down') {
@@ -514,9 +549,24 @@ export default function EventTypesClient({ username }: Props) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Description
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-300">
+                    Description
+                  </label>
+                  <button
+                    type="button"
+                    onClick={generateAIDescription}
+                    disabled={generatingDescription}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-violet-400 hover:text-violet-300 bg-violet-500/10 hover:bg-violet-500/20 rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    {generatingDescription ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3.5 h-3.5" />
+                    )}
+                    {generatingDescription ? 'Generating...' : 'Generate with AI'}
+                  </button>
+                </div>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}

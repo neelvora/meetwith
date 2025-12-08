@@ -69,7 +69,34 @@ export async function POST(request: NextRequest) {
 
     if (section === 'profile' && profile) {
       if (profile.name) updates.name = profile.name
-      if (profile.username) updates.username = profile.username
+      
+      if (profile.username) {
+        // Validate username format
+        const usernameRegex = /^[a-z0-9_-]{3,30}$/
+        const normalizedUsername = profile.username.toLowerCase().trim()
+        
+        if (!usernameRegex.test(normalizedUsername)) {
+          return NextResponse.json({ 
+            error: 'Username must be 3-30 characters, lowercase letters, numbers, hyphens, or underscores only' 
+          }, { status: 400 })
+        }
+        
+        // Check if username is already taken by another user
+        const { data: existingUser } = await supabaseAdmin
+          .from('users')
+          .select('id')
+          .eq('username', normalizedUsername)
+          .neq('id', session.user.id)
+          .single()
+        
+        if (existingUser) {
+          return NextResponse.json({ 
+            error: 'This username is already taken' 
+          }, { status: 409 })
+        }
+        
+        updates.username = normalizedUsername
+      }
     }
 
     if (section === 'branding' && branding) {

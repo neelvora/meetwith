@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Clock, Plus, Check, Trash2, Loader2, Copy, RotateCcw } from 'lucide-react'
+import { Clock, Plus, Check, Trash2, Loader2, Copy, RotateCcw, Sparkles, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui'
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -52,6 +52,11 @@ export default function AvailabilityClient() {
   const [bufferTime, setBufferTime] = useState(0)
   const [minNotice, setMinNotice] = useState(4)
   const [dailyLimit, setDailyLimit] = useState(0)
+  
+  // AI suggestion state
+  const [showAIHint, setShowAIHint] = useState(false)
+  const [aiSuggestion, setAISuggestion] = useState<string | null>(null)
+  const [loadingAI, setLoadingAI] = useState(false)
 
   useEffect(() => {
     fetchAvailability()
@@ -132,6 +137,43 @@ export default function AvailabilityClient() {
       setNotification({ type: 'error', message: 'Failed to save availability. Please try again.' })
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function fetchAISuggestion() {
+    setLoadingAI(true)
+    setAISuggestion(null)
+    
+    try {
+      const res = await fetch('/api/ai/suggest-window', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentAvailability: availability
+            .filter(s => s.is_active)
+            .map(s => ({
+              day: DAYS[s.weekday],
+              startTime: s.start_time,
+              endTime: s.end_time,
+            })),
+          timezone,
+        }),
+      })
+      
+      if (res.ok) {
+        const data = await res.json()
+        setAISuggestion(data.suggestion)
+        setShowAIHint(true)
+      } else if (res.status === 503) {
+        setAISuggestion('AI features are not configured. Add your OpenAI API key to enable smart suggestions.')
+      } else {
+        setAISuggestion('Unable to generate suggestions at this time.')
+      }
+    } catch (error) {
+      console.error('Error fetching AI suggestion:', error)
+      setAISuggestion('Unable to generate suggestions at this time.')
+    } finally {
+      setLoadingAI(false)
     }
   }
 
@@ -348,6 +390,66 @@ export default function AvailabilityClient() {
             </Button>
           </div>
         </CardContent>
+      </Card>
+
+      {/* AI Suggestion */}
+      <Card variant="glass" className="mt-6">
+        <CardHeader className="cursor-pointer" onClick={() => !aiSuggestion && fetchAISuggestion()}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-violet-500/20 flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-violet-400" />
+              </div>
+              <div>
+                <CardTitle className="text-base">AI Scheduling Assistant</CardTitle>
+                <CardDescription className="text-sm">Get smart suggestions for your availability</CardDescription>
+              </div>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                if (!aiSuggestion && !loadingAI) {
+                  fetchAISuggestion()
+                } else {
+                  setShowAIHint(!showAIHint)
+                }
+              }}
+              className="p-2 text-gray-400 hover:text-white transition-colors"
+            >
+              {loadingAI ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : showAIHint && aiSuggestion ? (
+                <ChevronUp className="w-5 h-5" />
+              ) : (
+                <ChevronDown className="w-5 h-5" />
+              )}
+            </button>
+          </div>
+        </CardHeader>
+        {showAIHint && aiSuggestion && (
+          <CardContent className="pt-0">
+            <div className="p-4 rounded-xl bg-violet-500/10 border border-violet-500/20">
+              <p className="text-sm text-gray-300 whitespace-pre-wrap">{aiSuggestion}</p>
+            </div>
+            <button
+              onClick={() => fetchAISuggestion()}
+              disabled={loadingAI}
+              className="mt-3 text-sm text-violet-400 hover:text-violet-300 transition-colors flex items-center gap-1.5"
+            >
+              {loadingAI ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Refresh suggestion
+                </>
+              )}
+            </button>
+          </CardContent>
+        )}
       </Card>
 
       {/* Advanced Settings */}

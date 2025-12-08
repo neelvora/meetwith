@@ -131,6 +131,7 @@ export async function DELETE(
     .from('event_types')
     .delete()
     .eq('id', id)
+    .eq('user_id', session.user.id)
 
   if (error) {
     console.error('Error deleting event type:', error)

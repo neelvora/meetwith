@@ -43,6 +43,7 @@ export default async function BookingsPage() {
       location,
       notes,
       created_at,
+      follow_up_draft,
       event_types (
         id,
         name,
@@ -50,8 +51,8 @@ export default async function BookingsPage() {
       )
     `)
     .eq('user_id', user.id)
-    .gte('start_time', new Date().toISOString())
-    .order('start_time', { ascending: true })
+    .order('start_time', { ascending: false })
+    .limit(100)
 
   const mappedBookings = (bookings || []).map(b => {
     const eventType = Array.isArray(b.event_types) ? b.event_types[0] : b.event_types
@@ -66,6 +67,7 @@ export default async function BookingsPage() {
       location: b.location,
       notes: b.notes,
       createdAt: b.created_at,
+      followUpDraft: b.follow_up_draft,
       eventType: eventType ? {
         id: eventType.id,
         name: eventType.name,

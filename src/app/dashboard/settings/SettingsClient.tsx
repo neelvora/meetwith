@@ -101,13 +101,15 @@ export default function SettingsClient({ initialProfile }: Props) {
       })
 
       if (!res.ok) {
-        throw new Error('Failed to save')
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to save')
       }
 
       setNotification({ type: 'success', message: 'Settings saved successfully!' })
       setTimeout(() => setNotification(null), 3000)
     } catch (error) {
-      setNotification({ type: 'error', message: 'Failed to save settings' })
+      const message = error instanceof Error ? error.message : 'Failed to save settings'
+      setNotification({ type: 'error', message })
     } finally {
       setSaving(null)
     }

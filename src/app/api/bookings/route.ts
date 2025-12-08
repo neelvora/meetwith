@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
 import { randomBytes } from 'crypto'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { authOptions } from '@/lib/auth'
 import { createCalendarEvent } from '@/lib/calendar/googleClient'
 import { sendBookingEmails } from '@/lib/email'
 import { validateSlot } from '@/lib/availability/validateSlot'
 import { trackBookingEvent } from '@/lib/analytics'
 import { checkRateLimit, getClientId, RATE_LIMITS } from '@/lib/rateLimit'
+import { generateAndStoreFollowUp } from '@/lib/ai/followUp'
 import type { CalendarAccount, AvailabilityRule } from '@/types'
 
 interface BookingResponse {
@@ -325,6 +328,16 @@ Manage this booking at https://www.meetwith.dev/dashboard
         },
         userAgent: request.headers.get('user-agent') || undefined,
       })
+
+      // 8. Generate AI follow-up draft (async, non-blocking)
+      if (booking?.id) {
+        generateAndStoreFollowUp({
+          bookingId: booking.id,
+          hostName: user.name || 'Host',
+          attendeeName,
+          meetingTitle: eventType?.name || 'Meeting',
+        }).catch(err => console.error('Follow-up generation error:', err))
+      }
     }
 
     return NextResponse.json(response)
@@ -338,6 +351,12 @@ Manage this booking at https://www.meetwith.dev/dashboard
 }
 
 export async function GET(request: NextRequest) {
+  const session = await getServerSession(authOptions)
+  
+  if (!session?.user?.email || !session.user.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const { searchParams } = new URL(request.url)
   const bookingId = searchParams.get('id')
 
@@ -363,6 +382,7 @@ export async function GET(request: NextRequest) {
       users (name, email, username)
     `)
     .eq('id', bookingId)
+    .eq('user_id', session.user.id)
     .single()
 
   if (error || !booking) {

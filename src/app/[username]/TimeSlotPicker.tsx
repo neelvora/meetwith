@@ -257,7 +257,7 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-7 gap-1 sm:gap-2">
+        <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
         {weekDays.map((day) => {
           const dateKey = getDateKey(day)
           const daySlots = slots[dateKey] || []
@@ -278,7 +278,7 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
               disabled={!hasSlots || past}
               type="button"
               className={`
-                p-2 sm:p-3 rounded-lg sm:rounded-xl text-center transition-all touch-manipulation
+                p-2 sm:p-3 rounded-lg sm:rounded-xl text-center transition-all touch-manipulation min-h-[60px] sm:min-h-0 active:scale-[0.97]
                 ${past ? 'opacity-30 cursor-not-allowed' : ''}
                 ${isSelected ? 'bg-violet-500 text-white' : ''}
                 ${!isSelected && hasSlots && !past ? 'bg-white/5 hover:bg-white/10 active:bg-white/20 cursor-pointer' : ''}
@@ -289,7 +289,7 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
               <div className="text-[10px] sm:text-xs text-gray-400 mb-0.5 sm:mb-1">
                 {day.toLocaleDateString('en-US', { weekday: 'narrow' })}
               </div>
-              <div className={`text-sm sm:text-lg font-semibold ${isSelected ? 'text-white' : 'text-white'}`}>
+              <div className={`text-base sm:text-lg font-semibold ${isSelected ? 'text-white' : 'text-white'}`}>
                 {day.getDate()}
               </div>
               {hasSlots && !past && (
@@ -329,7 +329,7 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
               return new Date(year, month - 1, day).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
             })()}
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-64 overflow-y-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 sm:gap-3 max-h-72 overflow-y-auto py-1 -mx-1 px-1">
             {(slots[selectedDate] || []).map((slot, i) => {
               const isSelected = selectedSlot?.start === slot.start
               return (
@@ -338,10 +338,10 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
                   onClick={() => setSelectedSlot(slot)}
                   type="button"
                   className={`
-                    px-3 py-2.5 rounded-lg text-sm font-medium transition-all touch-manipulation
+                    px-3 py-3 sm:py-2.5 rounded-lg text-sm font-medium transition-all touch-manipulation min-h-[44px]
                     ${isSelected 
                       ? 'bg-violet-500 text-white' 
-                      : 'bg-white/5 text-white hover:bg-white/10 active:bg-white/20 border border-white/10'
+                      : 'bg-white/5 text-white hover:bg-white/10 active:bg-white/20 border border-white/10 active:scale-[0.98]'
                     }
                   `}
                 >

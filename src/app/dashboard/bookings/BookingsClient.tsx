@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Calendar, Clock, Mail, User, Video, ExternalLink, X, Loader2, AlertTriangle, Filter } from 'lucide-react'
+import { Calendar, Clock, Mail, User, Video, ExternalLink, X, Loader2, AlertTriangle, Filter, Copy, Check, Sparkles, FileText } from 'lucide-react'
 import { Card, CardContent, Button } from '@/components/ui'
 
 interface Booking {
@@ -15,6 +15,7 @@ interface Booking {
   location?: string | null
   notes?: string | null
   createdAt: string
+  followUpDraft?: string | null
   eventType: {
     id: string
     name: string
@@ -35,6 +36,8 @@ export default function BookingsClient({ bookings: initialBookings, timezone }: 
   const [showCancelModal, setShowCancelModal] = useState<string | null>(null)
   const [filter, setFilter] = useState<FilterType>('upcoming')
   const [isLoading, setIsLoading] = useState(false)
+  const [showFollowUpModal, setShowFollowUpModal] = useState<string | null>(null)
+  const [copiedFollowUp, setCopiedFollowUp] = useState(false)
 
   const filteredBookings = useMemo(() => {
     const now = new Date()
@@ -106,6 +109,16 @@ export default function BookingsClient({ bookings: initialBookings, timezone }: 
     } finally {
       setCancellingId(null)
       setShowCancelModal(null)
+    }
+  }
+
+  async function copyFollowUp(text: string) {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedFollowUp(true)
+      setTimeout(() => setCopiedFollowUp(false), 2000)
+    } catch (error) {
+      console.error('Failed to copy:', error)
     }
   }
 
@@ -275,6 +288,19 @@ export default function BookingsClient({ bookings: initialBookings, timezone }: 
                         </button>
                       </div>
                     )}
+                    
+                    {/* Show Follow-up button for past completed bookings */}
+                    {!cancelled && past && booking.followUpDraft && (
+                      <div className="flex flex-col sm:flex-row gap-2 lg:flex-col lg:w-auto">
+                        <button
+                          onClick={() => setShowFollowUpModal(booking.id)}
+                          className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-violet-500/20 text-violet-400 hover:bg-violet-500/30 transition-colors text-sm font-medium"
+                        >
+                          <FileText className="w-4 h-4" />
+                          View Follow-up
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -317,6 +343,68 @@ export default function BookingsClient({ bookings: initialBookings, timezone }: 
                     </>
                   ) : (
                     'Yes, Cancel'
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Follow-up Email Draft Modal */}
+      {showFollowUpModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card variant="glass" className="max-w-2xl w-full max-h-[80vh] overflow-hidden">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-violet-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white">Follow-up Email Draft</h3>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowFollowUpModal(null)
+                    setCopiedFollowUp(false)
+                  }}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <p className="text-gray-400 text-sm mb-4">
+                AI-generated follow-up email draft based on your meeting. Copy and customize before sending.
+              </p>
+              <div className="bg-white/5 rounded-lg p-4 max-h-[50vh] overflow-y-auto mb-4">
+                <pre className="text-gray-300 text-sm whitespace-pre-wrap font-sans">
+                  {bookings.find(b => b.id === showFollowUpModal)?.followUpDraft || 'No follow-up draft available.'}
+                </pre>
+              </div>
+              <div className="flex justify-end gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setShowFollowUpModal(null)
+                    setCopiedFollowUp(false)
+                  }}
+                >
+                  Close
+                </Button>
+                <Button
+                  onClick={() => copyFollowUp(bookings.find(b => b.id === showFollowUpModal)?.followUpDraft || '')}
+                  className="bg-violet-500 hover:bg-violet-600"
+                >
+                  {copiedFollowUp ? (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copy to Clipboard
+                    </>
                   )}
                 </Button>
               </div>
