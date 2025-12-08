@@ -337,18 +337,30 @@ export default function CalendarManager() {
                       </div>
                     ) : googleCalendars.length > 0 ? (
                       <div className="space-y-2">
+                        {/* Instruction text when no write calendar selected */}
+                        {!writeCalendar && (
+                          <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 mb-3">
+                            <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                            <p className="text-sm text-amber-300">
+                              Click <span className="font-semibold">&quot;Set default&quot;</span> next to a calendar to choose where new bookings appear
+                            </p>
+                          </div>
+                        )}
                         {googleCalendars.map((cal) => {
                           const selected = isCalendarSelected(cal.id)
                           const isWrite = isWriteCalendar(cal.id)
                           const isSaving = savingCalendar === cal.id
+                          const needsAttention = !writeCalendar && cal.primary
                           
                           return (
                             <div
                               key={cal.id}
                               className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-lg border transition-all gap-3 ${
-                                selected 
-                                  ? 'bg-violet-500/10 border-violet-500/30' 
-                                  : 'bg-white/5 border-white/10 hover:border-white/20'
+                                needsAttention
+                                  ? 'bg-amber-500/5 border-amber-500/40 ring-1 ring-amber-500/30'
+                                  : selected 
+                                    ? 'bg-violet-500/10 border-violet-500/30' 
+                                    : 'bg-white/5 border-white/10 hover:border-white/20'
                               }`}
                             >
                               <div className="flex items-center gap-3">
@@ -374,7 +386,9 @@ export default function CalendarManager() {
                                   className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-all whitespace-nowrap ${
                                     isWrite
                                       ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                                      : 'text-gray-500 hover:text-white hover:bg-white/10'
+                                      : needsAttention
+                                        ? 'bg-amber-500 text-white hover:bg-amber-600 font-medium animate-pulse'
+                                        : 'text-gray-500 hover:text-white hover:bg-white/10'
                                   }`}
                                   title={isWrite ? 'Events created here' : 'Set as default for new events'}
                                 >
