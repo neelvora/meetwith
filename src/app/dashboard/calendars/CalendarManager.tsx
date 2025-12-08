@@ -36,7 +36,11 @@ export default function CalendarManager() {
   // Check for connection result from URL params
   useEffect(() => {
     if (searchParams.get('connected') === 'true') {
-      setNotification({ type: 'success', message: 'Google account connected successfully!' })
+      const isDefault = searchParams.get('default') === 'true'
+      const message = isDefault 
+        ? 'Google account connected! This calendar has been set as your default for new bookings.'
+        : 'Google account connected successfully!'
+      setNotification({ type: 'success', message })
       // Clear the URL param
       window.history.replaceState({}, '', '/dashboard/calendars')
     } else if (searchParams.get('error')) {

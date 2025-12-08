@@ -88,6 +88,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard/calendars?error=user_not_found', request.url))
     }
 
+    // Check if user already has any calendar accounts with write_to_calendar enabled
+    const { data: existingWriteCalendar } = await supabaseAdmin
+      .from('calendar_accounts')
+      .select('id')
+      .eq('user_id', dbUser.id)
+      .eq('write_to_calendar', true)
+      .single()
+
+    // If no write calendar exists, this will be set as the default
+    const shouldSetAsDefault = !existingWriteCalendar
+
     // Store the calendar account in database using the DB user ID
     const { error: upsertError } = await supabaseAdmin
       .from('calendar_accounts')
@@ -107,7 +118,7 @@ export async function GET(request: NextRequest) {
           calendar_name: `${userInfo.email} - Primary`,
           is_primary: false,
           include_in_availability: true,
-          write_to_calendar: false,
+          write_to_calendar: shouldSetAsDefault, // Auto-set first calendar as default
         },
         {
           onConflict: 'user_id,provider,provider_account_id,calendar_id',
@@ -119,8 +130,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard/calendars?error=db_error', request.url))
     }
 
-    // Success! Redirect back to calendars page
-    return NextResponse.redirect(new URL('/dashboard/calendars?connected=true', request.url))
+    // Success! Redirect back to calendars page with appropriate message
+    const redirectUrl = shouldSetAsDefault 
+      ? '/dashboard/calendars?connected=true&default=true'
+      : '/dashboard/calendars?connected=true'
+    return NextResponse.redirect(new URL(redirectUrl, request.url))
   } catch (err) {
     console.error('OAuth callback error:', err)
     return NextResponse.redirect(new URL('/dashboard/calendars?error=unknown', request.url))

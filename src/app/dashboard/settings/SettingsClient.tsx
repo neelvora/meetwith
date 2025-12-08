@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { User, Bell, Palette, Loader2, Check, AlertCircle, Link as LinkIcon } from 'lucide-react'
+import Link from 'next/link'
+import { User, Bell, Palette, Loader2, Check, AlertCircle, Link as LinkIcon, Calendar, ExternalLink } from 'lucide-react'
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent, Input } from '@/components/ui'
 
 interface UserProfile {
@@ -378,6 +379,55 @@ export default function SettingsClient({ initialProfile }: Props) {
               )}
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Calendar Settings - Links to dedicated page */}
+      <Card variant="glass" className="mb-6">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <Calendar className="w-5 h-5 text-violet-400" />
+            <div>
+              <CardTitle>Calendar Integration</CardTitle>
+              <CardDescription>Manage your connected calendars and booking preferences</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 gap-4">
+            <div className="flex-1">
+              <p className="font-medium text-gray-900 dark:text-white">Connected Calendars</p>
+              <p className="text-sm text-gray-500 dark:text-gray-500">
+                Add, remove, or manage which calendars are checked for conflicts and where new bookings are created
+              </p>
+            </div>
+            <Link href="/dashboard/calendars">
+              <Button variant="secondary" className="w-full sm:w-auto">
+                <span>Manage Calendars</span>
+                <ExternalLink className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 gap-4">
+            <div className="flex-1">
+              <p className="font-medium text-gray-900 dark:text-white">Availability Rules</p>
+              <p className="text-sm text-gray-500 dark:text-gray-500">
+                Set your working hours and when you&apos;re available for meetings
+              </p>
+            </div>
+            <Link href="/dashboard/availability">
+              <Button variant="secondary" className="w-full sm:w-auto">
+                <span>Set Availability</span>
+                <ExternalLink className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+          </div>
+
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            <span className="font-medium">Note:</span> When you connect a Google Calendar, we request permission to read your events (for conflict checking) and create events (for new bookings). 
+            Your first connected calendar is automatically set as the default for new bookings.
+          </p>
         </CardContent>
       </Card>
 
