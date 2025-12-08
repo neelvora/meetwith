@@ -343,12 +343,12 @@ export default function CalendarManager() {
             <div className="flex flex-col gap-4">
               {/* Default Calendar Selection */}
               <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                <label className="text-sm font-medium text-white whitespace-nowrap">
+                <label className="text-sm font-medium text-gray-900 dark:text-white whitespace-nowrap">
                   Default calendar for new bookings:
                 </label>
                 <div className="flex-1 max-w-md">
                   {loadingAllCalendars ? (
-                    <div className="flex items-center gap-2 text-sm text-gray-400">
+                    <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
                       <RefreshCw className="w-4 h-4 animate-spin" />
                       Loading calendars...
                     </div>
@@ -360,11 +360,11 @@ export default function CalendarManager() {
                           setWriteCalendar(e.target.value)
                         }
                       }}
-                      className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                      className="w-full px-3 py-2 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                     >
-                      <option value="" className="bg-gray-900">Select a calendar...</option>
+                      <option value="" className="bg-white dark:bg-gray-900">Select a calendar...</option>
                       {allCalendars.map((cal) => (
-                        <option key={cal.id} value={cal.id} className="bg-gray-900">
+                        <option key={cal.id} value={cal.id} className="bg-white dark:bg-gray-900">
                           {cal.summary} ({cal.accountEmail})
                         </option>
                       ))}
@@ -378,8 +378,8 @@ export default function CalendarManager() {
               </div>
               
               {/* Status info */}
-              <div className="flex items-center gap-3 text-sm text-gray-400">
-                <Eye className="w-4 h-4 text-violet-400" />
+              <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
+                <Eye className="w-4 h-4 text-violet-500 dark:text-violet-400" />
                 <span>
                   Checking {selectedCount} calendar{selectedCount !== 1 ? 's' : ''} for conflicts
                 </span>
@@ -392,13 +392,13 @@ export default function CalendarManager() {
       {/* Connected Calendars */}
       {accounts.length > 0 ? (
         <div id="calendar-accounts" ref={accountsRef} className="space-y-4 scroll-mt-24">
-          <h2 className="text-lg font-semibold text-white">Connected Accounts</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Connected Accounts</h2>
           {accounts.map((account) => (
             <Card key={account.id} variant="glass">
               <CardContent className="p-0">
                 {/* Account Header */}
                 <div
-                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 cursor-pointer hover:bg-white/5 transition-colors gap-3"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 transition-colors gap-3"
                   onClick={() => toggleAccountExpand(account.id)}
                 >
                   <div className="flex items-center gap-4">
@@ -406,19 +406,19 @@ export default function CalendarManager() {
                       <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-semibold text-white flex flex-wrap items-center gap-2">
+                      <h3 className="font-semibold text-gray-900 dark:text-white flex flex-wrap items-center gap-2">
                         <span className="truncate">{account.provider === 'google' ? 'Google Calendar' : account.provider}</span>
                         {account.is_primary && (
-                          <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30 shrink-0">
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-500 dark:text-green-400 border border-green-500/30 shrink-0">
                             Primary
                           </span>
                         )}
                       </h3>
-                      <p className="text-sm text-gray-400 truncate">{account.account_email}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{account.account_email}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3 self-end sm:self-auto">
-                    <div className="flex items-center gap-1.5 text-sm text-green-400">
+                    <div className="flex items-center gap-1.5 text-sm text-green-500 dark:text-green-400">
                       <Check className="w-4 h-4" />
                       <span className="hidden sm:inline">Connected</span>
                     </div>
@@ -432,10 +432,10 @@ export default function CalendarManager() {
 
                 {/* Expanded Calendar List */}
                 {expandedAccount === account.id && (
-                  <div className="border-t border-white/10 p-4">
+                  <div className="border-t border-gray-200 dark:border-white/10 p-4">
                     <div className="flex flex-col gap-1 mb-4">
                       <div className="flex items-center justify-between">
-                        <h4 className="text-sm font-medium text-white">
+                        <h4 className="text-sm font-medium text-gray-900 dark:text-white">
                           Your calendars
                         </h4>
                         <button
@@ -482,7 +482,7 @@ export default function CalendarManager() {
                                   ? 'bg-amber-500/5 border-amber-500/40 ring-1 ring-amber-500/30'
                                   : selected 
                                     ? 'bg-violet-500/10 border-violet-500/30' 
-                                    : 'bg-white/5 border-white/10 hover:border-white/20'
+                                    : 'bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'
                               }`}
                             >
                               <div className="flex items-center gap-3">
@@ -492,9 +492,9 @@ export default function CalendarManager() {
                                 />
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-2">
-                                    <p className="text-sm font-medium text-white truncate">{cal.summary}</p>
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{cal.summary}</p>
                                     {isWrite && (
-                                      <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30 whitespace-nowrap">
+                                      <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-500 dark:text-green-400 border border-green-500/30 whitespace-nowrap">
                                         ✓ Default
                                       </span>
                                     )}
@@ -516,7 +516,7 @@ export default function CalendarManager() {
                                     className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-all whitespace-nowrap ${
                                       needsAttention
                                         ? 'bg-amber-500 text-white hover:bg-amber-600 font-medium animate-pulse'
-                                        : 'text-gray-500 hover:text-white hover:bg-white/10'
+                                        : 'text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
                                     }`}
                                     title="Set as default calendar for new bookings"
                                   >
@@ -527,7 +527,7 @@ export default function CalendarManager() {
                                 
                                 {/* Include in Availability Toggle */}
                                 <label className="flex items-center gap-2 cursor-pointer" title="When enabled, we'll check this calendar for conflicts when showing available slots">
-                                  <span className="text-xs text-gray-400 hidden sm:inline">Check conflicts</span>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline">Check conflicts</span>
                                   <div className="relative">
                                     <input
                                       type="checkbox"
@@ -540,7 +540,7 @@ export default function CalendarManager() {
                                       className="sr-only"
                                     />
                                     <div className={`w-9 h-5 rounded-full transition-colors ${
-                                      selected ? 'bg-violet-600' : 'bg-white/20'
+                                      selected ? 'bg-violet-600' : 'bg-gray-300 dark:bg-white/20'
                                     }`}>
                                       <div className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform mt-0.5 ${
                                         selected ? 'translate-x-4.5 ml-0.5' : 'translate-x-0.5'
@@ -597,11 +597,11 @@ export default function CalendarManager() {
       ) : (
         <Card variant="glass">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-              <Calendar className="w-8 h-8 text-gray-500" />
+            <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center mb-4">
+              <Calendar className="w-8 h-8 text-gray-400 dark:text-gray-500" />
             </div>
-            <h3 className="text-lg font-semibold text-white mb-2">No calendars connected</h3>
-            <p className="text-gray-400 text-sm max-w-sm mb-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No calendars connected</h3>
+            <p className="text-gray-600 dark:text-gray-400 text-sm max-w-sm mb-6">
               Connect your Google Calendar to automatically check availability and create events.
             </p>
             <Button onClick={handleConnectGoogle}>
@@ -624,7 +624,7 @@ export default function CalendarManager() {
             {!hasConnectedGoogle && (
               <button
                 onClick={handleConnectGoogle}
-                className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-all text-left group"
+                className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 transition-all text-left group"
               >
                 <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center">
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -647,10 +647,10 @@ export default function CalendarManager() {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-white">Google Calendar</p>
+                  <p className="font-medium text-gray-900 dark:text-white">Google Calendar</p>
                   <p className="text-xs text-gray-500">Gmail, Google Workspace</p>
                 </div>
-                <Plus className="w-5 h-5 text-gray-500 group-hover:text-white transition-colors" />
+                <Plus className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white transition-colors" />
               </button>
             )}
 
@@ -659,7 +659,7 @@ export default function CalendarManager() {
               <button
                 onClick={handleConnectAdditionalGoogle}
                 disabled={connectingAccount}
-                className="flex items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10 hover:border-violet-500/50 transition-all text-left group"
+                className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:border-violet-500/50 transition-all text-left group"
               >
                 <div className="w-10 h-10 rounded-lg bg-white flex items-center justify-center">
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -682,7 +682,7 @@ export default function CalendarManager() {
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-white">Add Another Google Account</p>
+                  <p className="font-medium text-gray-900 dark:text-white">Add Another Google Account</p>
                   <p className="text-xs text-gray-500">
                     {connectedGoogleAccounts.length} account{connectedGoogleAccounts.length !== 1 ? 's' : ''} connected
                   </p>
@@ -690,7 +690,7 @@ export default function CalendarManager() {
                 {connectingAccount ? (
                   <RefreshCw className="w-5 h-5 text-violet-400 animate-spin" />
                 ) : (
-                  <Plus className="w-5 h-5 text-gray-500 group-hover:text-violet-400 transition-colors" />
+                  <Plus className="w-5 h-5 text-gray-400 dark:text-gray-500 group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors" />
                 )}
               </button>
             )}

@@ -15,8 +15,8 @@ export default async function CalendarsPage() {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Connected Calendars</h1>
-        <p className="text-gray-400">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 font-display">Connected Calendars</h1>
+        <p className="text-gray-600 dark:text-gray-400">
           Manage your calendar connections to check availability across all your schedules.
         </p>
       </div>
