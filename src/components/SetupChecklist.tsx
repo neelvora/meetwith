@@ -1,8 +1,9 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Check, ChevronRight, Sparkles } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui'
+import { Check, ChevronRight, Sparkles, PartyPopper, X } from 'lucide-react'
+import { Card, CardContent, Button } from '@/components/ui'
 import type { SetupStatus } from '@/lib/setup-status'
 
 interface SetupChecklistProps {
@@ -11,8 +12,82 @@ interface SetupChecklistProps {
   onDismiss?: () => void
 }
 
+// Celebration component for when setup is complete
+function SetupCelebration({ onDismiss }: { onDismiss?: () => void }) {
+  const [show, setShow] = useState(true)
+
+  useEffect(() => {
+    // Auto-dismiss after 10 seconds
+    const timer = setTimeout(() => {
+      setShow(false)
+      onDismiss?.()
+    }, 10000)
+    return () => clearTimeout(timer)
+  }, [onDismiss])
+
+  if (!show) return null
+
+  return (
+    <Card className="bg-gradient-to-br from-green-500/20 via-emerald-500/10 to-transparent border-green-500/30 mb-8 overflow-hidden relative">
+      <CardContent className="p-6">
+        <button 
+          onClick={() => { setShow(false); onDismiss?.() }}
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+        >
+          <X className="w-5 h-5" />
+        </button>
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center animate-bounce">
+            <PartyPopper className="w-7 h-7 text-white" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+              🎉 You're all set up!
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400">
+              Your booking page is ready. Share your link and start accepting meetings!
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link href="/dashboard/event-types">
+            <Button variant="primary" size="sm">
+              View your booking links
+            </Button>
+          </Link>
+          <Button 
+            variant="secondary" 
+            size="sm"
+            onClick={() => { setShow(false); onDismiss?.() }}
+          >
+            Dismiss
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 export function SetupChecklist({ status, dismissible, onDismiss }: SetupChecklistProps) {
+  const [showCelebration, setShowCelebration] = useState(false)
+  const [dismissed, setDismissed] = useState(false)
+
+  // Check if we just completed setup (show celebration once)
+  useEffect(() => {
+    if (status.isComplete && !dismissed) {
+      // Check localStorage to see if we've shown this before
+      const hasSeenCelebration = localStorage.getItem('meetwith_setup_celebrated')
+      if (!hasSeenCelebration) {
+        setShowCelebration(true)
+        localStorage.setItem('meetwith_setup_celebrated', 'true')
+      }
+    }
+  }, [status.isComplete, dismissed])
+
   if (status.isComplete) {
+    if (showCelebration) {
+      return <SetupCelebration onDismiss={() => { setShowCelebration(false); setDismissed(true) }} />
+    }
     return null
   }
 

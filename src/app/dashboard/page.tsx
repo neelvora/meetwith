@@ -167,7 +167,7 @@ export default async function DashboardPage() {
           <CardContent>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
               <div className="flex-1 px-4 py-3 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-gray-400 text-sm truncate">
-                meetwith.app/{session.user?.email?.split('@')[0] || 'you'}
+                meetwith.dev/{session.user?.email?.split('@')[0] || 'you'}
               </div>
               <Button variant="secondary" size="sm" className="w-full sm:w-auto">Copy</Button>
             </div>

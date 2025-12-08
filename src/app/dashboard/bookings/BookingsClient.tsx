@@ -129,8 +129,8 @@ export default function BookingsClient({ bookings: initialBookings, timezone }: 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Your Bookings</h1>
-        <p className="text-gray-400">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Your Bookings</h1>
+        <p className="text-gray-600 dark:text-gray-400">
           Manage your upcoming meetings and appointments
         </p>
       </div>
@@ -149,7 +149,7 @@ export default function BookingsClient({ bookings: initialBookings, timezone }: 
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               filter === key
                 ? 'bg-violet-500 text-white'
-                : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
             {label}
@@ -170,14 +170,14 @@ export default function BookingsClient({ bookings: initialBookings, timezone }: 
               <CardContent className="p-6">
                 <div className="animate-pulse">
                   <div className="flex items-center gap-4 mb-4">
-                    <div className="h-6 w-32 bg-white/10 rounded" />
-                    <div className="h-5 w-20 bg-white/10 rounded-full" />
+                    <div className="h-6 w-32 bg-gray-200 dark:bg-white/10 rounded" />
+                    <div className="h-5 w-20 bg-gray-200 dark:bg-white/10 rounded-full" />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="h-4 w-24 bg-white/10 rounded" />
-                    <div className="h-4 w-32 bg-white/10 rounded" />
-                    <div className="h-4 w-28 bg-white/10 rounded" />
-                    <div className="h-4 w-36 bg-white/10 rounded" />
+                    <div className="h-4 w-24 bg-gray-200 dark:bg-white/10 rounded" />
+                    <div className="h-4 w-32 bg-gray-200 dark:bg-white/10 rounded" />
+                    <div className="h-4 w-28 bg-gray-200 dark:bg-white/10 rounded" />
+                    <div className="h-4 w-36 bg-gray-200 dark:bg-white/10 rounded" />
                   </div>
                 </div>
               </CardContent>
@@ -187,16 +187,16 @@ export default function BookingsClient({ bookings: initialBookings, timezone }: 
       ) : filteredBookings.length === 0 ? (
         <Card variant="glass">
           <CardContent className="py-12 text-center">
-            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-4">
-              <Filter className="w-8 h-8 text-gray-500" />
+            <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center mx-auto mb-4">
+              <Filter className="w-8 h-8 text-gray-400 dark:text-gray-500" />
             </div>
-            <h3 className="text-lg font-medium text-white mb-2">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
               {filter === 'upcoming' ? 'No upcoming bookings' :
                filter === 'past' ? 'No past bookings' :
                filter === 'cancelled' ? 'No cancelled bookings' :
                'No bookings yet'}
             </h3>
-            <p className="text-gray-400 max-w-md mx-auto">
+            <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
               {filter === 'upcoming' 
                 ? 'When someone books a meeting with you, it will appear here.'
                 : 'Try selecting a different filter.'}
@@ -238,29 +238,29 @@ export default function BookingsClient({ bookings: initialBookings, timezone }: 
                       </div>
                       
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                        <div className="flex items-center gap-2 text-gray-400">
-                          <User className="w-4 h-4 text-violet-400 shrink-0" />
+                        <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                          <User className="w-4 h-4 text-violet-500 dark:text-violet-400 shrink-0" />
                           <span className="truncate">{booking.attendeeName}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-gray-400">
-                          <Mail className="w-4 h-4 text-violet-400 shrink-0" />
-                          <a href={`mailto:${booking.attendeeEmail}`} className="text-violet-400 hover:text-violet-300 truncate">
+                        <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                          <Mail className="w-4 h-4 text-violet-500 dark:text-violet-400 shrink-0" />
+                          <a href={`mailto:${booking.attendeeEmail}`} className="text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 truncate">
                             {booking.attendeeEmail}
                           </a>
                         </div>
-                        <div className="flex items-center gap-2 text-gray-400">
-                          <Calendar className="w-4 h-4 text-violet-400 shrink-0" />
+                        <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                          <Calendar className="w-4 h-4 text-violet-500 dark:text-violet-400 shrink-0" />
                           <span>{formatDateTime(booking.startTime)}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-gray-400">
-                          <Clock className="w-4 h-4 text-violet-400 shrink-0" />
+                        <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                          <Clock className="w-4 h-4 text-violet-500 dark:text-violet-400 shrink-0" />
                           <span>{booking.duration} min ({formatTime(booking.startTime)} - {formatTime(booking.endTime)})</span>
                         </div>
                       </div>
                       
                       {booking.notes && (
-                        <div className="mt-3 p-3 rounded-lg bg-white/5 text-sm text-gray-400">
-                          <span className="text-gray-500">Notes:</span> {booking.notes}
+                        <div className="mt-3 p-3 rounded-lg bg-gray-100 dark:bg-white/5 text-sm text-gray-600 dark:text-gray-400">
+                          <span className="text-gray-400 dark:text-gray-500">Notes:</span> {booking.notes}
                         </div>
                       )}
                     </div>
@@ -310,16 +310,16 @@ export default function BookingsClient({ bookings: initialBookings, timezone }: 
       )}
 
       {showCancelModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <Card variant="glass" className="max-w-md w-full">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center">
                   <AlertTriangle className="w-5 h-5 text-red-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-white">Cancel Booking?</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Cancel Booking?</h3>
               </div>
-              <p className="text-gray-400 mb-6">
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
                 Are you sure you want to cancel this booking? The attendee will be notified via email and the calendar event will be removed.
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
@@ -353,7 +353,7 @@ export default function BookingsClient({ bookings: initialBookings, timezone }: 
 
       {/* Follow-up Email Draft Modal */}
       {showFollowUpModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <Card variant="glass" className="max-w-2xl w-full max-h-[80vh] overflow-hidden">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
@@ -361,23 +361,23 @@ export default function BookingsClient({ bookings: initialBookings, timezone }: 
                   <div className="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center">
                     <FileText className="w-5 h-5 text-violet-400" />
                   </div>
-                  <h3 className="text-lg font-semibold text-white">Follow-up Email Draft</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Follow-up Email Draft</h3>
                 </div>
                 <button
                   onClick={() => {
                     setShowFollowUpModal(null)
                     setCopiedFollowUp(false)
                   }}
-                  className="text-gray-400 hover:text-white transition-colors"
+                  className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
-              <p className="text-gray-400 text-sm mb-4">
+              <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
                 AI-generated follow-up email draft based on your meeting. Copy and customize before sending.
               </p>
-              <div className="bg-white/5 rounded-lg p-4 max-h-[50vh] overflow-y-auto mb-4">
-                <pre className="text-gray-300 text-sm whitespace-pre-wrap font-sans">
+              <div className="bg-gray-100 dark:bg-white/5 rounded-lg p-4 max-h-[50vh] overflow-y-auto mb-4">
+                <pre className="text-gray-700 dark:text-gray-300 text-sm whitespace-pre-wrap font-sans">
                   {bookings.find(b => b.id === showFollowUpModal)?.followUpDraft || 'No follow-up draft available.'}
                 </pre>
               </div>

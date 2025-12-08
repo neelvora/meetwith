@@ -269,8 +269,8 @@ export default function EventTypesClient({ username }: Props) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2">Event Types</h1>
-          <p className="text-gray-400 text-sm sm:text-base">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Event Types</h1>
+          <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
             Create different meeting types for people to book with you.
           </p>
         </div>
@@ -302,8 +302,8 @@ export default function EventTypesClient({ username }: Props) {
               <div className="w-12 h-12 rounded-full bg-violet-500/10 flex items-center justify-center mb-4">
                 <Clock className="w-6 h-6 text-violet-400" />
               </div>
-              <h3 className="font-semibold text-white mb-1">No Event Types Yet</h3>
-              <p className="text-sm text-gray-500 max-w-xs mb-4">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-1">No Event Types Yet</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-500 max-w-xs mb-4">
                 Create your first event type to start accepting bookings.
               </p>
               <Button onClick={openCreateModal}>
@@ -323,21 +323,21 @@ export default function EventTypesClient({ username }: Props) {
                     disabled={index === 0}
                     className={`p-1 rounded transition-colors ${
                       index === 0 
-                        ? 'text-gray-600 cursor-not-allowed' 
-                        : 'text-gray-400 hover:text-white hover:bg-white/10'
+                        ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed' 
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
                     }`}
                     title="Move up"
                   >
                     <ChevronUp className="w-4 h-4" />
                   </button>
-                  <GripVertical className="w-4 h-4 text-gray-500" />
+                  <GripVertical className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                   <button
                     onClick={() => moveEventType(eventType.id, 'down')}
                     disabled={index === eventTypes.length - 1}
                     className={`p-1 rounded transition-colors ${
                       index === eventTypes.length - 1 
-                        ? 'text-gray-600 cursor-not-allowed' 
-                        : 'text-gray-400 hover:text-white hover:bg-white/10'
+                        ? 'text-gray-400 dark:text-gray-600 cursor-not-allowed' 
+                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10'
                     }`}
                     title="Move down"
                   >
@@ -354,14 +354,14 @@ export default function EventTypesClient({ username }: Props) {
                   <button
                     onClick={() => moveEventType(eventType.id, 'up')}
                     disabled={index === 0}
-                    className={`p-1.5 rounded ${index === 0 ? 'text-gray-600' : 'text-gray-400'}`}
+                    className={`p-1.5 rounded ${index === 0 ? 'text-gray-400 dark:text-gray-600' : 'text-gray-500 dark:text-gray-400'}`}
                   >
                     <ChevronUp className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => moveEventType(eventType.id, 'down')}
                     disabled={index === eventTypes.length - 1}
-                    className={`p-1.5 rounded ${index === eventTypes.length - 1 ? 'text-gray-600' : 'text-gray-400'}`}
+                    className={`p-1.5 rounded ${index === eventTypes.length - 1 ? 'text-gray-400 dark:text-gray-600' : 'text-gray-500 dark:text-gray-400'}`}
                   >
                     <ChevronDown className="w-4 h-4" />
                   </button>
@@ -370,7 +370,7 @@ export default function EventTypesClient({ username }: Props) {
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-white">{eventType.name}</h3>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">{eventType.name}</h3>
                     <button
                       onClick={() => toggleActive(eventType)}
                       className={`text-xs px-2 py-0.5 rounded-full cursor-pointer transition-colors ${
@@ -382,8 +382,8 @@ export default function EventTypesClient({ username }: Props) {
                       {eventType.is_active ? 'Active' : 'Inactive'}
                     </button>
                   </div>
-                  <p className="text-sm text-gray-400 line-clamp-1">{eventType.description}</p>
-                  <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1">{eventType.description}</p>
+                  <div className="flex items-center gap-4 mt-2 text-xs text-gray-500 dark:text-gray-500">
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {eventType.duration} min
@@ -400,7 +400,7 @@ export default function EventTypesClient({ username }: Props) {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="text-gray-400"
+                    className="text-gray-500 dark:text-gray-400"
                     onClick={() => window.open(`/${username}/${eventType.slug}`, '_blank')}
                   >
                     <ExternalLink className="w-4 h-4" />
@@ -408,7 +408,7 @@ export default function EventTypesClient({ username }: Props) {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="text-gray-400"
+                    className="text-gray-500 dark:text-gray-400"
                     onClick={() => openEditModal(eventType)}
                   >
                     Edit
@@ -426,10 +426,10 @@ export default function EventTypesClient({ username }: Props) {
 
               {/* Link preview */}
               <div className="px-4 sm:px-6 pb-4">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-lg bg-white/5 border border-white/5">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/5">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <LinkIcon className="w-4 h-4 text-gray-500 shrink-0" />
-                    <span className="text-sm text-gray-400 truncate">
+                    <LinkIcon className="w-4 h-4 text-gray-400 dark:text-gray-500 shrink-0" />
+                    <span className="text-sm text-gray-600 dark:text-gray-400 truncate">
                       meetwith.dev/{username}/{eventType.slug}
                     </span>
                   </div>
@@ -459,8 +459,8 @@ export default function EventTypesClient({ username }: Props) {
             <div className="w-12 h-12 rounded-full bg-violet-500/10 flex items-center justify-center mb-4">
               <Plus className="w-6 h-6 text-violet-400" />
             </div>
-            <h3 className="font-semibold text-white mb-1">Create New Event Type</h3>
-            <p className="text-sm text-gray-500 max-w-xs">
+            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Create New Event Type</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-500 max-w-xs">
               Set up a new booking link with custom duration, description, and settings.
             </p>
           </CardContent>
@@ -469,15 +469,15 @@ export default function EventTypesClient({ username }: Props) {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900 border border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
-              <h2 className="text-xl font-semibold text-white">
+        <div className="fixed inset-0 bg-black/30 dark:bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-white/10">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 {editingEvent ? 'Edit Event Type' : 'Create Event Type'}
               </h2>
               <button 
                 onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-white"
+                className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -508,7 +508,7 @@ export default function EventTypesClient({ username }: Props) {
               />
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Duration
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -520,7 +520,7 @@ export default function EventTypesClient({ username }: Props) {
                       className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                         formData.duration === duration
                           ? 'bg-violet-500 text-white'
-                          : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                          : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'
                       }`}
                     >
                       {duration} min
@@ -530,7 +530,7 @@ export default function EventTypesClient({ username }: Props) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Color
                 </label>
                 <div className="flex gap-3">
@@ -539,9 +539,9 @@ export default function EventTypesClient({ username }: Props) {
                       key={color.name}
                       type="button"
                       onClick={() => setFormData(prev => ({ ...prev, color: color.name }))}
-                      className={`w-10 h-10 rounded-lg ring-2 ring-offset-2 ring-offset-gray-900 transition-all ${
-                        formData.color === color.name ? 'ring-white' : 'ring-transparent'
-                      } hover:ring-white/50`}
+                      className={`w-10 h-10 rounded-lg ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-900 transition-all ${
+                        formData.color === color.name ? 'ring-gray-900 dark:ring-white' : 'ring-transparent'
+                      } hover:ring-gray-400 dark:hover:ring-white/50`}
                       style={{ backgroundColor: color.value }}
                     />
                   ))}
@@ -550,14 +550,14 @@ export default function EventTypesClient({ username }: Props) {
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-gray-300">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                     Description
                   </label>
                   <button
                     type="button"
                     onClick={generateAIDescription}
                     disabled={generatingDescription}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-violet-400 hover:text-violet-300 bg-violet-500/10 hover:bg-violet-500/20 rounded-lg transition-colors disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 bg-violet-500/10 hover:bg-violet-500/20 rounded-lg transition-colors disabled:opacity-50"
                   >
                     {generatingDescription ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -572,14 +572,14 @@ export default function EventTypesClient({ username }: Props) {
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Describe what this meeting is about..."
                   rows={3}
-                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
                 />
               </div>
 
-              <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10">
                 <div>
-                  <p className="font-medium text-white">Active</p>
-                  <p className="text-sm text-gray-500">Make this event type bookable</p>
+                  <p className="font-medium text-gray-900 dark:text-white">Active</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-500">Make this event type bookable</p>
                 </div>
                 <button 
                   type="button"

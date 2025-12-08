@@ -38,13 +38,14 @@ export async function getSetupStatus(userEmail: string): Promise<SetupStatus | n
 
   const hasCalendarConnected = (calendarAccounts?.length || 0) > 0
 
-  // Check if any calendar is selected for events
-  const { data: selectedCalendars } = await supabaseAdmin
-    .from('selected_calendars')
+  // Check if any calendar is selected for events (write_to_calendar = true)
+  const { data: writeCalendars } = await supabaseAdmin
+    .from('calendar_accounts')
     .select('id')
     .eq('user_id', user.id)
+    .eq('write_to_calendar', true)
 
-  const hasCalendarSelected = (selectedCalendars?.length || 0) > 0
+  const hasCalendarSelected = (writeCalendars?.length || 0) > 0
 
   // Check availability rules
   const { data: availabilityRules } = await supabaseAdmin

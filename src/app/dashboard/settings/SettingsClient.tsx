@@ -129,8 +129,8 @@ export default function SettingsClient({ initialProfile }: Props) {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
-        <p className="text-gray-400">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Settings</h1>
+        <p className="text-gray-600 dark:text-gray-400">
           Manage your account preferences and profile settings.
         </p>
       </div>
@@ -228,7 +228,7 @@ export default function SettingsClient({ initialProfile }: Props) {
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Brand Color
             </label>
             <div className="flex gap-3">
@@ -236,9 +236,9 @@ export default function SettingsClient({ initialProfile }: Props) {
                 <button
                   key={color.name}
                   onClick={() => setProfile(prev => ({ ...prev, brand_color: color.name }))}
-                  className={`w-10 h-10 rounded-lg ring-2 ring-offset-2 ring-offset-gray-900 transition-all ${
-                    profile.brand_color === color.name ? 'ring-white' : 'ring-transparent'
-                  } hover:ring-white/50`}
+                  className={`w-10 h-10 rounded-lg ring-2 ring-offset-2 ring-offset-white dark:ring-offset-gray-900 transition-all ${
+                    profile.brand_color === color.name ? 'ring-gray-900 dark:ring-white' : 'ring-transparent'
+                  } hover:ring-gray-400 dark:hover:ring-white/50`}
                   style={{ backgroundColor: color.value }}
                 />
               ))}
@@ -285,15 +285,15 @@ export default function SettingsClient({ initialProfile }: Props) {
             { key: 'cancellations' as const, label: 'Cancellations', description: 'Get notified when bookings are cancelled' },
             { key: 'marketing' as const, label: 'Marketing emails', description: 'Product updates and tips' },
           ].map((item) => (
-            <div key={item.key} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 gap-3">
+            <div key={item.key} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 gap-3">
               <div className="flex-1">
-                <p className="font-medium text-white">{item.label}</p>
-                <p className="text-sm text-gray-500">{item.description}</p>
+                <p className="font-medium text-gray-900 dark:text-white">{item.label}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-500">{item.description}</p>
               </div>
               <button 
                 onClick={() => toggleNotification(item.key)}
                 className={`w-12 h-7 rounded-full transition-all relative shrink-0 self-end sm:self-auto ${
-                  profile.notifications[item.key] ? 'bg-violet-500' : 'bg-gray-700'
+                  profile.notifications[item.key] ? 'bg-violet-500' : 'bg-gray-300 dark:bg-gray-700'
                 }`}
               >
                 <span 
@@ -329,8 +329,8 @@ export default function SettingsClient({ initialProfile }: Props) {
         <CardContent>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-red-500/5 border border-red-500/20 gap-4">
             <div>
-              <p className="font-medium text-white">Delete Account</p>
-              <p className="text-sm text-gray-500">Permanently delete your account and all data</p>
+              <p className="font-medium text-gray-900 dark:text-white">Delete Account</p>
+              <p className="text-sm text-gray-500 dark:text-gray-500">Permanently delete your account and all data</p>
             </div>
             <Button variant="secondary" className="text-red-400 border-red-500/30 hover:bg-red-500/10 w-full sm:w-auto">
               Delete Account

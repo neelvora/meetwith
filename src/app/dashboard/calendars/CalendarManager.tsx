@@ -528,7 +528,7 @@ export default function CalendarManager() {
                                 {/* Include in Availability Toggle */}
                                 <label className="flex items-center gap-2 cursor-pointer" title="When enabled, we'll check this calendar for conflicts when showing available slots">
                                   <span className="text-xs text-gray-500 dark:text-gray-400 hidden sm:inline">Check conflicts</span>
-                                  <div className="relative">
+                                  <div className="relative inline-flex items-center">
                                     <input
                                       type="checkbox"
                                       checked={selected}
@@ -537,14 +537,14 @@ export default function CalendarManager() {
                                         e.stopPropagation()
                                         toggleCalendarAvailability(cal.id, cal.summary, e.target.checked)
                                       }}
-                                      className="sr-only"
+                                      className="sr-only peer"
                                     />
-                                    <div className={`w-9 h-5 rounded-full transition-colors ${
-                                      selected ? 'bg-violet-600' : 'bg-gray-300 dark:bg-white/20'
+                                    <div className={`w-9 h-5 rounded-full transition-colors peer-focus:ring-2 peer-focus:ring-violet-500/50 ${
+                                      selected ? 'bg-violet-600' : 'bg-gray-300 dark:bg-gray-600'
                                     }`}>
-                                      <div className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform mt-0.5 ${
-                                        selected ? 'translate-x-4.5 ml-0.5' : 'translate-x-0.5'
-                                      }`} style={{ marginLeft: selected ? '18px' : '2px' }} />
+                                      <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${
+                                        selected ? 'translate-x-4' : 'translate-x-0'
+                                      }`} />
                                     </div>
                                   </div>
                                 </label>
