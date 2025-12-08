@@ -10,6 +10,7 @@ import { trackBookingEvent } from '@/lib/analytics'
 import { checkRateLimit, getClientId, RATE_LIMITS } from '@/lib/rateLimit'
 import { generateAndStoreFollowUp } from '@/lib/ai/followUp'
 import { validateBookingRequest } from '@/lib/booking/validateRequest'
+import { ensureAvailabilityRules } from '@/lib/availability/defaults'
 import type { CalendarAccount, AvailabilityRule } from '@/types'
 
 interface BookingResponse {
@@ -101,15 +102,12 @@ export async function POST(request: NextRequest) {
       }
 
       // 2.5 Validate the slot is still available (prevent double-bookings)
-      const { data: availabilityRules, error: rulesError } = await supabaseAdmin
-        .from('availability_rules')
-        .select('*')
-        .eq('user_id', user.id)
+      // Use ensureAvailabilityRules to create defaults if user has none
+      const availabilityRules = await ensureAvailabilityRules(supabaseAdmin, user.id)
       
-      console.log('Availability rules lookup:', {
+      console.log('Availability rules:', {
         userId: user.id,
         rulesCount: availabilityRules?.length || 0,
-        error: rulesError?.message,
         rules: availabilityRules?.map(r => ({ weekday: r.weekday, active: r.is_active }))
       })
       

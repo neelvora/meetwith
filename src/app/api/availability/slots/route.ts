@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { computeAvailableSlots } from '@/lib/availability/computeSlots'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { getDefaultAvailabilityRules } from '@/lib/availability/defaults'
 import type { CalendarAccount, AvailabilityRule } from '@/types'
 
 export async function GET(request: NextRequest) {
@@ -52,15 +53,9 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Default availability rules if none set (9 AM - 5 PM, Mon-Fri)
+  // Default availability rules if none set (Mon-Fri 9am-5pm)
   if (availabilityRules.length === 0) {
-    availabilityRules = [
-      { id: '1', user_id: 'default', name: 'Default', weekday: 1, start_time: '09:00', end_time: '17:00', is_active: true, created_at: '' },
-      { id: '2', user_id: 'default', name: 'Default', weekday: 2, start_time: '09:00', end_time: '17:00', is_active: true, created_at: '' },
-      { id: '3', user_id: 'default', name: 'Default', weekday: 3, start_time: '09:00', end_time: '17:00', is_active: true, created_at: '' },
-      { id: '4', user_id: 'default', name: 'Default', weekday: 4, start_time: '09:00', end_time: '17:00', is_active: true, created_at: '' },
-      { id: '5', user_id: 'default', name: 'Default', weekday: 5, start_time: '09:00', end_time: '17:00', is_active: true, created_at: '' },
-    ]
+    availabilityRules = getDefaultAvailabilityRules(username || 'default')
   }
 
   try {

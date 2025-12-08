@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth'
 import type { NextAuthOptions } from 'next-auth'
 import GoogleProvider from 'next-auth/providers/google'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { createDefaultAvailabilityRules } from '@/lib/availability/defaults'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -51,6 +52,9 @@ export const authOptions: NextAuthOptions = {
           
           if (newUser) {
             token.dbUserId = newUser.id
+            // Create default availability rules for new users
+            await createDefaultAvailabilityRules(supabaseAdmin, newUser.id)
+            console.log(`Created default availability rules for new user ${newUser.id}`)
           }
         }
       }
