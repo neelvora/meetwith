@@ -5,8 +5,8 @@ import { Button } from '@/components/ui'
 const features = [
   {
     icon: Calendar,
-    title: 'Multi-Calendar Sync',
-    description: 'Connect Google Calendar, iCloud, Outlook and more. See all your availability in one place.',
+    title: 'Google Calendar Sync',
+    description: 'Connect your Google Calendar in seconds. We check for conflicts so you never double-book.',
   },
   {
     icon: Sparkles,
@@ -16,12 +16,12 @@ const features = [
   {
     icon: Shield,
     title: 'Privacy First',
-    description: 'Self-hostable and open source. Your calendar data stays yours, always.',
+    description: 'Your data stays private and secure. We never share or sell your information.',
   },
   {
     icon: Zap,
     title: 'Lightning Fast',
-    description: 'Built with Next.js 15 and edge functions. Instant availability checks.',
+    description: 'Instant availability checks. No waiting, no lag—just fast scheduling.',
   },
   {
     icon: Clock,
@@ -30,8 +30,8 @@ const features = [
   },
   {
     icon: Users,
-    title: 'Team Ready',
-    description: 'Round-robin assignments, collective availability, and team booking pages.',
+    title: 'Team Features',
+    description: 'Coming soon: Round-robin assignments, collective availability, and team booking pages.',
   },
 ]
 
@@ -63,7 +63,7 @@ const benefits = [
   'Automatic Google Meet links',
   'Email notifications',
   'Timezone detection',
-  'Mobile responsive',
+  'Works on any device',
   'Custom availability',
   'Calendar sync',
   'No credit card required',
@@ -87,7 +87,7 @@ export default function Home() {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 mb-8 backdrop-blur-sm">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              <span className="text-sm text-gray-300">Now Live • Open Source</span>
+              <span className="text-sm text-gray-300">Now Live • 100% Free</span>
             </div>
 
             {/* Heading */}
@@ -99,7 +99,7 @@ export default function Home() {
 
             {/* Subheading */}
             <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-              The open source scheduling platform that respects your privacy. 
+              The free scheduling platform that respects your privacy. 
               Connect your calendar, set your availability, share your link.
             </p>
 
@@ -368,9 +368,9 @@ export default function Home() {
               <a href="https://neelvora.com" className="text-violet-400 hover:underline" target="_blank">
                 Neel Vora
               </a>
-              {' '}• Open Source on{' '}
+              {' '}•{' '}
               <a href="https://github.com/neelvora/meetwith" className="text-violet-400 hover:underline" target="_blank">
-                GitHub
+                View on GitHub
               </a>
             </p>
           </div>

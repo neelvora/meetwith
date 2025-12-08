@@ -10,9 +10,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "MeetWith - AI-Powered Scheduling",
-  description: "An open source, AI-powered scheduling platform. Better than Calendly.",
-  keywords: ["scheduling", "calendar", "booking", "meetings", "ai"],
+  title: "MeetWith - Free AI-Powered Scheduling",
+  description: "Free scheduling made simple. Share your link, let others book time with you. No more back-and-forth emails.",
+  keywords: ["scheduling", "calendar", "booking", "meetings", "free", "appointment"],
 };
 
 export default function RootLayout({
