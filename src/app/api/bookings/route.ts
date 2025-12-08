@@ -70,12 +70,19 @@ export async function POST(request: NextRequest) {
       }
 
       // 3. Get the user's primary calendar account for creating events
-      const { data: calendarAccount } = await supabaseAdmin
+      const { data: calendarAccount, error: calError } = await supabaseAdmin
         .from('calendar_accounts')
         .select('*')
         .eq('user_id', user.id)
         .eq('write_to_calendar', true)
         .single()
+
+      console.log('Calendar account lookup:', { 
+        userId: user.id, 
+        found: !!calendarAccount,
+        error: calError?.message,
+        calendarId: calendarAccount?.calendar_id 
+      })
 
       // Calculate duration
       const durationMinutes = Math.round(
@@ -88,6 +95,7 @@ export async function POST(request: NextRequest) {
       let calendarEventId: string | undefined
 
       if (calendarAccount) {
+        console.log('Creating calendar event on:', calendarAccount.account_email, calendarAccount.calendar_id)
         const account: CalendarAccount = {
           id: calendarAccount.id,
           user_id: calendarAccount.user_id,
@@ -137,6 +145,8 @@ Manage this booking at https://www.meetwith.dev/dashboard
           }
         )
 
+        console.log('Calendar event created:', calendarEvent ? 'success' : 'failed')
+
         if (calendarEvent) {
           calendarEventId = calendarEvent.id
           // Extract Google Meet link from conference data
@@ -149,7 +159,10 @@ Manage this booking at https://www.meetwith.dev/dashboard
             )
             meetLink = videoEntry?.uri
           }
+          console.log('Meet link:', meetLink)
         }
+      } else {
+        console.log('No write calendar configured - skipping calendar event creation')
       }
 
       // 5. Store the booking in database
