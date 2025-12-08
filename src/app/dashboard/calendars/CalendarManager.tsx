@@ -92,11 +92,11 @@ export default function CalendarManager() {
     }
   }
 
-  async function fetchGoogleCalendars() {
+  async function fetchGoogleCalendars(accountId: string) {
     if (loadingCalendars) return
     setLoadingCalendars(true)
     try {
-      const res = await fetch('/api/calendars/google/list')
+      const res = await fetch(`/api/calendars/google/list?accountId=${accountId}`)
       const data = await res.json()
       setGoogleCalendars(data.calendars || [])
     } catch (error) {
@@ -191,7 +191,7 @@ export default function CalendarManager() {
       setExpandedAccount(null)
     } else {
       setExpandedAccount(accountId)
-      fetchGoogleCalendars()
+      fetchGoogleCalendars(accountId)
     }
   }
 
@@ -315,7 +315,7 @@ export default function CalendarManager() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          fetchGoogleCalendars()
+                          fetchGoogleCalendars(account.id)
                         }}
                         className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1"
                       >
