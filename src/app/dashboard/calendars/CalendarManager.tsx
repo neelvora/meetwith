@@ -374,20 +374,25 @@ export default function CalendarManager() {
                 {/* Expanded Calendar List */}
                 {expandedAccount === account.id && (
                   <div className="border-t border-white/10 p-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="text-sm font-medium text-gray-400">
-                        Select calendars to check for availability
-                      </h4>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          fetchGoogleCalendars(account.id)
-                        }}
-                        className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1"
-                      >
-                        <RefreshCw className={`w-3 h-3 ${loadingCalendars ? 'animate-spin' : ''}`} />
-                        Refresh
-                      </button>
+                    <div className="flex flex-col gap-1 mb-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-medium text-white">
+                          Your calendars
+                        </h4>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            fetchGoogleCalendars(account.id)
+                          }}
+                          className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1"
+                        >
+                          <RefreshCw className={`w-3 h-3 ${loadingCalendars ? 'animate-spin' : ''}`} />
+                          Refresh
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        Choose a <span className="text-green-400">default</span> calendar for new bookings, and enable <span className="text-violet-400">conflict checking</span> on calendars you want us to check for busy times.
+                      </p>
                     </div>
                     {loadingCalendars ? (
                       <div className="flex items-center justify-center py-8">
@@ -427,36 +432,43 @@ export default function CalendarManager() {
                                   style={{ backgroundColor: cal.backgroundColor || '#7c3aed' }}
                                 />
                                 <div className="min-w-0">
-                                  <p className="text-sm font-medium text-white truncate">{cal.summary}</p>
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-sm font-medium text-white truncate">{cal.summary}</p>
+                                    {isWrite && (
+                                      <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30 whitespace-nowrap">
+                                        ✓ Default
+                                      </span>
+                                    )}
+                                  </div>
                                   {cal.primary && (
-                                    <p className="text-xs text-gray-500">Primary calendar</p>
+                                    <p className="text-xs text-gray-500">Primary Google calendar</p>
                                   )}
                                 </div>
                               </div>
                               <div className="flex items-center gap-3 justify-end">
-                                {/* Write Calendar Button */}
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    if (!isWrite) setWriteCalendar(cal.id)
-                                  }}
-                                  disabled={isSaving}
-                                  className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-all whitespace-nowrap ${
-                                    isWrite
-                                      ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                                      : needsAttention
+                                {/* Write Calendar Button - only show if not already default */}
+                                {!isWrite && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setWriteCalendar(cal.id)
+                                    }}
+                                    disabled={isSaving}
+                                    className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-all whitespace-nowrap ${
+                                      needsAttention
                                         ? 'bg-amber-500 text-white hover:bg-amber-600 font-medium animate-pulse'
                                         : 'text-gray-500 hover:text-white hover:bg-white/10'
-                                  }`}
-                                  title={isWrite ? 'Events created here' : 'Set as default for new events'}
-                                >
-                                  <Edit2 className="w-3 h-3" />
-                                  {isWrite ? 'Default' : 'Set default'}
-                                </button>
+                                    }`}
+                                    title="Set as default calendar for new bookings"
+                                  >
+                                    <Edit2 className="w-3 h-3" />
+                                    Set as default
+                                  </button>
+                                )}
                                 
                                 {/* Include in Availability Toggle */}
-                                <label className="flex items-center gap-2 cursor-pointer">
-                                  <span className="text-xs text-gray-400 hidden sm:inline">Check busy</span>
+                                <label className="flex items-center gap-2 cursor-pointer" title="When enabled, we'll check this calendar for conflicts when showing available slots">
+                                  <span className="text-xs text-gray-400 hidden sm:inline">Check conflicts</span>
                                   <div className="relative">
                                     <input
                                       type="checkbox"
