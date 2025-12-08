@@ -290,6 +290,30 @@ export default function CalendarManager() {
     }
   }
 
+  async function handleDisconnectAccount(accountId: string, accountEmail?: string) {
+    if (!confirm(`Are you sure you want to disconnect ${accountEmail || 'this account'}? This will remove all calendars associated with this account.`)) {
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/calendars/accounts/${accountId}`, {
+        method: 'DELETE',
+      })
+
+      if (res.ok) {
+        setNotification({ type: 'success', message: `${accountEmail || 'Account'} disconnected successfully` })
+        await fetchAccounts()
+        setExpandedAccount(null)
+      } else {
+        const data = await res.json()
+        setNotification({ type: 'error', message: data.error || 'Failed to disconnect account' })
+      }
+    } catch (error) {
+      console.error('Error disconnecting account:', error)
+      setNotification({ type: 'error', message: 'Failed to disconnect account' })
+    }
+  }
+
   function toggleAccountExpand(accountId: string) {
     if (expandedAccount === accountId) {
       setExpandedAccount(null)
@@ -595,6 +619,28 @@ export default function CalendarManager() {
                         </Button>
                       </div>
                     )}
+
+                    {/* Account Actions */}
+                    <div className="mt-6 pt-4 border-t border-gray-200 dark:border-white/10 flex flex-col sm:flex-row gap-3">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleReauthenticate(account.account_email)}
+                        className="flex items-center gap-2"
+                      >
+                        <Key className="w-4 h-4" />
+                        Refresh Permissions
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleDisconnectAccount(account.id, account.account_email)}
+                        className="flex items-center gap-2 text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Disconnect Account
+                      </Button>
+                    </div>
                   </div>
                 )}
               </CardContent>
