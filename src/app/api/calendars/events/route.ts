@@ -33,24 +33,29 @@ export async function GET(request: NextRequest) {
   let accounts: CalendarAccount[] = []
 
   if (supabaseAdmin && session.user.id) {
-    const { data } = await supabaseAdmin
+    const { data, error } = await supabaseAdmin
       .from('calendar_accounts')
       .select('*')
       .eq('user_id', session.user.id)
       .eq('include_in_availability', true)
 
+    if (error) {
+      console.error('Error fetching calendar accounts:', error)
+    }
     accounts = (data || []) as CalendarAccount[]
+    console.log(`Found ${accounts.length} calendar accounts for user ${session.user.id}`)
   }
 
-  // Fallback if no accounts in DB
+  // Fallback: Always use session token if no DB accounts found
   if (accounts.length === 0 && session.accessToken) {
+    console.log('Using fallback session-based calendar access')
     accounts = [
       {
         id: 'google-primary',
         user_id: session.user.id || 'temp',
         provider: 'google' as const,
-        provider_account_id: session.user.email,
-        account_email: session.user.email,
+        provider_account_id: session.user.email || '',
+        account_email: session.user.email || '',
         access_token: session.accessToken,
         calendar_id: 'primary',
         calendar_name: 'Primary Calendar',
@@ -80,12 +85,14 @@ export async function GET(request: NextRequest) {
   for (let i = 0; i < accounts.length; i++) {
     const account = accounts[i]
     try {
+      console.log(`Fetching events from ${account.calendar_name || account.calendar_id}...`)
       const events = await getCalendarEvents(
         account,
         account.calendar_id,
         timeMin,
         timeMax
       )
+      console.log(`Got ${events.length} events from ${account.calendar_name || account.calendar_id}`)
 
       // Add calendar source info to each event
       const eventsWithSource = events.map((event) => ({
@@ -108,5 +115,6 @@ export async function GET(request: NextRequest) {
     return new Date(aStart).getTime() - new Date(bStart).getTime()
   })
 
+  console.log(`Returning ${allEvents.length} total events`)
   return NextResponse.json({ events: allEvents })
 }

@@ -18,16 +18,43 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, account, user }) {
+    async jwt({ token, account }) {
       if (account) {
         token.accessToken = account.access_token
         token.refreshToken = account.refresh_token
         token.expiresAt = account.expires_at
         token.providerAccountId = account.providerAccountId
       }
-      if (user) {
-        token.userId = user.id
+      
+      // Look up or create user in database and store the DB UUID
+      if (token.email && supabaseAdmin && !token.dbUserId) {
+        const { data: existingUser } = await supabaseAdmin
+          .from('users')
+          .select('id')
+          .eq('email', token.email)
+          .single()
+        
+        if (existingUser) {
+          token.dbUserId = existingUser.id
+        } else {
+          // Create user with auto-generated UUID
+          const { data: newUser } = await supabaseAdmin
+            .from('users')
+            .insert({
+              email: token.email,
+              name: token.name as string,
+              image: token.picture as string,
+              username: (token.email as string).split('@')[0],
+            })
+            .select('id')
+            .single()
+          
+          if (newUser) {
+            token.dbUserId = newUser.id
+          }
+        }
       }
+      
       return token
     },
     async session({ session, token }) {
@@ -35,29 +62,9 @@ export const authOptions: NextAuthOptions = {
       session.refreshToken = token.refreshToken as string | undefined
       session.expiresAt = token.expiresAt as number | undefined
       
-      // Set user ID from token - use sub (Google's user ID) as fallback
+      // Use the database UUID, not Google's user ID
       if (session.user) {
-        session.user.id = (token.userId as string) || (token.sub as string)
-      }
-      
-      // Ensure user exists in Supabase
-      if (supabaseAdmin && session.user?.email && session.user?.id) {
-        const { data: existingUser } = await supabaseAdmin
-          .from('users')
-          .select('id')
-          .eq('email', session.user.email)
-          .single()
-        
-        if (!existingUser) {
-          // Create user in database
-          await supabaseAdmin.from('users').insert({
-            id: session.user.id,
-            email: session.user.email,
-            name: session.user.name,
-            image: session.user.image,
-            username: session.user.email?.split('@')[0],
-          })
-        }
+        session.user.id = token.dbUserId as string
       }
       
       return session
