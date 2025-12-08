@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Clock, Video, Loader2, Check } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Clock, Video, Loader2, Check, Globe, ChevronDown } from 'lucide-react'
 import { Button, Card, CardContent } from '@/components/ui'
 
 interface TimeSlot {
@@ -22,8 +22,25 @@ interface TimeSlotPickerProps {
     duration: number
   }
   onBack: () => void
-  onBook: (slot: { date: string; start: string; end: string }) => void
+  onBook: (slot: { date: string; start: string; end: string; timezone: string }) => void
 }
+
+const COMMON_TIMEZONES = [
+  { value: 'America/New_York', label: 'Eastern Time (ET)' },
+  { value: 'America/Chicago', label: 'Central Time (CT)' },
+  { value: 'America/Denver', label: 'Mountain Time (MT)' },
+  { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
+  { value: 'America/Phoenix', label: 'Arizona (AZ)' },
+  { value: 'Europe/London', label: 'London (GMT/BST)' },
+  { value: 'Europe/Paris', label: 'Paris (CET)' },
+  { value: 'Europe/Berlin', label: 'Berlin (CET)' },
+  { value: 'Asia/Tokyo', label: 'Tokyo (JST)' },
+  { value: 'Asia/Shanghai', label: 'Shanghai (CST)' },
+  { value: 'Asia/Dubai', label: 'Dubai (GST)' },
+  { value: 'Asia/Kolkata', label: 'India (IST)' },
+  { value: 'Australia/Sydney', label: 'Sydney (AEST)' },
+  { value: 'Pacific/Auckland', label: 'Auckland (NZST)' },
+]
 
 export default function TimeSlotPicker({ username, eventType, onBack, onBook }: TimeSlotPickerProps) {
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
@@ -36,10 +53,18 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
   const [loading, setLoading] = useState(true)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null)
+  const [timezone, setTimezone] = useState(() => {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone
+    } catch {
+      return 'America/Chicago'
+    }
+  })
+  const [showTimezoneDropdown, setShowTimezoneDropdown] = useState(false)
 
   useEffect(() => {
     fetchSlots()
-  }, [currentWeekStart])
+  }, [currentWeekStart, timezone])
 
   async function fetchSlots() {
     setLoading(true)
@@ -89,8 +114,14 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
-      timeZone: 'America/Chicago',
+      timeZone: timezone,
     })
+  }
+
+  function getTimezoneLabel(): string {
+    const found = COMMON_TIMEZONES.find(tz => tz.value === timezone)
+    if (found) return found.label
+    return timezone.replace(/_/g, ' ').split('/').pop() || timezone
   }
 
   function getWeekDays(): Date[] {
@@ -131,9 +162,12 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
         date: selectedDate,
         start: selectedSlot.start,
         end: selectedSlot.end,
+        timezone,
       })
     }
   }
+
+  const hasAnySlots = Object.values(slots).some(daySlots => daySlots.length > 0)
 
   return (
     <div className="space-y-6">
@@ -157,6 +191,37 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
         </div>
       </div>
 
+      {/* Timezone Selector */}
+      <div className="relative">
+        <button
+          onClick={() => setShowTimezoneDropdown(!showTimezoneDropdown)}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-sm text-gray-300 w-full sm:w-auto"
+        >
+          <Globe className="w-4 h-4 text-violet-400" />
+          <span className="flex-1 text-left">{getTimezoneLabel()}</span>
+          <ChevronDown className={`w-4 h-4 transition-transform ${showTimezoneDropdown ? 'rotate-180' : ''}`} />
+        </button>
+        {showTimezoneDropdown && (
+          <div className="absolute top-full left-0 right-0 sm:right-auto mt-2 bg-gray-900 border border-white/10 rounded-xl shadow-xl z-50 max-h-64 overflow-y-auto min-w-[200px]">
+            {COMMON_TIMEZONES.map((tz) => (
+              <button
+                key={tz.value}
+                onClick={() => {
+                  setTimezone(tz.value)
+                  setShowTimezoneDropdown(false)
+                  setSelectedSlot(null)
+                }}
+                className={`w-full text-left px-4 py-2.5 text-sm hover:bg-white/10 transition-colors ${
+                  timezone === tz.value ? 'text-violet-400 bg-violet-500/10' : 'text-gray-300'
+                }`}
+              >
+                {tz.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Week Navigation */}
       <div className="flex items-center justify-between">
         <button
@@ -177,8 +242,22 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
         </button>
       </div>
 
-      {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-1 sm:gap-2">
+      {/* Calendar Grid - Skeleton or Content */}
+      {loading ? (
+        <div className="grid grid-cols-7 gap-1 sm:gap-2">
+          {Array.from({ length: 7 }).map((_, i) => (
+            <div
+              key={i}
+              className="p-2 sm:p-3 rounded-lg sm:rounded-xl bg-white/5 animate-pulse"
+            >
+              <div className="h-3 bg-white/10 rounded mb-2 w-6 mx-auto" />
+              <div className="h-5 sm:h-7 bg-white/10 rounded w-6 sm:w-8 mx-auto" />
+              <div className="h-2 bg-white/10 rounded mt-2 w-10 mx-auto hidden sm:block" />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-7 gap-1 sm:gap-2">
         {weekDays.map((day) => {
           const dateKey = getDateKey(day)
           const daySlots = slots[dateKey] || []
@@ -221,7 +300,18 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
             </button>
           )
         })}
-      </div>
+        </div>
+      )}
+
+      {/* No slots this week message */}
+      {!loading && !hasAnySlots && (
+        <Card variant="glass" className="border-amber-500/20">
+          <CardContent className="py-6 text-center">
+            <p className="text-gray-400">No available times this week.</p>
+            <p className="text-sm text-gray-500 mt-1">Try checking another week.</p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Loading State */}
       {loading && (

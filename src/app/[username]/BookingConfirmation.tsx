@@ -1,7 +1,7 @@
 'use client'
 
-import { CheckCircle, Calendar, Clock, Video, Mail, ExternalLink } from 'lucide-react'
-import { Button, Card, CardContent } from '@/components/ui'
+import { CheckCircle, Calendar, Clock, Video, Mail, ExternalLink, Download } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui'
 
 interface BookingConfirmationProps {
   booking: {
@@ -15,6 +15,7 @@ interface BookingConfirmationProps {
   selectedSlot: {
     start: string
     end: string
+    timezone?: string
   }
   attendeeName: string
   attendeeEmail: string
@@ -25,10 +26,11 @@ export default function BookingConfirmation({
   booking,
   eventType,
   selectedSlot,
-  attendeeName,
   attendeeEmail,
   hostName,
 }: BookingConfirmationProps) {
+  const displayTimezone = selectedSlot.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
+
   function formatDateTime(isoString: string): string {
     return new Date(isoString).toLocaleString('en-US', {
       weekday: 'long',
@@ -38,7 +40,22 @@ export default function BookingConfirmation({
       hour: 'numeric',
       minute: '2-digit',
       hour12: true,
+      timeZone: displayTimezone,
     })
+  }
+
+  function getTimezoneAbbr(): string {
+    try {
+      const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: displayTimezone,
+        timeZoneName: 'short',
+      })
+      const parts = formatter.formatToParts(new Date(selectedSlot.start))
+      const tzPart = parts.find(p => p.type === 'timeZoneName')
+      return tzPart?.value || displayTimezone
+    } catch {
+      return displayTimezone
+    }
   }
 
   function getGoogleCalendarUrl(): string {
@@ -78,11 +95,15 @@ export default function BookingConfirmation({
       {/* Booking Details */}
       <Card variant="glass">
         <CardContent>
-          <h3 className="font-semibold text-white text-lg mb-4">{eventType.name}</h3>
+          <h3 className="font-semibold text-white text-lg mb-1">{eventType.name}</h3>
+          <p className="text-sm text-gray-500 mb-4">with {hostName}</p>
           <div className="space-y-3 text-left">
-            <div className="flex items-center gap-3 text-gray-300">
-              <Calendar className="w-5 h-5 text-violet-400" />
-              {formatDateTime(selectedSlot.start)}
+            <div className="flex items-start gap-3 text-gray-300">
+              <Calendar className="w-5 h-5 text-violet-400 mt-0.5" />
+              <div>
+                <div>{formatDateTime(selectedSlot.start)}</div>
+                <div className="text-sm text-gray-500">{getTimezoneAbbr()}</div>
+              </div>
             </div>
             <div className="flex items-center gap-3 text-gray-300">
               <Clock className="w-5 h-5 text-violet-400" />
@@ -136,6 +157,15 @@ export default function BookingConfirmation({
           <Calendar className="w-5 h-5" />
           Add to Google Calendar
           <ExternalLink className="w-4 h-4" />
+        </a>
+
+        <a
+          href={`/ics/${booking.id}`}
+          download
+          className="inline-flex items-center justify-center gap-2 w-full bg-white/5 text-gray-300 px-6 py-3 font-medium rounded-xl border border-white/10 hover:bg-white/10 transition-all"
+        >
+          <Download className="w-5 h-5" />
+          Download .ics file
         </a>
 
         <p className="text-sm text-gray-500">

@@ -18,6 +18,7 @@ export async function GET() {
     .from('event_types')
     .select('*')
     .eq('user_id', session.user.id)
+    .order('sort_index', { ascending: true })
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -85,4 +86,40 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ eventType: { ...eventType, duration: eventType.duration_minutes } })
+}
+
+export async function PATCH(request: NextRequest) {
+  const session = await getServerSession(authOptions)
+
+  if (!session?.user?.email || !session.user.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  if (!supabaseAdmin) {
+    return NextResponse.json({ error: 'Database not configured' }, { status: 500 })
+  }
+
+  const body = await request.json()
+  const { order } = body
+
+  if (!order || !Array.isArray(order)) {
+    return NextResponse.json({ error: 'Invalid order data' }, { status: 400 })
+  }
+
+  // Update sort_index for each event type
+  const updates = order.map(({ id, sort_index }: { id: string; sort_index: number }) =>
+    supabaseAdmin!
+      .from('event_types')
+      .update({ sort_index })
+      .eq('id', id)
+      .eq('user_id', session.user.id)
+  )
+
+  try {
+    await Promise.all(updates)
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error updating event type order:', error)
+    return NextResponse.json({ error: 'Failed to update order' }, { status: 500 })
+  }
 }

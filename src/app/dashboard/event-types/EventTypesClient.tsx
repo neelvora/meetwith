@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Link as LinkIcon, Plus, Clock, Video, ExternalLink, X, Check, Loader2, Trash2 } from 'lucide-react'
+import { Link as LinkIcon, Plus, Clock, Video, ExternalLink, X, Check, Loader2, Trash2, GripVertical, ChevronUp, ChevronDown } from 'lucide-react'
 import { Button, Card, CardContent, Input } from '@/components/ui'
 
 interface EventType {
@@ -12,6 +12,7 @@ interface EventType {
   color: string
   description: string
   is_active: boolean
+  sort_index?: number
 }
 
 const COLOR_OPTIONS = [
@@ -179,6 +180,41 @@ export default function EventTypesClient({ username }: Props) {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
+  async function moveEventType(id: string, direction: 'up' | 'down') {
+    const currentIndex = eventTypes.findIndex(e => e.id === id)
+    if (currentIndex === -1) return
+    if (direction === 'up' && currentIndex === 0) return
+    if (direction === 'down' && currentIndex === eventTypes.length - 1) return
+
+    const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+    const newOrder = [...eventTypes]
+    const [moved] = newOrder.splice(currentIndex, 1)
+    newOrder.splice(newIndex, 0, moved)
+
+    // Optimistically update UI
+    setEventTypes(newOrder)
+
+    // Update order on server
+    try {
+      const res = await fetch('/api/event-types', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          order: newOrder.map((e, i) => ({ id: e.id, sort_index: i }))
+        }),
+      })
+
+      if (!res.ok) {
+        // Revert on error
+        await fetchEventTypes()
+        setNotification({ type: 'error', message: 'Failed to update order' })
+      }
+    } catch {
+      await fetchEventTypes()
+      setNotification({ type: 'error', message: 'Failed to update order' })
+    }
+  }
+
   const getColorGradient = (colorName: string) => {
     return COLOR_OPTIONS.find(c => c.name === colorName)?.gradient || COLOR_OPTIONS[0].gradient
   }
@@ -242,14 +278,59 @@ export default function EventTypesClient({ username }: Props) {
             </CardContent>
           </Card>
         ) : (
-          eventTypes.map((eventType) => (
+          eventTypes.map((eventType, index) => (
             <Card key={eventType.id} variant="glass" className="hover:border-white/20 transition-all">
               <CardContent className="flex flex-col sm:flex-row sm:items-center gap-4">
+                {/* Reorder controls - desktop */}
+                <div className="hidden sm:flex flex-col items-center gap-1">
+                  <button
+                    onClick={() => moveEventType(eventType.id, 'up')}
+                    disabled={index === 0}
+                    className={`p-1 rounded transition-colors ${
+                      index === 0 
+                        ? 'text-gray-600 cursor-not-allowed' 
+                        : 'text-gray-400 hover:text-white hover:bg-white/10'
+                    }`}
+                    title="Move up"
+                  >
+                    <ChevronUp className="w-4 h-4" />
+                  </button>
+                  <GripVertical className="w-4 h-4 text-gray-500" />
+                  <button
+                    onClick={() => moveEventType(eventType.id, 'down')}
+                    disabled={index === eventTypes.length - 1}
+                    className={`p-1 rounded transition-colors ${
+                      index === eventTypes.length - 1 
+                        ? 'text-gray-600 cursor-not-allowed' 
+                        : 'text-gray-400 hover:text-white hover:bg-white/10'
+                    }`}
+                    title="Move down"
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                </div>
+
                 {/* Color indicator - hidden on mobile, shown on larger screens */}
                 <div className={`hidden sm:block w-2 h-16 rounded-full bg-gradient-to-b ${getColorGradient(eventType.color)}`} />
                 
-                {/* Mobile color bar */}
-                <div className={`sm:hidden w-full h-1 rounded-full bg-gradient-to-r ${getColorGradient(eventType.color)}`} />
+                {/* Mobile header with color bar and reorder */}
+                <div className="sm:hidden flex items-center gap-2">
+                  <div className={`flex-1 h-1 rounded-full bg-gradient-to-r ${getColorGradient(eventType.color)}`} />
+                  <button
+                    onClick={() => moveEventType(eventType.id, 'up')}
+                    disabled={index === 0}
+                    className={`p-1.5 rounded ${index === 0 ? 'text-gray-600' : 'text-gray-400'}`}
+                  >
+                    <ChevronUp className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => moveEventType(eventType.id, 'down')}
+                    disabled={index === eventTypes.length - 1}
+                    className={`p-1.5 rounded ${index === eventTypes.length - 1 ? 'text-gray-600' : 'text-gray-400'}`}
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                </div>
                 
                 {/* Info */}
                 <div className="flex-1 min-w-0">

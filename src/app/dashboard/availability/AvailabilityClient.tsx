@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Clock, Plus, Check, Trash2, Loader2 } from 'lucide-react'
+import { Clock, Plus, Check, Trash2, Loader2, Copy, RotateCcw } from 'lucide-react'
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui'
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -151,6 +151,40 @@ export default function AvailabilityClient() {
     ))
   }
 
+  function copyFirstActiveToAll() {
+    const firstActive = availability.find(s => s.is_active)
+    if (!firstActive) {
+      setNotification({ type: 'error', message: 'No active day to copy from' })
+      setTimeout(() => setNotification(null), 3000)
+      return
+    }
+    
+    setAvailability(prev => prev.map(slot => ({
+      ...slot,
+      start_time: firstActive.start_time,
+      end_time: firstActive.end_time,
+      is_active: true,
+    })))
+    
+    setNotification({ type: 'success', message: 'Copied schedule to all days' })
+    setTimeout(() => setNotification(null), 3000)
+  }
+
+  function resetToDefault() {
+    setAvailability([
+      { weekday: 1, start_time: '09:00', end_time: '17:00', is_active: true },
+      { weekday: 2, start_time: '09:00', end_time: '17:00', is_active: true },
+      { weekday: 3, start_time: '09:00', end_time: '17:00', is_active: true },
+      { weekday: 4, start_time: '09:00', end_time: '17:00', is_active: true },
+      { weekday: 5, start_time: '09:00', end_time: '17:00', is_active: true },
+      { weekday: 0, start_time: '09:00', end_time: '17:00', is_active: false },
+      { weekday: 6, start_time: '09:00', end_time: '17:00', is_active: false },
+    ])
+    
+    setNotification({ type: 'success', message: 'Reset to default 9-5 weekday schedule' })
+    setTimeout(() => setNotification(null), 3000)
+  }
+
   function getSlotForDay(weekday: number) {
     return availability.find(s => s.weekday === weekday) || {
       weekday,
@@ -217,8 +251,30 @@ export default function AvailabilityClient() {
       {/* Weekly Hours */}
       <Card variant="glass">
         <CardHeader>
-          <CardTitle>Weekly Hours</CardTitle>
-          <CardDescription>Define your standard availability for each day</CardDescription>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <CardTitle>Weekly Hours</CardTitle>
+              <CardDescription>Define your standard availability for each day</CardDescription>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={copyFirstActiveToAll}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+                title="Copy first active day's schedule to all days"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                Copy to All
+              </button>
+              <button
+                onClick={resetToDefault}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+                title="Reset to default 9-5 weekday schedule"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Reset to 9-5
+              </button>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">

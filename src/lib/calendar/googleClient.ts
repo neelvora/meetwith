@@ -1,5 +1,5 @@
 import type { CalendarAccount } from '@/types'
-import { getValidAccessToken } from './storeAccount'
+import { getValidAccessToken, refreshAccessToken } from './storeAccount'
 
 const GOOGLE_CALENDAR_API = 'https://www.googleapis.com/calendar/v3'
 
@@ -26,6 +26,13 @@ export interface GoogleCalendarEvent {
     responseStatus?: string
   }>
   htmlLink?: string
+  conferenceData?: {
+    entryPoints?: Array<{
+      entryPointType: string
+      uri: string
+      label?: string
+    }>
+  }
 }
 
 export interface FreeBusyTimeSlot {
@@ -43,34 +50,72 @@ export interface FreeBusyResponse {
 }
 
 /**
+ * Make a Google API request with automatic retry on 401
+ * If the first request fails with 401, refresh the token and retry once
+ */
+async function googleApiRequest<T>(
+  account: CalendarAccount,
+  url: string,
+  options: RequestInit = {}
+): Promise<{ data: T | null; error?: string }> {
+  let accessToken = await getValidAccessToken(account)
+  if (!accessToken) {
+    return { data: null, error: 'No valid access token' }
+  }
+
+  const makeRequest = async (token: string) => {
+    return fetch(url, {
+      ...options,
+      headers: {
+        ...options.headers,
+        Authorization: `Bearer ${token}`,
+      },
+    })
+  }
+
+  let response = await makeRequest(accessToken)
+
+  // If 401, try to refresh and retry once
+  if (response.status === 401) {
+    console.log('Got 401, attempting token refresh and retry...')
+    const refreshedAccount = await refreshAccessToken(account)
+    if (refreshedAccount?.access_token) {
+      accessToken = refreshedAccount.access_token
+      response = await makeRequest(accessToken)
+    } else {
+      return { data: null, error: 'Token refresh failed' }
+    }
+  }
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Unknown error' }))
+    return { data: null, error: error.error?.message || error.message || 'API request failed' }
+  }
+
+  // Handle 204 No Content (e.g., DELETE requests)
+  if (response.status === 204) {
+    return { data: null }
+  }
+
+  const data = await response.json()
+  return { data }
+}
+
+/**
  * List all calendars the user has access to
  */
 export async function listCalendars(account: CalendarAccount): Promise<GoogleCalendar[]> {
-  const accessToken = await getValidAccessToken(account)
-  if (!accessToken) {
-    console.error('No valid access token for calendar list')
-    return []
-  }
+  const { data, error } = await googleApiRequest<{ items: GoogleCalendar[] }>(
+    account,
+    `${GOOGLE_CALENDAR_API}/users/me/calendarList`
+  )
 
-  try {
-    const response = await fetch(`${GOOGLE_CALENDAR_API}/users/me/calendarList`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      console.error('Error listing calendars:', error)
-      return []
-    }
-
-    const data = await response.json()
-    return data.items || []
-  } catch (error) {
+  if (error) {
     console.error('Error listing calendars:', error)
     return []
   }
+
+  return data?.items || []
 }
 
 /**
@@ -82,42 +127,25 @@ export async function getCalendarEvents(
   timeMin: Date,
   timeMax: Date
 ): Promise<GoogleCalendarEvent[]> {
-  const accessToken = await getValidAccessToken(account)
-  if (!accessToken) {
-    console.error('No valid access token for calendar events')
-    return []
-  }
+  const params = new URLSearchParams({
+    timeMin: timeMin.toISOString(),
+    timeMax: timeMax.toISOString(),
+    singleEvents: 'true',
+    orderBy: 'startTime',
+    maxResults: '250',
+  })
 
-  try {
-    const params = new URLSearchParams({
-      timeMin: timeMin.toISOString(),
-      timeMax: timeMax.toISOString(),
-      singleEvents: 'true',
-      orderBy: 'startTime',
-      maxResults: '250',
-    })
+  const { data, error } = await googleApiRequest<{ items: GoogleCalendarEvent[] }>(
+    account,
+    `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events?${params}`
+  )
 
-    const response = await fetch(
-      `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events?${params}`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    )
-
-    if (!response.ok) {
-      const error = await response.json()
-      console.error('Error getting calendar events:', error)
-      return []
-    }
-
-    const data = await response.json()
-    return data.items || []
-  } catch (error) {
+  if (error) {
     console.error('Error getting calendar events:', error)
     return []
   }
+
+  return data?.items || []
 }
 
 /**
@@ -130,17 +158,12 @@ export async function getFreeBusy(
   timeMin: Date,
   timeMax: Date
 ): Promise<FreeBusyResponse | null> {
-  const accessToken = await getValidAccessToken(account)
-  if (!accessToken) {
-    console.error('No valid access token for free/busy query')
-    return null
-  }
-
-  try {
-    const response = await fetch(`${GOOGLE_CALENDAR_API}/freeBusy`, {
+  const { data, error } = await googleApiRequest<FreeBusyResponse>(
+    account,
+    `${GOOGLE_CALENDAR_API}/freeBusy`,
+    {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -148,19 +171,15 @@ export async function getFreeBusy(
         timeMax: timeMax.toISOString(),
         items: calendarIds.map((id) => ({ id })),
       }),
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      console.error('Error getting free/busy:', error)
-      return null
     }
+  )
 
-    return await response.json()
-  } catch (error) {
+  if (error) {
     console.error('Error getting free/busy:', error)
     return null
   }
+
+  return data
 }
 
 /**
@@ -179,71 +198,62 @@ export async function createCalendarEvent(
     conferenceDataVersion?: number // Set to 1 to auto-create Google Meet
   }
 ): Promise<GoogleCalendarEvent | null> {
-  const accessToken = await getValidAccessToken(account)
-  if (!accessToken) {
-    console.error('No valid access token for creating event')
-    return null
+  const params = new URLSearchParams()
+  if (event.conferenceDataVersion) {
+    params.set('conferenceDataVersion', event.conferenceDataVersion.toString())
   }
 
-  try {
-    const params = new URLSearchParams()
-    if (event.conferenceDataVersion) {
-      params.set('conferenceDataVersion', event.conferenceDataVersion.toString())
-    }
+  const url = `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events${
+    params.toString() ? `?${params}` : ''
+  }`
 
-    const url = `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events${
-      params.toString() ? `?${params}` : ''
-    }`
+  const eventBody: Record<string, unknown> = {
+    summary: event.summary,
+    description: event.description,
+    start: {
+      dateTime: event.start.toISOString(),
+    },
+    end: {
+      dateTime: event.end.toISOString(),
+    },
+  }
 
-    const eventBody: Record<string, unknown> = {
-      summary: event.summary,
-      description: event.description,
-      start: {
-        dateTime: event.start.toISOString(),
+  if (event.attendees && event.attendees.length > 0) {
+    eventBody.attendees = event.attendees.map((email) => ({ email }))
+  }
+
+  if (event.location) {
+    eventBody.location = event.location
+  }
+
+  // Auto-create Google Meet
+  if (event.conferenceDataVersion) {
+    eventBody.conferenceData = {
+      createRequest: {
+        requestId: `meetwith-${Date.now()}`,
+        conferenceSolutionKey: { type: 'hangoutsMeet' },
       },
-      end: {
-        dateTime: event.end.toISOString(),
-      },
     }
+  }
 
-    if (event.attendees && event.attendees.length > 0) {
-      eventBody.attendees = event.attendees.map((email) => ({ email }))
-    }
-
-    if (event.location) {
-      eventBody.location = event.location
-    }
-
-    // Auto-create Google Meet
-    if (event.conferenceDataVersion) {
-      eventBody.conferenceData = {
-        createRequest: {
-          requestId: `meetwith-${Date.now()}`,
-          conferenceSolutionKey: { type: 'hangoutsMeet' },
-        },
-      }
-    }
-
-    const response = await fetch(url, {
+  const { data, error } = await googleApiRequest<GoogleCalendarEvent>(
+    account,
+    url,
+    {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(eventBody),
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      console.error('Error creating calendar event:', error)
-      return null
     }
+  )
 
-    return await response.json()
-  } catch (error) {
+  if (error) {
     console.error('Error creating calendar event:', error)
     return null
   }
+
+  return data
 }
 
 /**
@@ -254,32 +264,18 @@ export async function deleteCalendarEvent(
   calendarId: string,
   eventId: string
 ): Promise<boolean> {
-  const accessToken = await getValidAccessToken(account)
-  if (!accessToken) {
-    console.error('No valid access token for deleting event')
-    return false
-  }
-
-  try {
-    const response = await fetch(
-      `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`,
-      {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    )
-
-    if (!response.ok && response.status !== 204) {
-      const error = await response.json()
-      console.error('Error deleting calendar event:', error)
-      return false
+  const { error } = await googleApiRequest<null>(
+    account,
+    `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`,
+    {
+      method: 'DELETE',
     }
+  )
 
-    return true
-  } catch (error) {
+  if (error) {
     console.error('Error deleting calendar event:', error)
     return false
   }
+
+  return true
 }

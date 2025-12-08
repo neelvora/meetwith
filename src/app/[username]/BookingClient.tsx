@@ -31,6 +31,7 @@ interface SelectedSlot {
   date: string
   start: string
   end: string
+  timezone: string
 }
 
 export default function BookingClient({ username, user, eventTypes }: BookingClientProps) {

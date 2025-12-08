@@ -3,7 +3,10 @@ import { randomBytes } from 'crypto'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { createCalendarEvent } from '@/lib/calendar/googleClient'
 import { sendBookingEmails } from '@/lib/email'
-import type { CalendarAccount } from '@/types'
+import { validateSlot } from '@/lib/availability/validateSlot'
+import { trackBookingEvent } from '@/lib/analytics'
+import { checkRateLimit, getClientId, RATE_LIMITS } from '@/lib/rateLimit'
+import type { CalendarAccount, AvailabilityRule } from '@/types'
 
 interface BookingResponse {
   success: boolean
@@ -15,6 +18,26 @@ interface BookingResponse {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limit check
+    const clientId = getClientId(request)
+    const rateLimitResult = checkRateLimit(`booking:${clientId}`, RATE_LIMITS.booking)
+    
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { 
+          error: 'Too many booking requests. Please try again later.',
+          retryAfter: rateLimitResult.resetIn 
+        },
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': rateLimitResult.resetIn.toString(),
+            'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+          }
+        }
+      )
+    }
+
     const body = await request.json()
     const {
       username,
@@ -68,6 +91,69 @@ export async function POST(request: NextRequest) {
           .eq('id', eventTypeId)
           .single()
         eventType = et
+      }
+
+      // 2.5 Validate the slot is still available (prevent double-bookings)
+      const { data: availabilityRules } = await supabaseAdmin
+        .from('availability_rules')
+        .select('*')
+        .eq('user_id', user.id)
+      
+      const { data: calendarAccounts } = await supabaseAdmin
+        .from('calendar_accounts')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('include_in_availability', true)
+      
+      const { data: settings } = await supabaseAdmin
+        .from('user_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
+
+      const validAccounts: CalendarAccount[] = (calendarAccounts || []).map(ca => ({
+        id: ca.id,
+        user_id: ca.user_id,
+        provider: ca.provider,
+        provider_account_id: ca.provider_account_id,
+        account_email: ca.account_email,
+        access_token: ca.access_token,
+        refresh_token: ca.refresh_token || undefined,
+        expires_at: ca.expires_at || undefined,
+        scope: ca.scope || undefined,
+        calendar_id: ca.calendar_id || 'primary',
+        calendar_name: ca.calendar_name || undefined,
+        is_primary: ca.is_primary || false,
+        include_in_availability: ca.include_in_availability ?? true,
+        write_to_calendar: ca.write_to_calendar ?? false,
+        created_at: ca.created_at,
+      }))
+
+      const validRules: AvailabilityRule[] = (availabilityRules || []).map(r => ({
+        id: r.id,
+        user_id: r.user_id,
+        name: r.name || 'Default',
+        weekday: r.weekday,
+        start_time: r.start_time,
+        end_time: r.end_time,
+        is_active: r.is_active ?? true,
+        created_at: r.created_at || new Date().toISOString(),
+      }))
+
+      const validation = await validateSlot({
+        slotStart: new Date(startTime),
+        slotEnd: new Date(endTime),
+        calendarAccounts: validAccounts,
+        availabilityRules: validRules,
+        timezone: user.timezone || 'America/Chicago',
+        minNoticeHours: settings?.min_notice || 0,
+      })
+
+      if (!validation.valid) {
+        return NextResponse.json(
+          { error: validation.reason || 'This time slot is no longer available' },
+          { status: 409 } // Conflict
+        )
       }
 
       // 3. Get the user's primary calendar account for creating events
@@ -225,6 +311,19 @@ Manage this booking at https://www.meetwith.dev/dashboard
         attendeeEmail,
         hostEmail: user.email,
         emailsSent: emailResult,
+      })
+
+      // 7. Track analytics event
+      await trackBookingEvent({
+        userId: user.id,
+        eventType: 'booking_created',
+        bookingId: booking?.id,
+        eventData: {
+          eventTypeId: eventTypeId || null,
+          duration: durationMinutes,
+          attendeeTimezone,
+        },
+        userAgent: request.headers.get('user-agent') || undefined,
       })
     }
 
