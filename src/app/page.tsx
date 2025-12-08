@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Calendar, Sparkles, Shield, Zap, Clock, Users, ArrowRight, Check, Play, Globe, Video, Mail } from 'lucide-react'
 import { Button } from '@/components/ui'
+import { BetaSignupForm } from '@/components/BetaSignupForm'
 
 const features = [
   {
@@ -105,9 +106,9 @@ export default function Home() {
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/auth/signin">
+              <Link href="#beta">
                 <Button size="lg" className="w-full sm:w-auto group">
-                  Get Started Free
+                  Request Beta Access
                   <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
@@ -324,31 +325,36 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="py-24 relative overflow-hidden">
+      {/* Final CTA / Beta Signup */}
+      <section id="beta" className="py-24 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-violet-500/20 via-violet-500/5 to-transparent" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-violet-500/20 rounded-full blur-3xl" />
         
-        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="relative max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-500/10 border border-violet-500/20 mb-6">
+            <div className="w-2 h-2 bg-violet-400 rounded-full animate-pulse" />
+            <span className="text-sm text-violet-300">Private Beta</span>
+          </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-6">
             Ready to simplify your scheduling?
           </h2>
-          <p className="text-lg text-gray-400 mb-10 max-w-2xl mx-auto">
-            Join thousands of professionals who use MeetWith to save hours every week.
+          <p className="text-lg text-gray-400 mb-10 max-w-xl mx-auto">
+            We&apos;re currently in private beta. Request access and I&apos;ll add you to the testers list.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+          
+          {/* Beta Signup Form */}
+          <div className="max-w-lg mx-auto">
+            <BetaSignupForm />
+          </div>
+
+          <div className="mt-8 pt-8 border-t border-white/10">
+            <p className="text-sm text-gray-500 mb-4">Already have access?</p>
             <Link href="/auth/signin">
-              <Button size="lg" className="w-full sm:w-auto group">
-                Get Started Free
+              <Button variant="secondary" size="lg" className="group">
+                Sign In
                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            <a href="mailto:hello@meetwith.dev">
-              <Button variant="secondary" size="lg" className="w-full sm:w-auto">
-                <Mail className="w-4 h-4 mr-2" />
-                Contact Us
-              </Button>
-            </a>
           </div>
         </div>
       </section>
