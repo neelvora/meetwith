@@ -18,7 +18,7 @@ interface BookingFormProps {
   }
   hostName: string
   onBack: () => void
-  onSuccess: (booking: { id: string }) => void
+  onSuccess: (booking: { id: string; meetLink?: string }) => void
 }
 
 export default function BookingForm({
@@ -51,6 +51,7 @@ export default function BookingForm({
           endTime: selectedSlot.end,
           attendeeName: name,
           attendeeEmail: email,
+          attendeeTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           notes,
         }),
       })
@@ -61,7 +62,7 @@ export default function BookingForm({
         throw new Error(data.error || 'Failed to create booking')
       }
 
-      onSuccess({ id: data.bookingId })
+      onSuccess({ id: data.bookingId, meetLink: data.meetLink })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {

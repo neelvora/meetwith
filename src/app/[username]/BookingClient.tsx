@@ -38,6 +38,7 @@ export default function BookingClient({ username, user, eventTypes }: BookingCli
   const [selectedEventType, setSelectedEventType] = useState<EventType | null>(null)
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlot | null>(null)
   const [bookingId, setBookingId] = useState<string | null>(null)
+  const [meetLink, setMeetLink] = useState<string | null>(null)
   const [attendeeInfo, setAttendeeInfo] = useState({ name: '', email: '' })
 
   function handleSelectEventType(eventType: EventType) {
@@ -50,8 +51,11 @@ export default function BookingClient({ username, user, eventTypes }: BookingCli
     setStep('enter-details')
   }
 
-  function handleBookingSuccess(booking: { id: string }) {
+  function handleBookingSuccess(booking: { id: string; meetLink?: string }) {
     setBookingId(booking.id)
+    if (booking.meetLink) {
+      setMeetLink(booking.meetLink)
+    }
     setStep('confirmed')
   }
 
@@ -145,7 +149,7 @@ export default function BookingClient({ username, user, eventTypes }: BookingCli
         {/* Step: Confirmation */}
         {step === 'confirmed' && selectedEventType && selectedSlot && bookingId && (
           <BookingConfirmation
-            booking={{ id: bookingId }}
+            booking={{ id: bookingId, meetLink: meetLink || undefined }}
             eventType={selectedEventType}
             selectedSlot={selectedSlot}
             attendeeName={attendeeInfo.name}

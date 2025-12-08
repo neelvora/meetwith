@@ -6,6 +6,7 @@ import { Button, Card, CardContent } from '@/components/ui'
 interface BookingConfirmationProps {
   booking: {
     id: string
+    meetLink?: string
   }
   eventType: {
     name: string
@@ -89,7 +90,18 @@ export default function BookingConfirmation({
             </div>
             <div className="flex items-center gap-3 text-gray-300">
               <Video className="w-5 h-5 text-violet-400" />
-              Google Meet (link in calendar invite)
+              {booking.meetLink ? (
+                <a 
+                  href={booking.meetLink} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-violet-400 hover:text-violet-300 underline underline-offset-2"
+                >
+                  Join Google Meet
+                </a>
+              ) : (
+                'Google Meet (link in calendar invite)'
+              )}
             </div>
             <div className="flex items-center gap-3 text-gray-300">
               <Mail className="w-5 h-5 text-violet-400" />
@@ -98,6 +110,20 @@ export default function BookingConfirmation({
           </div>
         </CardContent>
       </Card>
+
+      {/* Join Meeting Button - shown when Meet link is available */}
+      {booking.meetLink && (
+        <a
+          href={booking.meetLink}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center justify-center gap-2 w-full bg-gradient-to-r from-violet-600 to-purple-600 text-white px-6 py-4 font-semibold rounded-xl hover:from-violet-500 hover:to-purple-500 transition-all shadow-lg shadow-violet-500/25"
+        >
+          <Video className="w-5 h-5" />
+          Join Google Meet
+          <ExternalLink className="w-4 h-4" />
+        </a>
+      )}
 
       {/* Actions */}
       <div className="space-y-3">
