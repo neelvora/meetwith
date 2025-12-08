@@ -2,18 +2,28 @@
 
 import { useState, useEffect } from 'react'
 import { useSession, signIn } from 'next-auth/react'
-import { Calendar, Plus, Check, RefreshCw, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Calendar, Plus, Check, RefreshCw, Trash2, ChevronDown, ChevronUp, Eye, Edit2 } from 'lucide-react'
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui'
 import type { CalendarAccount } from '@/types'
 import type { GoogleCalendar } from '@/lib/calendar/googleClient'
 
+interface SavedCalendar {
+  id: string
+  calendar_id: string
+  calendar_name: string
+  include_in_availability: boolean
+  write_to_calendar: boolean
+}
+
 export default function CalendarManager() {
   const { data: session, status } = useSession()
   const [accounts, setAccounts] = useState<CalendarAccount[]>([])
+  const [savedCalendars, setSavedCalendars] = useState<SavedCalendar[]>([])
   const [googleCalendars, setGoogleCalendars] = useState<GoogleCalendar[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedAccount, setExpandedAccount] = useState<string | null>(null)
   const [loadingCalendars, setLoadingCalendars] = useState(false)
+  const [savingCalendar, setSavingCalendar] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -28,6 +38,15 @@ export default function CalendarManager() {
       const res = await fetch('/api/calendars')
       const data = await res.json()
       setAccounts(data.accounts || [])
+      // Extract saved calendar preferences
+      const saved = (data.accounts || []).map((a: CalendarAccount) => ({
+        id: a.id,
+        calendar_id: a.calendar_id,
+        calendar_name: a.calendar_name,
+        include_in_availability: a.include_in_availability,
+        write_to_calendar: a.write_to_calendar,
+      }))
+      setSavedCalendars(saved)
     } catch (error) {
       console.error('Error fetching accounts:', error)
     } finally {
@@ -49,6 +68,63 @@ export default function CalendarManager() {
     }
   }
 
+  async function toggleCalendarAvailability(calendarId: string, calendarName: string, include: boolean) {
+    setSavingCalendar(calendarId)
+    try {
+      // Check if calendar exists in saved list
+      const existing = savedCalendars.find(c => c.calendar_id === calendarId)
+      
+      if (existing) {
+        // Update existing
+        await fetch('/api/calendars', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            calendarId,
+            includeInAvailability: include,
+          }),
+        })
+      } else {
+        // Add new
+        await fetch('/api/calendars', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            calendarId,
+            calendarName,
+            includeInAvailability: include,
+          }),
+        })
+      }
+      
+      // Refresh the list
+      await fetchAccounts()
+    } catch (error) {
+      console.error('Error updating calendar:', error)
+    } finally {
+      setSavingCalendar(null)
+    }
+  }
+
+  async function setWriteCalendar(calendarId: string) {
+    setSavingCalendar(calendarId)
+    try {
+      await fetch('/api/calendars', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          calendarId,
+          writeToCalendar: true,
+        }),
+      })
+      await fetchAccounts()
+    } catch (error) {
+      console.error('Error setting write calendar:', error)
+    } finally {
+      setSavingCalendar(null)
+    }
+  }
+
   function handleConnectGoogle() {
     signIn('google', { callbackUrl: '/dashboard/calendars' })
   }
@@ -62,6 +138,14 @@ export default function CalendarManager() {
     }
   }
 
+  function isCalendarSelected(calendarId: string): boolean {
+    return savedCalendars.some(c => c.calendar_id === calendarId && c.include_in_availability)
+  }
+
+  function isWriteCalendar(calendarId: string): boolean {
+    return savedCalendars.some(c => c.calendar_id === calendarId && c.write_to_calendar)
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -71,9 +155,36 @@ export default function CalendarManager() {
   }
 
   const hasConnectedGoogle = accounts.some((a) => a.provider === 'google')
+  const selectedCount = savedCalendars.filter(c => c.include_in_availability).length
+  const writeCalendar = savedCalendars.find(c => c.write_to_calendar)
 
   return (
     <div className="space-y-8">
+      {/* Status Summary */}
+      {hasConnectedGoogle && (
+        <Card variant="glass" className="border-violet-500/30">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center">
+                  <Eye className="w-5 h-5 text-violet-400" />
+                </div>
+                <div>
+                  <p className="font-medium text-white">
+                    Checking {selectedCount} calendar{selectedCount !== 1 ? 's' : ''} for availability
+                  </p>
+                  <p className="text-sm text-gray-400">
+                    {writeCalendar 
+                      ? `New events will be created on "${writeCalendar.calendar_name}"`
+                      : 'No calendar selected for creating events'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Connected Calendars */}
       {accounts.length > 0 ? (
         <div className="space-y-4">
@@ -118,42 +229,99 @@ export default function CalendarManager() {
                 {/* Expanded Calendar List */}
                 {expandedAccount === account.id && (
                   <div className="border-t border-white/10 p-4">
-                    <h4 className="text-sm font-medium text-gray-400 mb-3">
-                      Calendars in this account
-                    </h4>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-sm font-medium text-gray-400">
+                        Select calendars to check for availability
+                      </h4>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          fetchGoogleCalendars()
+                        }}
+                        className="text-xs text-violet-400 hover:text-violet-300 flex items-center gap-1"
+                      >
+                        <RefreshCw className={`w-3 h-3 ${loadingCalendars ? 'animate-spin' : ''}`} />
+                        Refresh
+                      </button>
+                    </div>
                     {loadingCalendars ? (
                       <div className="flex items-center justify-center py-8">
                         <RefreshCw className="w-5 h-5 text-violet-400 animate-spin" />
                       </div>
                     ) : googleCalendars.length > 0 ? (
                       <div className="space-y-2">
-                        {googleCalendars.map((cal) => (
-                          <div
-                            key={cal.id}
-                            className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div
-                                className="w-3 h-3 rounded-full"
-                                style={{ backgroundColor: cal.backgroundColor || '#7c3aed' }}
-                              />
-                              <div>
-                                <p className="text-sm font-medium text-white">{cal.summary}</p>
-                                {cal.primary && (
-                                  <p className="text-xs text-gray-500">Primary calendar</p>
-                                )}
+                        {googleCalendars.map((cal) => {
+                          const selected = isCalendarSelected(cal.id)
+                          const isWrite = isWriteCalendar(cal.id)
+                          const isSaving = savingCalendar === cal.id
+                          
+                          return (
+                            <div
+                              key={cal.id}
+                              className={`flex items-center justify-between p-3 rounded-lg border transition-all ${
+                                selected 
+                                  ? 'bg-violet-500/10 border-violet-500/30' 
+                                  : 'bg-white/5 border-white/10 hover:border-white/20'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className="w-3 h-3 rounded-full"
+                                  style={{ backgroundColor: cal.backgroundColor || '#7c3aed' }}
+                                />
+                                <div>
+                                  <p className="text-sm font-medium text-white">{cal.summary}</p>
+                                  {cal.primary && (
+                                    <p className="text-xs text-gray-500">Primary calendar</p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                {/* Write Calendar Button */}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (!isWrite) setWriteCalendar(cal.id)
+                                  }}
+                                  disabled={isSaving}
+                                  className={`flex items-center gap-1 px-2 py-1 rounded text-xs transition-all ${
+                                    isWrite
+                                      ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                                      : 'text-gray-500 hover:text-white hover:bg-white/10'
+                                  }`}
+                                  title={isWrite ? 'Events created here' : 'Set as default for new events'}
+                                >
+                                  <Edit2 className="w-3 h-3" />
+                                  {isWrite ? 'Default' : 'Set default'}
+                                </button>
+                                
+                                {/* Include in Availability Toggle */}
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <span className="text-xs text-gray-400">Check busy</span>
+                                  <div className="relative">
+                                    <input
+                                      type="checkbox"
+                                      checked={selected}
+                                      disabled={isSaving}
+                                      onChange={(e) => {
+                                        e.stopPropagation()
+                                        toggleCalendarAvailability(cal.id, cal.summary, e.target.checked)
+                                      }}
+                                      className="sr-only"
+                                    />
+                                    <div className={`w-9 h-5 rounded-full transition-colors ${
+                                      selected ? 'bg-violet-600' : 'bg-white/20'
+                                    }`}>
+                                      <div className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform mt-0.5 ${
+                                        selected ? 'translate-x-4.5 ml-0.5' : 'translate-x-0.5'
+                                      }`} style={{ marginLeft: selected ? '18px' : '2px' }} />
+                                    </div>
+                                  </div>
+                                </label>
                               </div>
                             </div>
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <span className="text-xs text-gray-400">Check availability</span>
-                              <input
-                                type="checkbox"
-                                defaultChecked={cal.primary}
-                                className="w-4 h-4 rounded border-white/20 bg-white/10 text-violet-600 focus:ring-violet-500 focus:ring-offset-0"
-                              />
-                            </label>
-                          </div>
-                        ))}
+                          )
+                        })}
                       </div>
                     ) : (
                       <p className="text-sm text-gray-500 text-center py-4">
