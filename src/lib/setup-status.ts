@@ -80,7 +80,7 @@ export async function getSetupStatus(userEmail: string): Promise<SetupStatus | n
       title: 'Select a calendar for events',
       description: 'Choose which calendar new bookings should be added to',
       completed: hasCalendarSelected,
-      href: '/dashboard/calendars',
+      href: '/dashboard/calendars?expand=true#calendar-accounts',
       priority: 2,
     },
     {

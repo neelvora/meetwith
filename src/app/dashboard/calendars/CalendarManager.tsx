@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession, signIn } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
-import { Calendar, Plus, Check, RefreshCw, Trash2, ChevronDown, ChevronUp, Eye, Edit2, AlertCircle } from 'lucide-react'
+import { Calendar, Plus, Check, RefreshCw, Trash2, ChevronDown, ChevronUp, Eye, Edit2, AlertCircle, ShieldAlert, Key } from 'lucide-react'
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui'
 import type { CalendarAccount } from '@/types'
 import type { GoogleCalendar } from '@/lib/calendar/googleClient'
@@ -19,6 +19,7 @@ interface SavedCalendar {
 export default function CalendarManager() {
   const { data: session, status } = useSession()
   const searchParams = useSearchParams()
+  const accountsRef = useRef<HTMLDivElement>(null)
   const [accounts, setAccounts] = useState<CalendarAccount[]>([])
   const [savedCalendars, setSavedCalendars] = useState<SavedCalendar[]>([])
   const [googleCalendars, setGoogleCalendars] = useState<GoogleCalendar[]>([])
@@ -28,6 +29,7 @@ export default function CalendarManager() {
   const [savingCalendar, setSavingCalendar] = useState<string | null>(null)
   const [connectingAccount, setConnectingAccount] = useState(false)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
+  const [permissionError, setPermissionError] = useState<string | null>(null)
 
   // Check for connection result from URL params
   useEffect(() => {
@@ -63,6 +65,15 @@ export default function CalendarManager() {
     }
   }, [notification])
 
+  // Scroll to accounts section if expand param is set
+  useEffect(() => {
+    if (searchParams.get('expand') === 'true' && accountsRef.current) {
+      setTimeout(() => {
+        accountsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 300)
+    }
+  }, [searchParams, loading])
+
   useEffect(() => {
     if (status === 'authenticated') {
       fetchAccounts()
@@ -75,9 +86,10 @@ export default function CalendarManager() {
     try {
       const res = await fetch('/api/calendars')
       const data = await res.json()
-      setAccounts(data.accounts || [])
+      const fetchedAccounts = data.accounts || []
+      setAccounts(fetchedAccounts)
       // Extract saved calendar preferences
-      const saved = (data.accounts || []).map((a: CalendarAccount) => ({
+      const saved = fetchedAccounts.map((a: CalendarAccount) => ({
         id: a.id,
         calendar_id: a.calendar_id,
         calendar_name: a.calendar_name,
@@ -85,6 +97,14 @@ export default function CalendarManager() {
         write_to_calendar: a.write_to_calendar,
       }))
       setSavedCalendars(saved)
+      
+      // Auto-expand first account if coming from setup or has accounts
+      const shouldAutoExpand = searchParams.get('setup') === 'calendar' || searchParams.get('expand') === 'true'
+      if (fetchedAccounts.length > 0 && (shouldAutoExpand || !expandedAccount)) {
+        const firstAccount = fetchedAccounts[0]
+        setExpandedAccount(firstAccount.id)
+        fetchGoogleCalendars(firstAccount.id)
+      }
     } catch (error) {
       console.error('Error fetching accounts:', error)
     } finally {
@@ -95,12 +115,27 @@ export default function CalendarManager() {
   async function fetchGoogleCalendars(accountId: string) {
     if (loadingCalendars) return
     setLoadingCalendars(true)
+    setPermissionError(null)
     try {
       const res = await fetch(`/api/calendars/google/list?accountId=${accountId}`)
       const data = await res.json()
-      setGoogleCalendars(data.calendars || [])
+      
+      if (data.error) {
+        // Check for permission-related errors
+        if (data.error.includes('insufficient') || data.error.includes('scope') || data.error.includes('permission') || data.error.includes('403')) {
+          setPermissionError('Calendar permissions may be missing. Please reconnect your account to grant full access.')
+        } else {
+          setPermissionError(data.error)
+        }
+        setGoogleCalendars([])
+      } else {
+        setGoogleCalendars(data.calendars || [])
+        // If we got calendars, permissions are working
+        setPermissionError(null)
+      }
     } catch (error) {
       console.error('Error fetching Google calendars:', error)
+      setPermissionError('Failed to fetch calendars. Please try reconnecting your account.')
     } finally {
       setLoadingCalendars(false)
     }
@@ -181,6 +216,29 @@ export default function CalendarManager() {
     } catch (error) {
       console.error('Error connecting account:', error)
       setNotification({ type: 'error', message: 'Failed to connect account' })
+    } finally {
+      setConnectingAccount(false)
+    }
+  }
+
+  async function handleReauthenticate(email?: string) {
+    setConnectingAccount(true)
+    try {
+      // Use the connect endpoint with prompt=consent to force re-authorization
+      const url = email 
+        ? `/api/calendars/google/connect?reauth=true&hint=${encodeURIComponent(email)}`
+        : '/api/calendars/google/connect?reauth=true'
+      const res = await fetch(url)
+      const data = await res.json()
+      
+      if (data.authUrl) {
+        window.location.href = data.authUrl
+      } else {
+        setNotification({ type: 'error', message: 'Failed to initiate re-authentication' })
+      }
+    } catch (error) {
+      console.error('Error re-authenticating:', error)
+      setNotification({ type: 'error', message: 'Failed to re-authenticate' })
     } finally {
       setConnectingAccount(false)
     }
@@ -274,7 +332,7 @@ export default function CalendarManager() {
 
       {/* Connected Calendars */}
       {accounts.length > 0 ? (
-        <div className="space-y-4">
+        <div id="calendar-accounts" ref={accountsRef} className="space-y-4 scroll-mt-24">
           <h2 className="text-lg font-semibold text-white">Connected Accounts</h2>
           {accounts.map((account) => (
             <Card key={account.id} variant="glass">
@@ -424,10 +482,40 @@ export default function CalendarManager() {
                           )
                         })}
                       </div>
+                    ) : permissionError ? (
+                      <div className="flex flex-col items-center gap-4 py-6">
+                        <div className="flex items-center gap-2 text-amber-400">
+                          <ShieldAlert className="w-5 h-5" />
+                          <p className="text-sm font-medium">Permission Issue</p>
+                        </div>
+                        <p className="text-sm text-gray-400 text-center max-w-md">
+                          {permissionError}
+                        </p>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleReauthenticate(account.account_email)}
+                          className="flex items-center gap-2"
+                        >
+                          <Key className="w-4 h-4" />
+                          Reconnect & Grant Permissions
+                        </Button>
+                      </div>
                     ) : (
-                      <p className="text-sm text-gray-500 text-center py-4">
-                        No calendars found. Make sure calendar permissions are granted.
-                      </p>
+                      <div className="flex flex-col items-center gap-4 py-6">
+                        <p className="text-sm text-gray-500 text-center">
+                          No calendars found. This might be a permissions issue.
+                        </p>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => handleReauthenticate(account.account_email)}
+                          className="flex items-center gap-2"
+                        >
+                          <Key className="w-4 h-4" />
+                          Reconnect Account
+                        </Button>
+                      </div>
                     )}
                   </div>
                 )}

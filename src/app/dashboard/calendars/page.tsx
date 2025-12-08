@@ -21,14 +21,15 @@ export default async function CalendarsPage() {
         </p>
       </div>
 
-      {/* Calendar Overlap View */}
-      <div className="mb-12">
-        <h2 className="text-xl font-semibold text-white mb-4">Your Week at a Glance</h2>
-        <CalendarOverlapView />
+      {/* Calendar Manager - Primary focus */}
+      <div id="calendar-accounts">
+        <CalendarManager />
       </div>
 
-      {/* Calendar Manager */}
-      <CalendarManager />
+      {/* Calendar Overlap View - Collapsible */}
+      <div className="mt-12">
+        <CalendarOverlapView />
+      </div>
     </div>
   )
 }
