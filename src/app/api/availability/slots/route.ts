@@ -1,20 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { computeAvailableSlots } from '@/lib/availability/computeSlots'
+import { supabaseAdmin } from '@/lib/supabase/server'
 import type { CalendarAccount, AvailabilityRule } from '@/types'
 
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions)
-
-  if (!session?.user?.email || !session.accessToken) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
   const { searchParams } = new URL(request.url)
   const startParam = searchParams.get('start')
   const endParam = searchParams.get('end')
   const duration = parseInt(searchParams.get('duration') || '30', 10)
+  const username = searchParams.get('username')
 
   // Default to next 7 days if no dates provided
   const start = startParam ? new Date(startParam) : new Date()
@@ -22,37 +16,59 @@ export async function GET(request: NextRequest) {
     ? new Date(endParam)
     : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 
-  // Mock calendar account from session (in production, fetch from Supabase)
-  const mockAccount: CalendarAccount = {
-    id: 'session',
-    user_id: 'session',
-    provider: 'google',
-    provider_account_id: session.user.email,
-    account_email: session.user.email,
-    access_token: session.accessToken,
-    calendar_id: 'primary',
-    is_primary: true,
-    include_in_availability: true,
-    write_to_calendar: false,
-    created_at: new Date().toISOString(),
+  let calendarAccounts: CalendarAccount[] = []
+  let availabilityRules: AvailabilityRule[] = []
+  let timezone = 'America/Chicago'
+
+  // If username provided, fetch that user's data (public booking page)
+  if (username && supabaseAdmin) {
+    // Get user by username
+    const { data: user } = await supabaseAdmin
+      .from('users')
+      .select('id, timezone')
+      .eq('username', username)
+      .single()
+
+    if (user) {
+      timezone = user.timezone || 'America/Chicago'
+      
+      // Get their calendar accounts
+      const { data: accounts } = await supabaseAdmin
+        .from('calendar_accounts')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('include_in_availability', true)
+
+      calendarAccounts = (accounts || []) as CalendarAccount[]
+
+      // Get their availability rules
+      const { data: rules } = await supabaseAdmin
+        .from('availability_rules')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+
+      availabilityRules = (rules || []) as AvailabilityRule[]
+    }
   }
 
-  // Default availability rules (9 AM - 5 PM, Mon-Fri)
-  // In production, fetch from Supabase
-  const defaultRules: AvailabilityRule[] = [
-    { id: '1', user_id: 'session', name: 'Default', weekday: 1, start_time: '09:00', end_time: '17:00', is_active: true, created_at: '' },
-    { id: '2', user_id: 'session', name: 'Default', weekday: 2, start_time: '09:00', end_time: '17:00', is_active: true, created_at: '' },
-    { id: '3', user_id: 'session', name: 'Default', weekday: 3, start_time: '09:00', end_time: '17:00', is_active: true, created_at: '' },
-    { id: '4', user_id: 'session', name: 'Default', weekday: 4, start_time: '09:00', end_time: '17:00', is_active: true, created_at: '' },
-    { id: '5', user_id: 'session', name: 'Default', weekday: 5, start_time: '09:00', end_time: '17:00', is_active: true, created_at: '' },
-  ]
+  // Default availability rules if none set (9 AM - 5 PM, Mon-Fri)
+  if (availabilityRules.length === 0) {
+    availabilityRules = [
+      { id: '1', user_id: 'default', name: 'Default', weekday: 1, start_time: '09:00', end_time: '17:00', is_active: true, created_at: '' },
+      { id: '2', user_id: 'default', name: 'Default', weekday: 2, start_time: '09:00', end_time: '17:00', is_active: true, created_at: '' },
+      { id: '3', user_id: 'default', name: 'Default', weekday: 3, start_time: '09:00', end_time: '17:00', is_active: true, created_at: '' },
+      { id: '4', user_id: 'default', name: 'Default', weekday: 4, start_time: '09:00', end_time: '17:00', is_active: true, created_at: '' },
+      { id: '5', user_id: 'default', name: 'Default', weekday: 5, start_time: '09:00', end_time: '17:00', is_active: true, created_at: '' },
+    ]
+  }
 
   try {
     const slots = await computeAvailableSlots({
-      userId: 'session',
-      calendarAccounts: [mockAccount],
-      availabilityRules: defaultRules,
-      timezone: 'America/Chicago',
+      userId: username || 'default',
+      calendarAccounts,
+      availabilityRules,
+      timezone,
       dateRange: { start, end },
       slotDuration: duration,
       minNoticeHours: 4,
@@ -64,7 +80,6 @@ export async function GET(request: NextRequest) {
     // Group by date for easier consumption
     // Use timezone-aware date formatting to avoid UTC offset issues
     const groupedSlots: Record<string, { start: string; end: string }[]> = {}
-    const timezone = 'America/Chicago'
 
     for (const slot of availableSlots) {
       // Get the date in the user's timezone, not UTC

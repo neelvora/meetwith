@@ -196,6 +196,7 @@ Manage this booking at https://www.meetwith.dev/dashboard
         startTime: new Date(startTime),
         endTime: new Date(endTime),
         duration: durationMinutes,
+        timezone: user.timezone || 'America/Chicago',
         meetLink,
         notes: notes || undefined,
         bookingId: booking?.id || response.bookingId,

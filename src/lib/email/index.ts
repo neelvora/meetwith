@@ -25,12 +25,13 @@ interface BookingDetails {
   startTime: Date
   endTime: Date
   duration: number
+  timezone?: string
   meetLink?: string
   notes?: string
   bookingId: string
 }
 
-function formatDateTime(date: Date): string {
+function formatDateTime(date: Date, timezone: string = 'America/Chicago'): string {
   return date.toLocaleString('en-US', {
     weekday: 'long',
     month: 'long',
@@ -39,6 +40,7 @@ function formatDateTime(date: Date): string {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
+    timeZone: timezone,
     timeZoneName: 'short',
   })
 }
@@ -96,7 +98,7 @@ export async function sendAttendeeConfirmation(details: BookingDetails): Promise
                             <span style="color: #9ca3af; font-size: 14px;">📅 When</span>
                           </td>
                           <td style="padding: 8px 0; text-align: right;">
-                            <span style="color: #ffffff; font-size: 14px;">${formatDateTime(details.startTime)}</span>
+                            <span style="color: #ffffff; font-size: 14px;">${formatDateTime(details.startTime, details.timezone)}</span>
                           </td>
                         </tr>
                         <tr>
@@ -220,7 +222,7 @@ export async function sendHostNotification(details: BookingDetails): Promise<boo
                             <span style="color: #9ca3af; font-size: 14px;">📅 When</span>
                           </td>
                           <td style="padding: 8px 0; text-align: right;">
-                            <span style="color: #ffffff; font-size: 14px;">${formatDateTime(details.startTime)}</span>
+                            <span style="color: #ffffff; font-size: 14px;">${formatDateTime(details.startTime, details.timezone)}</span>
                           </td>
                         </tr>
                         <tr>

@@ -48,7 +48,7 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
       const end = new Date(currentWeekStart.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString()
       
       const res = await fetch(
-        `/api/availability/slots?start=${start}&end=${end}&duration=${eventType.duration}`
+        `/api/availability/slots?username=${username}&start=${start}&end=${end}&duration=${eventType.duration}`
       )
       const data = await res.json()
       setSlots(data.slots || {})
