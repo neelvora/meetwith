@@ -23,9 +23,11 @@ export default function CalendarManager() {
   const [accounts, setAccounts] = useState<CalendarAccount[]>([])
   const [savedCalendars, setSavedCalendars] = useState<SavedCalendar[]>([])
   const [googleCalendars, setGoogleCalendars] = useState<GoogleCalendar[]>([])
+  const [allCalendars, setAllCalendars] = useState<Array<GoogleCalendar & { accountEmail: string }>>([])
   const [loading, setLoading] = useState(true)
   const [expandedAccount, setExpandedAccount] = useState<string | null>(null)
   const [loadingCalendars, setLoadingCalendars] = useState(false)
+  const [loadingAllCalendars, setLoadingAllCalendars] = useState(false)
   const [savingCalendar, setSavingCalendar] = useState<string | null>(null)
   const [connectingAccount, setConnectingAccount] = useState(false)
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
@@ -87,7 +89,18 @@ export default function CalendarManager() {
       const res = await fetch('/api/calendars')
       const data = await res.json()
       const fetchedAccounts = data.accounts || []
-      setAccounts(fetchedAccounts)
+      
+      // Deduplicate accounts by email (keep the one with calendar_id if exists)
+      const accountsByEmail = new Map<string, CalendarAccount>()
+      for (const account of fetchedAccounts) {
+        const existing = accountsByEmail.get(account.account_email)
+        if (!existing || (account.calendar_id && !existing.calendar_id)) {
+          accountsByEmail.set(account.account_email, account)
+        }
+      }
+      const deduplicatedAccounts = Array.from(accountsByEmail.values())
+      
+      setAccounts(deduplicatedAccounts)
       // Extract saved calendar preferences
       const saved = fetchedAccounts.map((a: CalendarAccount) => ({
         id: a.id,
@@ -100,15 +113,41 @@ export default function CalendarManager() {
       
       // Auto-expand first account if coming from setup or has accounts
       const shouldAutoExpand = searchParams.get('setup') === 'calendar' || searchParams.get('expand') === 'true'
-      if (fetchedAccounts.length > 0 && (shouldAutoExpand || !expandedAccount)) {
-        const firstAccount = fetchedAccounts[0]
+      if (deduplicatedAccounts.length > 0 && (shouldAutoExpand || !expandedAccount)) {
+        const firstAccount = deduplicatedAccounts[0]
         setExpandedAccount(firstAccount.id)
         fetchGoogleCalendars(firstAccount.id)
       }
+      
+      // Fetch all calendars for the dropdown
+      fetchAllCalendars(deduplicatedAccounts)
     } catch (error) {
       console.error('Error fetching accounts:', error)
     } finally {
       setLoading(false)
+    }
+  }
+  
+  async function fetchAllCalendars(accountsList: CalendarAccount[]) {
+    setLoadingAllCalendars(true)
+    try {
+      const allCals: Array<GoogleCalendar & { accountEmail: string }> = []
+      for (const account of accountsList) {
+        if (account.provider === 'google') {
+          const res = await fetch(`/api/calendars/google/list?accountId=${account.id}`)
+          const data = await res.json()
+          if (data.calendars) {
+            for (const cal of data.calendars) {
+              allCals.push({ ...cal, accountEmail: account.account_email || '' })
+            }
+          }
+        }
+      }
+      setAllCalendars(allCals)
+    } catch (error) {
+      console.error('Error fetching all calendars:', error)
+    } finally {
+      setLoadingAllCalendars(false)
     }
   }
 
@@ -297,33 +336,53 @@ export default function CalendarManager() {
           </button>
         </div>
       )}
-      {/* Status Summary */}
+      {/* Status Summary with Default Calendar Dropdown */}
       {hasConnectedGoogle && (
-        <Card variant="glass" className={writeCalendar ? 'border-violet-500/30' : 'border-amber-500/50 bg-amber-500/5'}>
+        <Card variant="glass" className="border-violet-500/30">
           <CardContent className="py-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                  writeCalendar ? 'bg-violet-500/20' : 'bg-amber-500/20'
-                }`}>
-                  {writeCalendar ? (
-                    <Eye className="w-5 h-5 text-violet-400" />
+            <div className="flex flex-col gap-4">
+              {/* Default Calendar Selection */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <label className="text-sm font-medium text-white whitespace-nowrap">
+                  Default calendar for new bookings:
+                </label>
+                <div className="flex-1 max-w-md">
+                  {loadingAllCalendars ? (
+                    <div className="flex items-center gap-2 text-sm text-gray-400">
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Loading calendars...
+                    </div>
+                  ) : allCalendars.length > 0 ? (
+                    <select
+                      value={writeCalendar?.calendar_id || ''}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          setWriteCalendar(e.target.value)
+                        }
+                      }}
+                      className="w-full px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                    >
+                      <option value="" className="bg-gray-900">Select a calendar...</option>
+                      {allCalendars.map((cal) => (
+                        <option key={cal.id} value={cal.id} className="bg-gray-900">
+                          {cal.summary} ({cal.accountEmail})
+                        </option>
+                      ))}
+                    </select>
                   ) : (
-                    <AlertCircle className="w-5 h-5 text-amber-400" />
+                    <p className="text-sm text-amber-400">
+                      No calendars available. Expand an account below to load calendars.
+                    </p>
                   )}
                 </div>
-                <div>
-                  <p className="font-medium text-white">
-                    {writeCalendar 
-                      ? `Checking ${selectedCount} calendar${selectedCount !== 1 ? 's' : ''} for availability`
-                      : '⚠️ Setup incomplete: No calendar selected for events'}
-                  </p>
-                  <p className={`text-sm ${writeCalendar ? 'text-gray-400' : 'text-amber-300'}`}>
-                    {writeCalendar 
-                      ? `New events will be created on "${writeCalendar.calendar_name}"`
-                      : 'Bookings won\'t appear on your calendar until you select a default below'}
-                  </p>
-                </div>
+              </div>
+              
+              {/* Status info */}
+              <div className="flex items-center gap-3 text-sm text-gray-400">
+                <Eye className="w-4 h-4 text-violet-400" />
+                <span>
+                  Checking {selectedCount} calendar{selectedCount !== 1 ? 's' : ''} for conflicts
+                </span>
               </div>
             </div>
           </CardContent>
