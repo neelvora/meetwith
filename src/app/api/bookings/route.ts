@@ -101,10 +101,17 @@ export async function POST(request: NextRequest) {
       }
 
       // 2.5 Validate the slot is still available (prevent double-bookings)
-      const { data: availabilityRules } = await supabaseAdmin
+      const { data: availabilityRules, error: rulesError } = await supabaseAdmin
         .from('availability_rules')
         .select('*')
         .eq('user_id', user.id)
+      
+      console.log('Availability rules lookup:', {
+        userId: user.id,
+        rulesCount: availabilityRules?.length || 0,
+        error: rulesError?.message,
+        rules: availabilityRules?.map(r => ({ weekday: r.weekday, active: r.is_active }))
+      })
       
       const { data: calendarAccounts } = await supabaseAdmin
         .from('calendar_accounts')
@@ -154,6 +161,16 @@ export async function POST(request: NextRequest) {
         availabilityRules: validRules,
         timezone: user.timezone || 'America/Chicago',
         minNoticeHours: settings?.min_notice || 0,
+      })
+
+      console.log('Slot validation result:', {
+        slotStart: startTime,
+        slotEnd: endTime,
+        timezone: user.timezone,
+        valid: validation.valid,
+        reason: validation.reason,
+        rulesCount: validRules.length,
+        activeRules: validRules.filter(r => r.is_active).map(r => r.weekday)
       })
 
       if (!validation.valid) {
