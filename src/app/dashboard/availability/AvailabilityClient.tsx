@@ -262,8 +262,8 @@ export default function AvailabilityClient() {
 
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Availability</h1>
-        <p className="text-gray-400">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 font-display">Availability</h1>
+        <p className="text-gray-600 dark:text-gray-400">
           Set your weekly hours when you&apos;re available for meetings.
         </p>
       </div>
@@ -274,17 +274,17 @@ export default function AvailabilityClient() {
           <div className="flex items-center gap-3">
             <Clock className="w-5 h-5 text-gray-400 shrink-0" />
             <div>
-              <p className="text-sm font-medium text-white">Timezone</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">Timezone</p>
               <p className="text-xs text-gray-500 hidden sm:block">{timezone}</p>
             </div>
           </div>
           <select
             value={timezone}
             onChange={(e) => setTimezone(e.target.value)}
-            className="w-full sm:w-auto px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+            className="w-full sm:w-auto px-3 py-2 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
           >
             {TIMEZONES.map(tz => (
-              <option key={tz.value} value={tz.value}>{tz.label}</option>
+              <option key={tz.value} value={tz.value} className="bg-white dark:bg-gray-900">{tz.label}</option>
             ))}
           </select>
         </CardContent>
@@ -301,7 +301,7 @@ export default function AvailabilityClient() {
             <div className="flex gap-2">
               <button
                 onClick={copyFirstActiveToAll}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg transition-colors"
                 title="Copy first active day's schedule to all days"
               >
                 <Copy className="w-3.5 h-3.5" />
@@ -309,7 +309,7 @@ export default function AvailabilityClient() {
               </button>
               <button
                 onClick={resetToDefault}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 rounded-lg transition-colors"
                 title="Reset to default 9-5 weekday schedule"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
@@ -328,8 +328,8 @@ export default function AvailabilityClient() {
                   key={weekday} 
                   className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border transition-all gap-3 ${
                     slot.is_active 
-                      ? 'bg-white/5 border-white/10' 
-                      : 'bg-transparent border-white/5 opacity-50'
+                      ? 'bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-white/10' 
+                      : 'bg-transparent border-gray-100 dark:border-white/5 opacity-50'
                   }`}
                 >
                   <div className="flex items-center gap-3 sm:gap-4">
@@ -338,12 +338,12 @@ export default function AvailabilityClient() {
                       className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all shrink-0 ${
                         slot.is_active 
                           ? 'bg-violet-500 border-violet-500' 
-                          : 'border-gray-600 hover:border-gray-500'
+                          : 'border-gray-400 dark:border-gray-600 hover:border-gray-500'
                       }`}
                     >
                       {slot.is_active && <Check className="w-4 h-4 text-white" />}
                     </button>
-                    <span className="font-medium text-white sm:w-28">{DAYS[weekday]}</span>
+                    <span className="font-medium text-gray-900 dark:text-white sm:w-28">{DAYS[weekday]}</span>
                   </div>
                   
                   {slot.is_active ? (
@@ -351,20 +351,20 @@ export default function AvailabilityClient() {
                       <select 
                         value={slot.start_time}
                         onChange={(e) => updateSlot(weekday, 'start_time', e.target.value)}
-                        className="flex-1 sm:flex-initial px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                        className="flex-1 sm:flex-initial px-3 py-2 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
                       >
                         {TIME_OPTIONS.map(opt => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          <option key={opt.value} value={opt.value} className="bg-white dark:bg-gray-900">{opt.label}</option>
                         ))}
                       </select>
                       <span className="text-gray-500">-</span>
                       <select 
                         value={slot.end_time}
                         onChange={(e) => updateSlot(weekday, 'end_time', e.target.value)}
-                        className="flex-1 sm:flex-initial px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
+                        className="flex-1 sm:flex-initial px-3 py-2 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/50"
                       >
                         {TIME_OPTIONS.map(opt => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          <option key={opt.value} value={opt.value} className="bg-white dark:bg-gray-900">{opt.label}</option>
                         ))}
                       </select>
                     </div>
@@ -414,7 +414,7 @@ export default function AvailabilityClient() {
                   setShowAIHint(!showAIHint)
                 }
               }}
-              className="p-2 text-gray-400 hover:text-white transition-colors"
+              className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               {loadingAI ? (
                 <Loader2 className="w-5 h-5 animate-spin" />
@@ -429,12 +429,12 @@ export default function AvailabilityClient() {
         {showAIHint && aiSuggestion && (
           <CardContent className="pt-0">
             <div className="p-4 rounded-xl bg-violet-500/10 border border-violet-500/20">
-              <p className="text-sm text-gray-300 whitespace-pre-wrap">{aiSuggestion}</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{aiSuggestion}</p>
             </div>
             <button
               onClick={() => fetchAISuggestion()}
               disabled={loadingAI}
-              className="mt-3 text-sm text-violet-400 hover:text-violet-300 transition-colors flex items-center gap-1.5"
+              className="mt-3 text-sm text-violet-500 dark:text-violet-400 hover:text-violet-600 dark:hover:text-violet-300 transition-colors flex items-center gap-1.5"
             >
               {loadingAI ? (
                 <>
@@ -459,57 +459,57 @@ export default function AvailabilityClient() {
           <CardDescription>Fine-tune your availability preferences</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 gap-3">
             <div>
-              <p className="font-medium text-white">Buffer time</p>
+              <p className="font-medium text-gray-900 dark:text-white">Buffer time</p>
               <p className="text-sm text-gray-500">Add time between meetings</p>
             </div>
             <select 
               value={bufferTime}
               onChange={(e) => setBufferTime(Number(e.target.value))}
-              className="w-full sm:w-auto px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
+              className="w-full sm:w-auto px-3 py-2 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-sm"
             >
-              <option value="0">No buffer</option>
-              <option value="5">5 minutes</option>
-              <option value="10">10 minutes</option>
-              <option value="15">15 minutes</option>
-              <option value="30">30 minutes</option>
+              <option value="0" className="bg-white dark:bg-gray-900">No buffer</option>
+              <option value="5" className="bg-white dark:bg-gray-900">5 minutes</option>
+              <option value="10" className="bg-white dark:bg-gray-900">10 minutes</option>
+              <option value="15" className="bg-white dark:bg-gray-900">15 minutes</option>
+              <option value="30" className="bg-white dark:bg-gray-900">30 minutes</option>
             </select>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 gap-3">
             <div>
-              <p className="font-medium text-white">Minimum notice</p>
+              <p className="font-medium text-gray-900 dark:text-white">Minimum notice</p>
               <p className="text-sm text-gray-500">How far in advance can people book</p>
             </div>
             <select 
               value={minNotice}
               onChange={(e) => setMinNotice(Number(e.target.value))}
-              className="w-full sm:w-auto px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
+              className="w-full sm:w-auto px-3 py-2 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-sm"
             >
-              <option value="0">No minimum</option>
-              <option value="1">1 hour</option>
-              <option value="4">4 hours</option>
-              <option value="24">1 day</option>
-              <option value="48">2 days</option>
+              <option value="0" className="bg-white dark:bg-gray-900">No minimum</option>
+              <option value="1" className="bg-white dark:bg-gray-900">1 hour</option>
+              <option value="4" className="bg-white dark:bg-gray-900">4 hours</option>
+              <option value="24" className="bg-white dark:bg-gray-900">1 day</option>
+              <option value="48" className="bg-white dark:bg-gray-900">2 days</option>
             </select>
           </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 gap-3">
             <div>
-              <p className="font-medium text-white">Daily meeting limit</p>
+              <p className="font-medium text-gray-900 dark:text-white">Daily meeting limit</p>
               <p className="text-sm text-gray-500">Maximum meetings per day</p>
             </div>
             <select 
               value={dailyLimit}
               onChange={(e) => setDailyLimit(Number(e.target.value))}
-              className="w-full sm:w-auto px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm"
+              className="w-full sm:w-auto px-3 py-2 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white text-sm"
             >
-              <option value="0">No limit</option>
-              <option value="3">3 meetings</option>
-              <option value="5">5 meetings</option>
-              <option value="8">8 meetings</option>
-              <option value="10">10 meetings</option>
+              <option value="0" className="bg-white dark:bg-gray-900">No limit</option>
+              <option value="3" className="bg-white dark:bg-gray-900">3 meetings</option>
+              <option value="5" className="bg-white dark:bg-gray-900">5 meetings</option>
+              <option value="8" className="bg-white dark:bg-gray-900">8 meetings</option>
+              <option value="10" className="bg-white dark:bg-gray-900">10 meetings</option>
             </select>
           </div>
         </CardContent>
