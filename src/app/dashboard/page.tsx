@@ -1,15 +1,75 @@
 import { redirect } from 'next/navigation'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { Calendar, Clock, Link as LinkIcon, Plus, ArrowRight } from 'lucide-react'
+import { Calendar, Clock, Link as LinkIcon, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui'
+import { getSetupStatus } from '@/lib/setup-status'
+import { SetupChecklist } from '@/components/SetupChecklist'
+import { supabaseAdmin } from '@/lib/supabase/server'
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions)
   
   if (!session) {
     redirect('/auth/signin')
+  }
+
+  // Get setup status
+  const setupStatus = session.user?.email 
+    ? await getSetupStatus(session.user.email) 
+    : null
+
+  // Get real stats
+  let stats = {
+    calendars: 0,
+    upcomingMeetings: 0,
+    eventTypes: 0,
+    totalBookings: 0,
+  }
+
+  if (supabaseAdmin && session.user?.email) {
+    const { data: user } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .eq('email', session.user.email)
+      .single()
+
+    if (user) {
+      // Count calendars
+      const { count: calendarCount } = await supabaseAdmin
+        .from('calendar_accounts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+
+      // Count upcoming meetings
+      const { count: upcomingCount } = await supabaseAdmin
+        .from('bookings')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('status', 'confirmed')
+        .gte('start_time', new Date().toISOString())
+
+      // Count event types
+      const { count: eventTypeCount } = await supabaseAdmin
+        .from('event_types')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+
+      // Count total bookings
+      const { count: totalBookingCount } = await supabaseAdmin
+        .from('bookings')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+
+      stats = {
+        calendars: calendarCount || 0,
+        upcomingMeetings: upcomingCount || 0,
+        eventTypes: eventTypeCount || 0,
+        totalBookings: totalBookingCount || 0,
+      }
+    }
   }
 
   const quickActions = [
@@ -48,13 +108,18 @@ export default async function DashboardPage() {
         </p>
       </div>
 
+      {/* Setup Checklist - Shows if setup incomplete */}
+      {setupStatus && !setupStatus.isComplete && (
+        <SetupChecklist status={setupStatus} />
+      )}
+
       {/* Quick Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: 'Connected Calendars', value: '0', subtext: 'calendars' },
-          { label: 'Upcoming Meetings', value: '0', subtext: 'this week' },
-          { label: 'Event Types', value: '0', subtext: 'active' },
-          { label: 'Total Bookings', value: '0', subtext: 'all time' },
+          { label: 'Connected Calendars', value: stats.calendars.toString(), subtext: 'calendars' },
+          { label: 'Upcoming Meetings', value: stats.upcomingMeetings.toString(), subtext: 'scheduled' },
+          { label: 'Event Types', value: stats.eventTypes.toString(), subtext: 'active' },
+          { label: 'Total Bookings', value: stats.totalBookings.toString(), subtext: 'all time' },
         ].map((stat) => (
           <Card key={stat.label} variant="glass">
             <CardContent>

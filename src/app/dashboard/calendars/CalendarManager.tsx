@@ -241,21 +241,29 @@ export default function CalendarManager() {
       )}
       {/* Status Summary */}
       {hasConnectedGoogle && (
-        <Card variant="glass" className="border-violet-500/30">
+        <Card variant="glass" className={writeCalendar ? 'border-violet-500/30' : 'border-amber-500/50 bg-amber-500/5'}>
           <CardContent className="py-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-violet-500/20 flex items-center justify-center shrink-0">
-                  <Eye className="w-5 h-5 text-violet-400" />
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                  writeCalendar ? 'bg-violet-500/20' : 'bg-amber-500/20'
+                }`}>
+                  {writeCalendar ? (
+                    <Eye className="w-5 h-5 text-violet-400" />
+                  ) : (
+                    <AlertCircle className="w-5 h-5 text-amber-400" />
+                  )}
                 </div>
                 <div>
                   <p className="font-medium text-white">
-                    Checking {selectedCount} calendar{selectedCount !== 1 ? 's' : ''} for availability
+                    {writeCalendar 
+                      ? `Checking ${selectedCount} calendar${selectedCount !== 1 ? 's' : ''} for availability`
+                      : '⚠️ Setup incomplete: No calendar selected for events'}
                   </p>
-                  <p className="text-sm text-gray-400">
+                  <p className={`text-sm ${writeCalendar ? 'text-gray-400' : 'text-amber-300'}`}>
                     {writeCalendar 
                       ? `New events will be created on "${writeCalendar.calendar_name}"`
-                      : 'No calendar selected for creating events'}
+                      : 'Bookings won\'t appear on your calendar until you select a default below'}
                   </p>
                 </div>
               </div>
