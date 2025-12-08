@@ -3,7 +3,12 @@ export interface User {
   email: string
   name?: string
   image?: string
+  username?: string
+  timezone?: string
+  welcome_message?: string
+  brand_color?: string
   created_at: string
+  updated_at?: string
 }
 
 export interface CalendarAccount {
@@ -11,13 +16,18 @@ export interface CalendarAccount {
   user_id: string
   provider: 'google' | 'apple' | 'outlook'
   provider_account_id: string
+  account_email?: string
   access_token: string
   refresh_token?: string
   expires_at?: number
-  calendar_id?: string
+  scope?: string
+  calendar_id: string
   calendar_name?: string
   is_primary: boolean
+  include_in_availability: boolean
+  write_to_calendar: boolean
   created_at: string
+  updated_at?: string
 }
 
 export interface AvailabilityRule {

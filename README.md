@@ -61,8 +61,9 @@ NEXTAUTH_SECRET=your_nextauth_secret
 ## Roadmap
 
 - [x] Project setup
-- [ ] Google OAuth + Calendar sync
-- [ ] Availability rules engine
+- [x] Google OAuth + Calendar sync
+- [x] Calendar connections UI
+- [x] Availability rules engine
 - [ ] Public booking pages
 - [ ] Email notifications
 - [ ] AI meeting prep

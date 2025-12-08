@@ -21,15 +21,19 @@ CREATE TABLE IF NOT EXISTS calendar_accounts (
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   provider TEXT NOT NULL, -- 'google', 'apple', 'outlook'
   provider_account_id TEXT NOT NULL,
+  account_email TEXT, -- The email associated with this calendar account
   access_token TEXT NOT NULL,
   refresh_token TEXT,
   expires_at BIGINT,
-  calendar_id TEXT,
+  scope TEXT, -- OAuth scopes granted
+  calendar_id TEXT DEFAULT 'primary', -- Specific calendar within the account
   calendar_name TEXT,
   is_primary BOOLEAN DEFAULT false,
+  include_in_availability BOOLEAN DEFAULT true, -- Check this calendar for conflicts
+  write_to_calendar BOOLEAN DEFAULT false, -- Create new events on this calendar
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(user_id, provider, provider_account_id)
+  UNIQUE(user_id, provider, provider_account_id, calendar_id)
 );
 
 -- Availability rules

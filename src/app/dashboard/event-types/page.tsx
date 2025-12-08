@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { Link as LinkIcon, Plus, Clock, Video, ExternalLink, MoreVertical } from 'lucide-react'
 import Link from 'next/link'
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui'
@@ -34,7 +35,7 @@ const colorMap: Record<string, string> = {
 }
 
 export default async function EventTypesPage() {
-  const session = await auth()
+  const session = await getServerSession(authOptions)
   
   if (!session) {
     redirect('/auth/signin')

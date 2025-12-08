@@ -1,10 +1,11 @@
 import { redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { User, Bell, Shield, Palette, Globe } from 'lucide-react'
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent, Input } from '@/components/ui'
 
 export default async function SettingsPage() {
-  const session = await auth()
+  const session = await getServerSession(authOptions)
   
   if (!session) {
     redirect('/auth/signin')
