@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { User, Bell, Palette, Loader2, Check } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { User, Bell, Palette, Loader2, Check, AlertCircle, Link as LinkIcon } from 'lucide-react'
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent, Input } from '@/components/ui'
 
 interface UserProfile {
@@ -53,6 +53,50 @@ export default function SettingsClient({ initialProfile }: Props) {
   
   const [saving, setSaving] = useState<string | null>(null)
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle')
+  const [originalUsername, setOriginalUsername] = useState<string>('')
+
+  // Debounced username availability check
+  const checkUsernameAvailability = useCallback(async (username: string) => {
+    if (!username || username === originalUsername) {
+      setUsernameStatus('idle')
+      return
+    }
+
+    // Validate format first
+    const usernameRegex = /^[a-z0-9_-]{3,30}$/
+    const normalized = username.toLowerCase().trim()
+    
+    if (!usernameRegex.test(normalized)) {
+      setUsernameStatus('invalid')
+      return
+    }
+
+    setUsernameStatus('checking')
+
+    try {
+      const res = await fetch(`/api/settings/check-username?username=${encodeURIComponent(normalized)}`)
+      const data = await res.json()
+      
+      if (data.available) {
+        setUsernameStatus('available')
+      } else {
+        setUsernameStatus('taken')
+      }
+    } catch {
+      setUsernameStatus('idle')
+    }
+  }, [originalUsername])
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (profile.username && profile.username !== originalUsername) {
+        checkUsernameAvailability(profile.username)
+      }
+    }, 500) // Debounce 500ms
+
+    return () => clearTimeout(timer)
+  }, [profile.username, originalUsername, checkUsernameAvailability])
 
   useEffect(() => {
     fetchSettings()
@@ -64,13 +108,15 @@ export default function SettingsClient({ initialProfile }: Props) {
       if (res.ok) {
         const data = await res.json()
         if (data.settings) {
+          const username = data.settings.username || profile.username
           setProfile(prev => ({
             ...prev,
-            username: data.settings.username || prev.username,
+            username,
             brand_color: data.settings.brand_color || prev.brand_color,
             welcome_message: data.settings.welcome_message || prev.welcome_message,
             notifications: data.settings.notifications || prev.notifications,
           }))
+          setOriginalUsername(username)
         }
       }
     } catch (error) {
@@ -103,6 +149,12 @@ export default function SettingsClient({ initialProfile }: Props) {
       if (!res.ok) {
         const data = await res.json()
         throw new Error(data.error || 'Failed to save')
+      }
+
+      // Update original username after successful save
+      if (section === 'profile') {
+        setOriginalUsername(profile.username)
+        setUsernameStatus('idle')
       }
 
       setNotification({ type: 'success', message: 'Settings saved successfully!' })
@@ -178,19 +230,73 @@ export default function SettingsClient({ initialProfile }: Props) {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input 
-              label="Name" 
-              value={profile.name}
-              onChange={(e) => setProfile(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Your name"
-            />
-            <Input 
-              label="Username" 
-              value={profile.username}
-              onChange={(e) => setProfile(prev => ({ ...prev, username: e.target.value }))}
-              placeholder="username"
-            />
+          <Input 
+            label="Name" 
+            value={profile.name}
+            onChange={(e) => setProfile(prev => ({ ...prev, name: e.target.value }))}
+            placeholder="Your name"
+          />
+
+          {/* Username / Booking Link Section */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Your Booking Link
+            </label>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex items-center flex-1 rounded-xl border border-gray-300 dark:border-white/10 bg-gray-50 dark:bg-white/5 overflow-hidden">
+                <span className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-white/5 border-r border-gray-300 dark:border-white/10 whitespace-nowrap">
+                  meetwith.dev/
+                </span>
+                <input
+                  type="text"
+                  value={profile.username}
+                  onChange={(e) => {
+                    const value = e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '')
+                    setProfile(prev => ({ ...prev, username: value }))
+                  }}
+                  placeholder="your-username"
+                  className="flex-1 px-4 py-3 bg-transparent text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none text-sm min-w-0"
+                />
+              </div>
+              {/* Status indicator */}
+              <div className="flex items-center justify-center sm:w-auto">
+                {usernameStatus === 'checking' && (
+                  <div className="flex items-center gap-2 text-gray-500 text-sm px-3 py-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span className="hidden sm:inline">Checking...</span>
+                  </div>
+                )}
+                {usernameStatus === 'available' && (
+                  <div className="flex items-center gap-2 text-green-500 text-sm px-3 py-2">
+                    <Check className="w-4 h-4" />
+                    <span>Available</span>
+                  </div>
+                )}
+                {usernameStatus === 'taken' && (
+                  <div className="flex items-center gap-2 text-red-500 text-sm px-3 py-2">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>Taken</span>
+                  </div>
+                )}
+                {usernameStatus === 'invalid' && (
+                  <div className="flex items-center gap-2 text-amber-500 text-sm px-3 py-2">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>Invalid</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              3-30 characters. Lowercase letters, numbers, hyphens, and underscores only.
+            </p>
+            {profile.username && profile.username !== originalUsername && usernameStatus === 'available' && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-violet-500/10 border border-violet-500/20">
+                <LinkIcon className="w-4 h-4 text-violet-400" />
+                <span className="text-sm text-violet-400 dark:text-violet-300">
+                  Your new booking link: <span className="font-medium">meetwith.dev/{profile.username}</span>
+                </span>
+              </div>
+            )}
           </div>
 
           <Input 
@@ -201,7 +307,15 @@ export default function SettingsClient({ initialProfile }: Props) {
           />
 
           <div className="flex justify-end">
-            <Button onClick={() => saveSection('profile')} disabled={saving === 'profile'}>
+            <Button 
+              onClick={() => saveSection('profile')} 
+              disabled={
+                saving === 'profile' || 
+                usernameStatus === 'taken' || 
+                usernameStatus === 'invalid' ||
+                usernameStatus === 'checking'
+              }
+            >
               {saving === 'profile' ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
