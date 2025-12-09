@@ -28,9 +28,10 @@ export default async function BookingPage({ params }: BookingPageProps) {
   // Fetch user's active event types
   const { data: eventTypes } = await supabaseAdmin
     .from('event_types')
-    .select('id, slug, name, description, duration_minutes, color')
+    .select('id, slug, name, description, duration_minutes, color, sort_index')
     .eq('user_id', user.id)
     .eq('is_active', true)
+    .order('sort_index', { ascending: true })
     .order('created_at', { ascending: true })
 
   // Map to the format expected by BookingClient

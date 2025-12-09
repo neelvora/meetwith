@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Calendar, Clock, Video, Globe } from 'lucide-react'
 import { Card, CardContent, Button } from '@/components/ui'
 import TimeSlotPicker from './TimeSlotPicker'
@@ -41,6 +41,14 @@ export default function BookingClient({ username, user, eventTypes }: BookingCli
   const [bookingId, setBookingId] = useState<string | null>(null)
   const [meetLink, setMeetLink] = useState<string | null>(null)
   const [attendeeInfo, setAttendeeInfo] = useState({ name: '', email: '' })
+  const [displayTimezone, setDisplayTimezone] = useState(() => {
+    // Try to detect user's timezone
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone
+    } catch {
+      return 'America/Chicago'
+    }
+  })
 
   function handleSelectEventType(eventType: EventType) {
     setSelectedEventType(eventType)
@@ -49,14 +57,16 @@ export default function BookingClient({ username, user, eventTypes }: BookingCli
 
   function handleSelectSlot(slot: SelectedSlot) {
     setSelectedSlot(slot)
+    setDisplayTimezone(slot.timezone)
     setStep('enter-details')
   }
 
-  function handleBookingSuccess(booking: { id: string; meetLink?: string }) {
+  function handleBookingSuccess(booking: { id: string; meetLink?: string; attendeeName: string; attendeeEmail: string }) {
     setBookingId(booking.id)
     if (booking.meetLink) {
       setMeetLink(booking.meetLink)
     }
+    setAttendeeInfo({ name: booking.attendeeName, email: booking.attendeeEmail })
     setStep('confirmed')
   }
 
@@ -141,9 +151,7 @@ export default function BookingClient({ username, user, eventTypes }: BookingCli
             selectedSlot={selectedSlot}
             hostName={user.name}
             onBack={handleBack}
-            onSuccess={(booking) => {
-              handleBookingSuccess(booking)
-            }}
+            onSuccess={handleBookingSuccess}
           />
         )}
 
@@ -164,7 +172,7 @@ export default function BookingClient({ username, user, eventTypes }: BookingCli
           <div className="text-center mt-8 sm:mt-12 text-gray-500 text-sm">
             <p className="flex items-center justify-center gap-2">
               <Globe className="w-4 h-4" />
-              America/Chicago
+              {displayTimezone.replace(/_/g, ' ')}
             </p>
             <p className="mt-4">
               Powered by{' '}

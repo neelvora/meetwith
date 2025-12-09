@@ -18,7 +18,7 @@ interface BookingFormProps {
   }
   hostName: string
   onBack: () => void
-  onSuccess: (booking: { id: string; meetLink?: string }) => void
+  onSuccess: (booking: { id: string; meetLink?: string; attendeeName: string; attendeeEmail: string }) => void
 }
 
 export default function BookingForm({
@@ -62,7 +62,7 @@ export default function BookingForm({
         throw new Error(data.error || 'Failed to create booking')
       }
 
-      onSuccess({ id: data.bookingId, meetLink: data.meetLink })
+      onSuccess({ id: data.bookingId, meetLink: data.meetLink, attendeeName: name, attendeeEmail: email })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
