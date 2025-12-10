@@ -55,8 +55,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   // - Check if user has any available slots in the next N days
   // - Check if user has paused bookings
   // - Check user's availability settings
-  // For now, hard-code to true (available)
-  const available = true
+  // For now, hard-code (flip to test "Busy" on neelvora.com)
+  const available = false
 
   // Return response with caching headers
   return NextResponse.json(
