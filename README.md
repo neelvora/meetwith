@@ -102,6 +102,60 @@ APP_BASE_URL=https://www.meetwith.dev
    - View and cancel bookings from your dashboard
    - Cancelled bookings notify the attendee and remove calendar events
 
+## Public Status API
+
+MeetWith provides a public endpoint for external sites to fetch user availability status (e.g., for portfolio availability badges).
+
+### Endpoint
+
+```
+GET /api/public/status/[username]
+```
+
+### Response
+
+```json
+{
+  "available": true
+}
+```
+
+### Authentication
+
+- **Public mode**: If `MEETWITH_STATUS_TOKEN` is not set, the endpoint is fully public
+- **Protected mode**: If `MEETWITH_STATUS_TOKEN` is set, requests must include:
+  ```
+  Authorization: Bearer <token>
+  ```
+
+### Caching
+
+The endpoint includes caching headers for CDN optimization:
+- `s-maxage=60` - CDN caches for 1 minute
+- `stale-while-revalidate=300` - Serve stale content for up to 5 minutes while revalidating
+
+### Example Usage (neelvora.com)
+
+The portfolio site at neelvora.com fetches this endpoint to show real-time availability:
+
+```typescript
+// In neelvora.com
+const res = await fetch('https://www.meetwith.dev/api/public/status/neelbvora', {
+  headers: process.env.MEETWITH_STATUS_TOKEN 
+    ? { Authorization: `Bearer ${process.env.MEETWITH_STATUS_TOKEN}` }
+    : undefined,
+  next: { revalidate: 300 },
+})
+const { available } = await res.json()
+// Badge shows "Available" or "Busy" based on status
+```
+
+### Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `MEETWITH_STATUS_TOKEN` | Bearer token for protecting the status endpoint | No |
+
 ## Roadmap
 
 - [x] Google OAuth + Calendar sync
