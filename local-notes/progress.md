@@ -2,7 +2,7 @@
 
 ## January 2026
 
-### January 13 - Monitoring, Recurring Meetings
+### January 13 - Monitoring, Recurring Meetings, Payments
 
 #### Sentry Error Monitoring
 - Installed `@sentry/nextjs` package
@@ -39,6 +39,30 @@
   - Date-based ending (e.g., until Dec 31)
   - Indefinite (capped at 52 occurrences)
 - Added 17 tests for recurring booking logic
+
+#### Payment Integration (Stripe)
+- Created migration `014_add_payments.sql`:
+  - Extended event_types with payment fields (is_paid, price_cents, currency)
+  - New `payments` table for tracking transactions
+  - Stripe Connect fields on users table
+- Created `/lib/payments/stripe.ts`:
+  - Checkout session creation for paid bookings
+  - Connect account onboarding for hosts
+  - Refund processing
+  - Webhook signature verification
+  - Price formatting utility
+- Created `/api/stripe/connect`:
+  - GET: Check Stripe Connect status
+  - POST: Start onboarding flow
+  - DELETE: Disconnect Stripe account
+- Created `/api/stripe/webhook`:
+  - Handles checkout.session.completed
+  - Handles payment_intent.payment_failed
+  - Handles charge.refunded
+  - Handles account.updated (Connect status changes)
+- Added types: Payment, StripeConnectStatus
+- Extended EventType and Booking types with payment fields
+- Note: Requires STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET env vars
 
 ### January 13 - Reschedule, Rate Limiting, Webhooks
 

@@ -103,3 +103,19 @@
 - Trace sampling: 10%
 - Source maps hidden in production
 - Tunnel route: /monitoring (to avoid ad blockers)
+
+### Payment Integration (Stripe)
+- Using Stripe Connect for marketplace model
+- Hosts connect their Stripe Express accounts
+- Platform takes configurable fee (default 5%)
+- Payment flow:
+  1. Guest selects paid event type
+  2. Create pending booking + payment record
+  3. Redirect to Stripe Checkout
+  4. Webhook confirms payment → confirm booking → send emails
+- Stripe Connect Express for simplest onboarding
+- Refunds supported through admin action
+- Environment variables needed:
+  - STRIPE_SECRET_KEY
+  - STRIPE_WEBHOOK_SECRET  
+  - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
