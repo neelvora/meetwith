@@ -44,6 +44,9 @@ export default async function BookingsPage() {
       notes,
       created_at,
       follow_up_draft,
+      external_event_id,
+      external_status,
+      external_error,
       event_types (
         id,
         name,
@@ -68,6 +71,9 @@ export default async function BookingsPage() {
       notes: b.notes,
       createdAt: b.created_at,
       followUpDraft: b.follow_up_draft,
+      externalEventId: b.external_event_id,
+      externalStatus: b.external_status as 'created' | 'failed' | 'not_applicable' | null,
+      externalError: b.external_error,
       eventType: eventType ? {
         id: eventType.id,
         name: eventType.name,

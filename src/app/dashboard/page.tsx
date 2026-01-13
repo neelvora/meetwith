@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { Calendar, Clock, Link as LinkIcon, ArrowRight } from 'lucide-react'
+import { Calendar, Clock, Link as LinkIcon, ArrowRight, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui'
 import { getSetupStatus } from '@/lib/setup-status'
@@ -26,6 +26,7 @@ export default async function DashboardPage() {
     upcomingMeetings: 0,
     eventTypes: 0,
     totalBookings: 0,
+    syncIssues: 0,
   }
 
   if (supabaseAdmin && session.user?.email) {
@@ -63,11 +64,20 @@ export default async function DashboardPage() {
         .select('*', { count: 'exact', head: true })
         .eq('user_id', user.id)
 
+      // Count bookings with sync issues
+      const { count: syncIssueCount } = await supabaseAdmin
+        .from('bookings')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .neq('status', 'cancelled')
+        .or('external_status.eq.failed,external_status.eq.not_applicable')
+
       stats = {
         calendars: calendarCount || 0,
         upcomingMeetings: upcomingCount || 0,
         eventTypes: eventTypeCount || 0,
         totalBookings: totalBookingCount || 0,
+        syncIssues: syncIssueCount || 0,
       }
     }
   }
@@ -111,6 +121,30 @@ export default async function DashboardPage() {
       {/* Setup Checklist - Shows if setup incomplete */}
       {setupStatus && !setupStatus.isComplete && (
         <SetupChecklist status={setupStatus} />
+      )}
+
+      {/* Sync Issues Alert */}
+      {stats.syncIssues > 0 && (
+        <Link href="/dashboard/bookings?filter=sync-issues">
+          <Card variant="glass" className="mb-6 border-amber-500/30 hover:border-amber-500/50 transition-colors cursor-pointer">
+            <CardContent className="py-4">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-amber-400" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-amber-300">
+                    {stats.syncIssues} booking{stats.syncIssues !== 1 ? 's' : ''} not synced to Google Calendar
+                  </p>
+                  <p className="text-sm text-amber-400/70">
+                    These meetings won&apos;t appear on your calendar. Click to view and retry sync.
+                  </p>
+                </div>
+                <ArrowRight className="w-5 h-5 text-amber-400 shrink-0" />
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       )}
 
       {/* Quick Stats */}

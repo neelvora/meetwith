@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Calendar, Clock, Mail, User, Video, ExternalLink, X, Loader2, AlertTriangle, Filter, Copy, Check, Sparkles, FileText } from 'lucide-react'
+import { Calendar, Clock, Mail, User, Video, ExternalLink, X, Loader2, AlertTriangle, Filter, Copy, Check, Sparkles, FileText, RefreshCw, CalendarX } from 'lucide-react'
 import { Card, CardContent, Button } from '@/components/ui'
 
 interface Booking {
@@ -16,6 +16,9 @@ interface Booking {
   notes?: string | null
   createdAt: string
   followUpDraft?: string | null
+  externalEventId?: string | null
+  externalStatus?: 'created' | 'failed' | 'not_applicable' | null
+  externalError?: string | null
   eventType: {
     id: string
     name: string
@@ -28,7 +31,7 @@ interface BookingsClientProps {
   timezone: string
 }
 
-type FilterType = 'all' | 'upcoming' | 'past' | 'cancelled'
+type FilterType = 'all' | 'upcoming' | 'past' | 'cancelled' | 'sync-issues'
 
 export default function BookingsClient({ bookings: initialBookings, timezone }: BookingsClientProps) {
   const [bookings, setBookings] = useState(initialBookings)
@@ -38,6 +41,7 @@ export default function BookingsClient({ bookings: initialBookings, timezone }: 
   const [isLoading, setIsLoading] = useState(false)
   const [showFollowUpModal, setShowFollowUpModal] = useState<string | null>(null)
   const [copiedFollowUp, setCopiedFollowUp] = useState(false)
+  const [retryingId, setRetryingId] = useState<string | null>(null)
 
   const filteredBookings = useMemo(() => {
     const now = new Date()
@@ -50,6 +54,8 @@ export default function BookingsClient({ bookings: initialBookings, timezone }: 
           return b.status === 'confirmed' && bookingDate < now
         case 'cancelled':
           return b.status === 'cancelled'
+        case 'sync-issues':
+          return b.externalStatus === 'failed' || b.externalStatus === 'not_applicable'
         case 'all':
         default:
           return true
@@ -64,6 +70,7 @@ export default function BookingsClient({ bookings: initialBookings, timezone }: 
       upcoming: bookings.filter(b => b.status === 'confirmed' && new Date(b.startTime) >= now).length,
       past: bookings.filter(b => b.status === 'confirmed' && new Date(b.startTime) < now).length,
       cancelled: bookings.filter(b => b.status === 'cancelled').length,
+      'sync-issues': bookings.filter(b => b.externalStatus === 'failed' || b.externalStatus === 'not_applicable').length,
     }
   }, [bookings])
 
@@ -122,6 +129,38 @@ export default function BookingsClient({ bookings: initialBookings, timezone }: 
     }
   }
 
+  async function handleRetrySync(bookingId: string) {
+    setRetryingId(bookingId)
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}/retry-sync`, {
+        method: 'POST',
+      })
+
+      const data = await res.json()
+
+      if (res.ok && data.success) {
+        setBookings(prev => prev.map(b => 
+          b.id === bookingId 
+            ? { 
+                ...b, 
+                externalStatus: 'created' as const, 
+                externalError: null,
+                externalEventId: data.calendarEventId,
+                location: data.meetLink || b.location,
+              } 
+            : b
+        ))
+      } else {
+        alert(data.error || 'Failed to sync calendar event')
+      }
+    } catch (error) {
+      console.error('Error retrying sync:', error)
+      alert('Failed to sync calendar event')
+    } finally {
+      setRetryingId(null)
+    }
+  }
+
   function isPast(dateStr: string): boolean {
     return new Date(dateStr) < new Date()
   }
@@ -138,20 +177,24 @@ export default function BookingsClient({ bookings: initialBookings, timezone }: 
       {/* Filter Tabs */}
       <div className="flex flex-wrap gap-2 mb-6">
         {([
-          { key: 'upcoming', label: 'Upcoming' },
-          { key: 'past', label: 'Past' },
-          { key: 'cancelled', label: 'Cancelled' },
-          { key: 'all', label: 'All' },
-        ] as const).map(({ key, label }) => (
+          { key: 'upcoming' as const, label: 'Upcoming', highlight: false },
+          { key: 'past' as const, label: 'Past', highlight: false },
+          { key: 'cancelled' as const, label: 'Cancelled', highlight: false },
+          { key: 'sync-issues' as const, label: 'Sync Issues', highlight: true },
+          { key: 'all' as const, label: 'All', highlight: false },
+        ]).map(({ key, label, highlight }) => (
           <button
             key={key}
             onClick={() => setFilter(key)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               filter === key
-                ? 'bg-violet-500 text-white'
-                : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white'
+                ? key === 'sync-issues' ? 'bg-amber-500 text-white' : 'bg-violet-500 text-white'
+                : highlight && filterCounts[key] > 0
+                  ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30'
+                  : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
+            {key === 'sync-issues' && filterCounts[key] > 0 && <CalendarX className="w-3.5 h-3.5 inline mr-1.5" />}
             {label}
             <span className={`ml-2 px-1.5 py-0.5 rounded text-xs ${
               filter === key ? 'bg-white/20' : 'bg-white/10'
@@ -194,12 +237,15 @@ export default function BookingsClient({ bookings: initialBookings, timezone }: 
               {filter === 'upcoming' ? 'No upcoming bookings' :
                filter === 'past' ? 'No past bookings' :
                filter === 'cancelled' ? 'No cancelled bookings' :
+               filter === 'sync-issues' ? 'No sync issues' :
                'No bookings yet'}
             </h3>
             <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
               {filter === 'upcoming' 
                 ? 'When someone books a meeting with you, it will appear here.'
-                : 'Try selecting a different filter.'}
+                : filter === 'sync-issues'
+                  ? 'All your bookings are synced to Google Calendar.'
+                  : 'Try selecting a different filter.'}
             </p>
           </CardContent>
         </Card>
@@ -208,14 +254,51 @@ export default function BookingsClient({ bookings: initialBookings, timezone }: 
           {filteredBookings.map((booking) => {
             const past = isPast(booking.startTime)
             const cancelled = booking.status === 'cancelled'
+            const hasSyncIssue = booking.externalStatus === 'failed' || booking.externalStatus === 'not_applicable'
             
             return (
               <Card 
                 key={booking.id} 
                 variant="glass" 
-                className={`transition-all ${cancelled ? 'opacity-60' : ''} ${!cancelled && !past ? 'hover:border-white/20' : ''}`}
+                className={`transition-all ${cancelled ? 'opacity-60' : ''} ${hasSyncIssue && !cancelled ? 'border-amber-500/30' : ''} ${!cancelled && !past ? 'hover:border-white/20' : ''}`}
               >
                 <CardContent className="p-4 sm:p-6">
+                  {/* Sync Issue Banner */}
+                  {hasSyncIssue && !cancelled && (
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 mb-4">
+                      <CalendarX className="w-5 h-5 text-amber-400 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-amber-300">
+                          {booking.externalStatus === 'not_applicable' 
+                            ? 'Not synced to Google Calendar'
+                            : 'Failed to sync to Google Calendar'}
+                        </p>
+                        {booking.externalError && (
+                          <p className="text-xs text-amber-400/70 mt-0.5 truncate">{booking.externalError}</p>
+                        )}
+                        {booking.externalStatus === 'not_applicable' && (
+                          <p className="text-xs text-amber-400/70 mt-0.5">No default calendar was configured when this booking was created.</p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleRetrySync(booking.id)}
+                        disabled={retryingId === booking.id}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors disabled:opacity-50 shrink-0"
+                      >
+                        {retryingId === booking.id ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Syncing...
+                          </>
+                        ) : (
+                          <>
+                            <RefreshCw className="w-4 h-4" />
+                            Retry Sync
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3">
