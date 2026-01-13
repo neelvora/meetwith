@@ -18,7 +18,15 @@
 - [ ] Set up Vercel Cron for reminder emails (every 15 min)
 - [ ] Run migration 009_add_user_settings.sql
 - [ ] Run migration 010_add_reminder_support.sql
+- [ ] Run migration 011_add_reschedule_token.sql
+- [ ] Run migration 012_add_webhooks.sql  
+- [ ] Run migration 013_add_recurring_meetings.sql
+- [ ] Run migration 014_add_payments.sql
 - [ ] Add CRON_SECRET to environment variables for cron auth
+- [ ] Add SENTRY_DSN to environment variables for error monitoring
+- [ ] Add STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET for payments
+- [ ] Add OUTLOOK_CLIENT_ID, OUTLOOK_CLIENT_SECRET for Outlook calendar
+- [ ] Configure Stripe webhook endpoint in Stripe Dashboard
 
 ## Resolved
 - Calendar sync failures now visible and retryable from dashboard
@@ -43,3 +51,16 @@
 
 ## In Progress
 - None currently
+
+## Local Commits Ready to Push (7 total)
+1. `feat: add Sentry error monitoring` - Error tracking with Sentry
+2. `feat: add recurring meetings support` - Series bookings with 17 tests
+3. `docs: update local notes with Sentry and recurring meetings progress`
+4. `feat: scaffold Stripe payment integration` - Paid event types
+5. `docs: update notes with payment integration details`
+6. `feat: scaffold Outlook and iCloud calendar integrations`
+7. `docs: update notes with calendar integration details`
+
+## Test Status
+- All 155 tests passing
+- Build compiles successfully
