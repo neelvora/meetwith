@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { deleteCalendarEvent } from '@/lib/calendar/googleClient'
 import { sendCancellationEmails } from '@/lib/email'
 import { checkRateLimit, getClientId, RATE_LIMITS } from '@/lib/rateLimit'
+import { sendWebhook, buildBookingCancelledPayload } from '@/lib/webhooks'
 import type { CalendarAccount } from '@/types'
 
 export async function POST(request: NextRequest) {
@@ -110,6 +111,18 @@ export async function POST(request: NextRequest) {
       timezone: booking.users?.timezone || 'America/Chicago',
       cancelledBy: 'attendee',
     })
+
+    // Send webhook notification (async, non-blocking)
+    if (booking.users?.id) {
+      sendWebhook(booking.users.id, 'booking.cancelled', buildBookingCancelledPayload({
+        id: booking.id,
+        attendee_name: booking.attendee_name,
+        attendee_email: booking.attendee_email,
+        start_time: booking.start_time,
+        end_time: booking.end_time,
+        cancelled_by: 'attendee',
+      })).catch(err => console.error('Webhook error:', err))
+    }
 
     return NextResponse.json({ success: true, message: 'Booking cancelled successfully' })
   } catch (error) {

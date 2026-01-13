@@ -5,6 +5,7 @@ import { createCalendarEvent, deleteCalendarEvent, updateCalendarEvent } from '@
 import { sendRescheduleEmails } from '@/lib/email'
 import { validateSlot } from '@/lib/availability/validateSlot'
 import { checkRateLimit, getClientId, RATE_LIMITS } from '@/lib/rateLimit'
+import { sendWebhook, buildBookingRescheduledPayload } from '@/lib/webhooks'
 import type { CalendarAccount, AvailabilityRule } from '@/types'
 
 // GET: Validate reschedule token and return booking info
@@ -304,6 +305,20 @@ export async function POST(request: NextRequest) {
       meetLink: newMeetLink || undefined,
       bookingId: booking.id,
     })
+
+    // Send webhook notification (async, non-blocking)
+    const hostId = booking.users?.id || booking.user_id
+    if (hostId) {
+      sendWebhook(hostId, 'booking.rescheduled', buildBookingRescheduledPayload({
+        id: booking.id,
+        attendee_name: booking.attendee_name,
+        attendee_email: booking.attendee_email,
+        old_start_time: booking.start_time,
+        old_end_time: booking.end_time,
+        new_start_time: newStartTime,
+        new_end_time: newEndTime,
+      })).catch(err => console.error('Webhook error:', err))
+    }
 
     return NextResponse.json({
       success: true,

@@ -11,8 +11,8 @@ import { checkRateLimit, getClientId, RATE_LIMITS } from '@/lib/rateLimit'
 import { generateAndStoreFollowUp } from '@/lib/ai/followUp'
 import { validateBookingRequest } from '@/lib/booking/validateRequest'
 import { ensureAvailabilityRules } from '@/lib/availability/defaults'
+import { sendWebhook, buildBookingCreatedPayload } from '@/lib/webhooks'
 import type { CalendarAccount, AvailabilityRule } from '@/types'
-
 interface BookingResponse {
   success: boolean
   bookingId: string
@@ -383,6 +383,21 @@ Manage this booking at https://www.meetwith.dev/dashboard
           attendeeName,
           meetingTitle: eventType?.name || 'Meeting',
         }).catch(err => console.error('Follow-up generation error:', err))
+      }
+
+      // 9. Send webhook notifications (async, non-blocking)
+      if (booking?.id) {
+        sendWebhook(user.id, 'booking.created', buildBookingCreatedPayload({
+          id: booking.id,
+          attendee_name: attendeeName,
+          attendee_email: attendeeEmail,
+          start_time: startTime,
+          end_time: endTime,
+          duration_minutes: durationMinutes,
+          event_type_name: eventType?.name,
+          location: meetLink,
+          notes: notes || undefined,
+        })).catch(err => console.error('Webhook error:', err))
       }
     }
 
