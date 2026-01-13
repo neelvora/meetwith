@@ -250,7 +250,7 @@ export async function createCalendarEvent(
 
   if (error) {
     console.error('Error creating calendar event:', error)
-    return null
+    throw new Error(error)
   }
 
   return data

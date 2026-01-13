@@ -130,7 +130,7 @@ Manage this booking at https://www.meetwith.dev/dashboard
           .eq('id', id)
 
         return NextResponse.json({ 
-          error: 'Calendar event creation failed. Check your calendar permissions.' 
+          error: 'Calendar API returned empty response. Try reconnecting your calendar.' 
         }, { status: 500 })
       }
 

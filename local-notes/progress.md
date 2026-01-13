@@ -1,7 +1,13 @@
 # MeetWith - Progress (Last 6 Months)
 
 ## January 2026
-- No commits yet this month
+
+### January 13
+- Calendar sync issue tracking and retry functionality
+- Dashboard shows "Sync Issues" filter tab for bookings that failed to sync
+- New `/api/bookings/[id]/retry-sync` endpoint to re-attempt calendar event creation
+- Alert banner on dashboard home when sync issues exist
+- Tracks `external_status`, `external_error` in booking records
 
 ## December 2025
 

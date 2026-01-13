@@ -56,3 +56,9 @@
 ### Data Model
 - 8 migrations applied on top of initial schema
 - Includes: notification prefs, cancellation tokens, sort index, analytics, follow-up drafts, external status, password auth
+
+### Calendar Sync Strategy
+- Booking creation requires `write_to_calendar = true` on a calendar account
+- If no write calendar configured, booking succeeds but `external_status = 'not_applicable'`
+- If calendar API fails, booking succeeds but `external_status = 'failed'` with `external_error`
+- Retry mechanism allows manual re-sync from dashboard

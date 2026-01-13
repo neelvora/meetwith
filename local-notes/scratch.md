@@ -13,3 +13,7 @@
 - Multi-account OAuth can be complex with edge cases
 - Calendar permission detection depends on Google API behavior
 - Real-time busy status adds latency to status endpoint
+
+## Resolved
+- Calendar sync failures now visible and retryable from dashboard
+- Root cause of missing calendar events: no `write_to_calendar` flag set on any calendar account

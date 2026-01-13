@@ -29,6 +29,11 @@
 - Multi-account OAuth user lookup
 - Session with database UUID
 
+## Calendar Sync Improvements (Jan 2026)
+- Sync issue tracking in bookings table
+- Retry sync API endpoint
+- Dashboard UI for surfacing and fixing sync failures
+
 ## Initial Build (Dec 7-10)
 - Core scaffolding
 - Google Calendar integration
