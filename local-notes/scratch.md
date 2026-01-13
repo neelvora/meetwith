@@ -20,4 +20,6 @@
 
 ## In Progress
 - Investigating calendar sync failure for neelbvora@gmail.com
-- Improved error surfacing to show actual Google API error (deployed Jan 13)
+- Root cause: refresh_token was null - callback was overwriting with null on reconnect
+- Fix deployed: preserve existing refresh_token if Google doesn't return new one
+- User action needed: revoke app at myaccount.google.com/permissions and reconnect

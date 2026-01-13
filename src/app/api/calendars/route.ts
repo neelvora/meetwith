@@ -140,13 +140,29 @@ export async function PATCH(request: NextRequest) {
     updates.write_to_calendar = writeToCalendar
   }
 
-  const { data, error } = await supabaseAdmin
+  // First try exact match on calendar_id
+  let { data, error } = await supabaseAdmin
     .from('calendar_accounts')
     .update(updates)
     .eq('user_id', session.user.id)
     .eq('calendar_id', calendarId)
     .select()
     .single()
+
+  // If no match, check if calendarId is an email matching account_email (Google uses email as calendar ID for primary)
+  if (error?.code === 'PGRST116' || !data) {
+    const result = await supabaseAdmin
+      .from('calendar_accounts')
+      .update({ ...updates, calendar_id: calendarId })
+      .eq('user_id', session.user.id)
+      .eq('account_email', calendarId)
+      .eq('calendar_id', 'primary')
+      .select()
+      .single()
+    
+    data = result.data
+    error = result.error
+  }
 
   if (error) {
     console.error('Error updating calendar:', error)
