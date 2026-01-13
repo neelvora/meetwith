@@ -50,6 +50,11 @@ export interface EventType {
   duration_minutes: number
   color: string
   is_active: boolean
+  // Payment fields
+  is_paid?: boolean
+  price_cents?: number
+  currency?: string
+  stripe_price_id?: string
   created_at: string
 }
 
@@ -69,6 +74,9 @@ export interface Booking {
   external_error?: string
   external_retry_count?: number
   notes?: string
+  // Payment fields
+  payment_id?: string
+  payment_status?: 'pending' | 'succeeded' | 'failed' | 'refunded'
   created_at: string
 }
 
@@ -130,4 +138,32 @@ export interface Webhook {
   updated_at?: string
   last_triggered_at?: string
   failure_count?: number
+}
+
+// Payment types
+export interface Payment {
+  id: string
+  user_id: string
+  booking_id?: string
+  event_type_id?: string
+  stripe_payment_intent_id?: string
+  stripe_checkout_session_id?: string
+  stripe_customer_id?: string
+  amount_cents: number
+  currency: string
+  status: 'pending' | 'succeeded' | 'failed' | 'refunded'
+  payer_email?: string
+  payer_name?: string
+  created_at: string
+  completed_at?: string
+  refunded_at?: string
+}
+
+export interface StripeConnectStatus {
+  connected: boolean
+  accountId: string | null
+  status: 'pending' | 'active' | 'restricted' | null
+  onboardingCompleted: boolean
+  chargesEnabled: boolean
+  payoutsEnabled: boolean
 }
