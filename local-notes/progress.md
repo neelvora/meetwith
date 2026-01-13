@@ -2,6 +2,44 @@
 
 ## January 2026
 
+### January 13 - Monitoring, Recurring Meetings
+
+#### Sentry Error Monitoring
+- Installed `@sentry/nextjs` package
+- Created Sentry configuration files:
+  - `sentry.server.config.ts` - Server-side monitoring
+  - `sentry.client.config.ts` - Client-side monitoring with session replay
+  - `sentry.edge.config.ts` - Edge runtime monitoring
+- Updated `next.config.ts` with conditional Sentry wrapper
+- Added global error page (`global-error.tsx`) with Sentry capture
+- Added 404 not-found page with styled UI
+- Environment variables needed: SENTRY_DSN, SENTRY_ORG, SENTRY_PROJECT
+
+#### Recurring Meetings Feature
+- Created migration `013_add_recurring_meetings.sql`:
+  - Extended event_types with recurrence fields
+  - New `booking_series` table for tracking recurring bookings
+  - Added series_id and series_index to bookings
+- Added types: RecurrenceConfig, BookingSeries, RecurringBookingRequest
+- Created `/lib/booking/recurring.ts` with:
+  - `generateRecurringSlots()` - Generate all slots for a series
+  - `validateRecurrenceConfig()` - Validate recurrence settings
+  - `describeRecurrence()` - Human-readable recurrence description
+- Created `/api/bookings/recurring` endpoint:
+  - POST creates a booking series with all individual bookings
+  - GET retrieves a series and its bookings
+  - Validates all slots before creating
+  - Creates calendar events for each occurrence
+  - Sends single confirmation email for the series
+  - Fires webhooks for each booking created
+- Supports:
+  - Daily, weekly, biweekly, monthly patterns
+  - Weekly with specific days (e.g., Mon/Wed/Fri)
+  - Count-based ending (e.g., 10 occurrences)
+  - Date-based ending (e.g., until Dec 31)
+  - Indefinite (capped at 52 occurrences)
+- Added 17 tests for recurring booking logic
+
 ### January 13 - Reschedule, Rate Limiting, Webhooks
 
 #### Test Suite Fixes

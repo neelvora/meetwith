@@ -76,3 +76,30 @@
 - Retry mechanism allows manual re-sync from dashboard
 - Calendar ID matching handles Google's inconsistency (email vs 'primary')
 - OAuth reconnect preserves existing refresh_token if Google doesn't return a new one
+
+### Webhook System
+- Users can configure webhooks in settings
+- Events: booking.created, booking.cancelled, booking.rescheduled
+- HMAC-SHA256 signature verification (X-MeetWith-Signature header)
+- Non-blocking delivery (fire and forget, 10s timeout)
+- Webhook logs track delivery success/failure
+
+### Recurring Meetings
+- Event types can be configured as recurring
+- Recurrence patterns: daily, weekly (with specific days), biweekly, monthly
+- End conditions: count-based (max 52), date-based, or indefinite
+- Creating a recurring booking:
+  1. Validates all slots are available upfront
+  2. Creates a booking_series record
+  3. Creates individual bookings linked via series_id
+  4. Creates calendar events for each occurrence
+  5. Sends single confirmation email for the series
+- Each booking in series has series_index (1-based)
+
+### Error Monitoring (Sentry)
+- Conditional loading: only active when SENTRY_DSN env var is set
+- Server, client, and edge runtime coverage
+- Session replay: 1% sampling (100% on error)
+- Trace sampling: 10%
+- Source maps hidden in production
+- Tunnel route: /monitoring (to avoid ad blockers)
