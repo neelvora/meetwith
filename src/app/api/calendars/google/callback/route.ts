@@ -110,31 +110,37 @@ export async function GET(request: NextRequest) {
     // If no write calendar exists, this will be set as the default
     const shouldSetAsDefault = !existingWriteCalendar
 
+    // Build update object - only include refresh_token if we got a new one
+    // Google only returns refresh_token on first auth or when prompt=consent is used
+    // But sometimes it still doesn't return one, so preserve existing token
+    const accountData: Record<string, unknown> = {
+      user_id: dbUser.id,
+      provider: 'google',
+      provider_account_id: userInfo.id || userInfo.email,
+      account_email: userInfo.email,
+      access_token: tokens.access_token,
+      expires_at: tokens.expires_in 
+        ? Math.floor(Date.now() / 1000) + tokens.expires_in 
+        : null,
+      scope: tokens.scope || null,
+      calendar_id: 'primary',
+      calendar_name: `${userInfo.email} - Primary`,
+      is_primary: false,
+      include_in_availability: true,
+      write_to_calendar: shouldSetAsDefault,
+    }
+
+    // Only set refresh_token if we got one - otherwise keep existing
+    if (tokens.refresh_token) {
+      accountData.refresh_token = tokens.refresh_token
+    }
+
     // Store the calendar account in database using the DB user ID
     const { error: upsertError } = await supabaseAdmin
       .from('calendar_accounts')
-      .upsert(
-        {
-          user_id: dbUser.id, // Use the UUID from our database
-          provider: 'google',
-          provider_account_id: userInfo.id || userInfo.email,
-          account_email: userInfo.email,
-          access_token: tokens.access_token,
-          refresh_token: tokens.refresh_token || null,
-          expires_at: tokens.expires_in 
-            ? Math.floor(Date.now() / 1000) + tokens.expires_in 
-            : null,
-          scope: tokens.scope || null,
-          calendar_id: 'primary',
-          calendar_name: `${userInfo.email} - Primary`,
-          is_primary: false,
-          include_in_availability: true,
-          write_to_calendar: shouldSetAsDefault, // Auto-set first calendar as default
-        },
-        {
-          onConflict: 'user_id,provider,provider_account_id,calendar_id',
-        }
-      )
+      .upsert(accountData, {
+        onConflict: 'user_id,provider,provider_account_id,calendar_id',
+      })
 
     if (upsertError) {
       console.error('Error storing calendar account:', upsertError)

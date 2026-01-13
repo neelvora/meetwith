@@ -17,3 +17,7 @@
 ## Resolved
 - Calendar sync failures now visible and retryable from dashboard
 - Root cause of missing calendar events: no `write_to_calendar` flag set on any calendar account
+
+## In Progress
+- Investigating calendar sync failure for neelbvora@gmail.com
+- Improved error surfacing to show actual Google API error (deployed Jan 13)
