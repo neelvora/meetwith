@@ -257,6 +257,69 @@ export async function createCalendarEvent(
 }
 
 /**
+ * Update an existing calendar event
+ */
+export async function updateCalendarEvent(
+  account: CalendarAccount,
+  calendarId: string,
+  eventId: string,
+  updates: {
+    summary?: string
+    description?: string
+    start?: Date
+    end?: Date
+    attendees?: string[]
+  }
+): Promise<GoogleCalendarEvent | null> {
+  // First, get the existing event to preserve data
+  const { data: existingEvent, error: getError } = await googleApiRequest<GoogleCalendarEvent>(
+    account,
+    `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`,
+    { method: 'GET' }
+  )
+
+  if (getError || !existingEvent) {
+    console.error('Error fetching event for update:', getError)
+    return null
+  }
+
+  // Merge updates with existing event
+  const eventData: Record<string, unknown> = {
+    summary: updates.summary || existingEvent.summary,
+    description: updates.description || existingEvent.description,
+  }
+
+  if (updates.start) {
+    eventData.start = { dateTime: updates.start.toISOString(), timeZone: 'UTC' }
+  }
+
+  if (updates.end) {
+    eventData.end = { dateTime: updates.end.toISOString(), timeZone: 'UTC' }
+  }
+
+  if (updates.attendees) {
+    eventData.attendees = updates.attendees.map(email => ({ email }))
+  }
+
+  const { data, error } = await googleApiRequest<GoogleCalendarEvent>(
+    account,
+    `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(eventData),
+      headers: { 'Content-Type': 'application/json' },
+    }
+  )
+
+  if (error) {
+    console.error('Error updating calendar event:', error)
+    return null
+  }
+
+  return data
+}
+
+/**
  * Delete an event from a calendar
  */
 export async function deleteCalendarEvent(

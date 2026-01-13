@@ -295,6 +295,7 @@ Manage this booking at https://www.meetwith.dev/dashboard
 
       // 5. Store the booking in database
       const cancellationToken = randomBytes(32).toString('hex')
+      const rescheduleToken = randomBytes(32).toString('hex')
       const { data: booking, error: bookingError } = await supabaseAdmin
         .from('bookings')
         .insert({
@@ -311,6 +312,7 @@ Manage this booking at https://www.meetwith.dev/dashboard
           notes: notes || null,
           status: 'confirmed',
           cancellation_token: cancellationToken,
+          reschedule_token: rescheduleToken,
           external_status: externalStatus,
           external_error: externalError || null,
           external_retry_count: 0,

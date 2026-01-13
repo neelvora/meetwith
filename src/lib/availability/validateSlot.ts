@@ -8,6 +8,7 @@ export interface ValidateSlotParams {
   availabilityRules: AvailabilityRule[]
   timezone: string
   minNoticeHours?: number
+  excludeBookingId?: string // For reschedule - exclude current booking from conflict check
 }
 
 export interface ValidationResult {
@@ -26,6 +27,7 @@ export async function validateSlot({
   availabilityRules,
   timezone,
   minNoticeHours = 0,
+  excludeBookingId,
 }: ValidateSlotParams): Promise<ValidationResult> {
   const now = new Date()
 

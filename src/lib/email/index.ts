@@ -636,3 +636,280 @@ export async function sendReminderEmail(details: ReminderDetails): Promise<boole
     return false
   }
 }
+
+// ============================================
+// RESCHEDULE EMAILS
+// ============================================
+
+interface RescheduleDetails {
+  hostName: string
+  hostEmail: string
+  attendeeName: string
+  attendeeEmail: string
+  eventName: string
+  oldStartTime: Date
+  oldEndTime: Date
+  newStartTime: Date
+  newEndTime: Date
+  timezone: string
+  meetLink?: string
+  bookingId: string
+}
+
+/**
+ * Send reschedule notification to attendee
+ */
+export async function sendRescheduleToAttendee(details: RescheduleDetails): Promise<boolean> {
+  if (!resend) {
+    console.log('Email skipped (Resend not configured):', details.attendeeEmail)
+    return false
+  }
+
+  try {
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: details.attendeeEmail,
+      subject: `Rescheduled: ${details.eventName} with ${details.hostName}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Meeting Rescheduled</title>
+          </head>
+          <body style="margin: 0; padding: 0; background-color: #0f0f0f; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+              <tr>
+                <td>
+                  <!-- Logo -->
+                  <div style="text-align: center; margin-bottom: 32px;">
+                    <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #ffffff;">
+                      <span style="color: #8b5cf6;">Meet</span>With
+                    </h1>
+                  </div>
+                  
+                  <!-- Reschedule Badge -->
+                  <div style="text-align: center; margin-bottom: 24px;">
+                    <div style="display: inline-block; padding: 8px 16px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.1)); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 9999px;">
+                      <span style="color: #3b82f6; font-size: 14px; font-weight: 600;">📅 Meeting Rescheduled</span>
+                    </div>
+                  </div>
+                  
+                  <!-- Main Content -->
+                  <div style="background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 32px;">
+                    <h2 style="margin: 0 0 24px 0; font-size: 20px; color: #ffffff; text-align: center;">
+                      ${details.eventName}
+                    </h2>
+                    
+                    <!-- Old Time (crossed out) -->
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                      <p style="margin: 0; color: #9ca3af; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Previous Time</p>
+                      <p style="margin: 8px 0 0 0; color: #ef4444; font-size: 14px; text-decoration: line-through;">
+                        ${formatDateTime(details.oldStartTime, details.timezone)}
+                      </p>
+                    </div>
+                    
+                    <!-- New Time -->
+                    <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                      <p style="margin: 0; color: #9ca3af; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">New Time</p>
+                      <p style="margin: 8px 0 0 0; color: #22c55e; font-size: 16px; font-weight: 600;">
+                        ${formatDateTime(details.newStartTime, details.timezone)}
+                      </p>
+                    </div>
+                    
+                    <!-- Meeting Details -->
+                    <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                      <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td style="padding: 8px 0;">
+                            <span style="color: #9ca3af; font-size: 14px;">👤 With</span>
+                          </td>
+                          <td style="padding: 8px 0; text-align: right;">
+                            <span style="color: #ffffff; font-size: 14px; font-weight: 500;">${details.hostName}</span>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 8px 0;">
+                            <span style="color: #9ca3af; font-size: 14px;">⏱️ Duration</span>
+                          </td>
+                          <td style="padding: 8px 0; text-align: right;">
+                            <span style="color: #ffffff; font-size: 14px;">${Math.round((details.newEndTime.getTime() - details.newStartTime.getTime()) / 60000)} minutes</span>
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+                    
+                    ${details.meetLink ? `
+                    <!-- Join Meeting Button -->
+                    <div style="text-align: center;">
+                      <a href="${details.meetLink}" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #ffffff; text-decoration: none; font-weight: 600; font-size: 16px; border-radius: 12px;">
+                        Join Google Meet →
+                      </a>
+                    </div>
+                    ` : ''}
+                  </div>
+                  
+                  <!-- Footer -->
+                  <div style="text-align: center; margin-top: 32px;">
+                    <p style="color: #6b7280; font-size: 12px; margin: 0;">
+                      Your calendar has been updated automatically.
+                    </p>
+                    <p style="color: #4b5563; font-size: 11px; margin-top: 16px;">
+                      Powered by <a href="https://meetwith.dev" style="color: #8b5cf6; text-decoration: none;">MeetWith</a>
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
+      `,
+    })
+
+    if (error) {
+      console.error('Error sending reschedule email to attendee:', error)
+      return false
+    }
+
+    return true
+  } catch (error) {
+    console.error('Error sending reschedule email to attendee:', error)
+    return false
+  }
+}
+
+/**
+ * Send reschedule notification to host
+ */
+export async function sendRescheduleToHost(details: RescheduleDetails): Promise<boolean> {
+  if (!resend) {
+    console.log('Email skipped (Resend not configured):', details.hostEmail)
+    return false
+  }
+
+  try {
+    const { error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: details.hostEmail,
+      subject: `Meeting Rescheduled: ${details.eventName} with ${details.attendeeName}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Meeting Rescheduled</title>
+          </head>
+          <body style="margin: 0; padding: 0; background-color: #0f0f0f; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+              <tr>
+                <td>
+                  <!-- Logo -->
+                  <div style="text-align: center; margin-bottom: 32px;">
+                    <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #ffffff;">
+                      <span style="color: #8b5cf6;">Meet</span>With
+                    </h1>
+                  </div>
+                  
+                  <!-- Reschedule Badge -->
+                  <div style="text-align: center; margin-bottom: 24px;">
+                    <div style="display: inline-block; padding: 8px 16px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.1)); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 9999px;">
+                      <span style="color: #3b82f6; font-size: 14px; font-weight: 600;">📅 Meeting Rescheduled by Guest</span>
+                    </div>
+                  </div>
+                  
+                  <!-- Main Content -->
+                  <div style="background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; padding: 32px;">
+                    <h2 style="margin: 0 0 8px 0; font-size: 20px; color: #ffffff; text-align: center;">
+                      ${details.eventName}
+                    </h2>
+                    <p style="margin: 0 0 24px 0; color: #9ca3af; font-size: 14px; text-align: center;">
+                      ${details.attendeeName} has rescheduled this meeting
+                    </p>
+                    
+                    <!-- Old Time (crossed out) -->
+                    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 16px;">
+                      <p style="margin: 0; color: #9ca3af; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Previous Time</p>
+                      <p style="margin: 8px 0 0 0; color: #ef4444; font-size: 14px; text-decoration: line-through;">
+                        ${formatDateTime(details.oldStartTime, details.timezone)}
+                      </p>
+                    </div>
+                    
+                    <!-- New Time -->
+                    <div style="background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.2); border-radius: 12px; padding: 16px; margin-bottom: 24px;">
+                      <p style="margin: 0; color: #9ca3af; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">New Time</p>
+                      <p style="margin: 8px 0 0 0; color: #22c55e; font-size: 16px; font-weight: 600;">
+                        ${formatDateTime(details.newStartTime, details.timezone)}
+                      </p>
+                    </div>
+                    
+                    <!-- Attendee Details -->
+                    <div style="background: rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 20px;">
+                      <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                          <td style="padding: 8px 0;">
+                            <span style="color: #9ca3af; font-size: 14px;">👤 Guest</span>
+                          </td>
+                          <td style="padding: 8px 0; text-align: right;">
+                            <span style="color: #ffffff; font-size: 14px; font-weight: 500;">${details.attendeeName}</span>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 8px 0;">
+                            <span style="color: #9ca3af; font-size: 14px;">✉️ Email</span>
+                          </td>
+                          <td style="padding: 8px 0; text-align: right;">
+                            <a href="mailto:${details.attendeeEmail}" style="color: #8b5cf6; font-size: 14px; text-decoration: none;">${details.attendeeEmail}</a>
+                          </td>
+                        </tr>
+                      </table>
+                    </div>
+                  </div>
+                  
+                  <!-- Footer -->
+                  <div style="text-align: center; margin-top: 32px;">
+                    <p style="color: #6b7280; font-size: 12px; margin: 0;">
+                      Your calendar has been updated automatically.
+                    </p>
+                    <p style="color: #4b5563; font-size: 11px; margin-top: 16px;">
+                      <a href="https://meetwith.dev/dashboard" style="color: #8b5cf6; text-decoration: none;">View in Dashboard</a>
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </body>
+        </html>
+      `,
+    })
+
+    if (error) {
+      console.error('Error sending reschedule email to host:', error)
+      return false
+    }
+
+    return true
+  } catch (error) {
+    console.error('Error sending reschedule email to host:', error)
+    return false
+  }
+}
+
+/**
+ * Send reschedule notification emails to both parties
+ */
+export async function sendRescheduleEmails(details: RescheduleDetails): Promise<{
+  attendeeEmail: boolean
+  hostEmail: boolean
+}> {
+  const [attendeeResult, hostResult] = await Promise.all([
+    sendRescheduleToAttendee(details),
+    sendRescheduleToHost(details),
+  ])
+
+  return {
+    attendeeEmail: attendeeResult,
+    hostEmail: hostResult,
+  }
+}
