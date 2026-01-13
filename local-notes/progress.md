@@ -2,6 +2,45 @@
 
 ## January 2026
 
+### January 13 - Reschedule, Rate Limiting, Webhooks
+
+#### Test Suite Fixes
+- Fixed 11 pre-existing test failures caused by hardcoded December 2025 dates
+- Added helper functions (`getNextWeekday`, `toEndOfDay`) for dynamic future dates
+- All 138 tests now pass consistently
+
+#### Reschedule Functionality
+- Created `/api/bookings/reschedule` endpoint (GET to validate token, POST to reschedule)
+- Migration `011_add_reschedule_token.sql` adds:
+  - `reschedule_token` column for guest self-service
+  - `reschedule_count` to track reschedules (max 3)
+  - `rescheduled_from_id` for history tracking
+- Added `updateCalendarEvent()` function to modify existing calendar events
+- Created beautiful HTML reschedule email templates (attendee + host)
+- Booking creation now generates both cancellation and reschedule tokens
+
+#### Rate Limiting for Public Endpoints
+- Added rate limiting to `/api/availability/slots` (30 requests/minute)
+- Added rate limiting to `/api/bookings/cancel` (10 requests/minute)
+- Added rate limiting to `/api/bookings/reschedule` (10 requests/minute)
+- Uses existing `checkRateLimit` infrastructure
+
+#### Webhooks System
+- Migration `012_add_webhooks.sql` creates:
+  - `webhooks` table (user_id, name, url, events, secret, is_active)
+  - `webhook_logs` table (webhook_id, event_type, payload, response, success)
+- Created `/lib/webhooks.ts` with:
+  - HMAC-SHA256 signature generation for payload verification
+  - Non-blocking delivery with 10s timeout
+  - Event payload builders for booking.created/cancelled/rescheduled
+- Created `/api/settings/webhooks` for CRUD operations
+- Integrated webhooks into:
+  - Booking creation flow
+  - Cancellation flow  
+  - Reschedule flow
+
+---
+
 ### January 14 - Feature Audit & Implementation Sprint
 - **Audit**: Scanned codebase for unimplemented features that were promised in UI
 - Implemented 6 missing features:

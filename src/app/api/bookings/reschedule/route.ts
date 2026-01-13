@@ -63,6 +63,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Maximum reschedule limit reached' }, { status: 400 })
   }
 
+  // Extract user data (Supabase returns as object for single join)
+  const userData = booking.users as unknown as { id: string; username: string; name: string; email: string; timezone: string } | null
+
   return NextResponse.json({
     booking: {
       id: booking.id,
@@ -76,9 +79,9 @@ export async function GET(request: NextRequest) {
     },
     eventType: booking.event_types,
     host: {
-      username: booking.users?.username,
-      name: booking.users?.name,
-      timezone: booking.users?.timezone,
+      username: userData?.username,
+      name: userData?.name,
+      timezone: userData?.timezone,
     },
   })
 }
@@ -134,7 +137,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Maximum reschedule limit reached' }, { status: 400 })
     }
 
-    const userId = booking.users?.id || booking.user_id
+    // Extract user data (Supabase returns as object for single join)
+    const userData = booking.users as unknown as { id: string; username: string; name: string; email: string; timezone: string } | null
+    const userId = userData?.id || booking.user_id
 
     // Validate the new slot is available
     const { data: availabilityRules } = await supabaseAdmin
@@ -189,7 +194,7 @@ export async function POST(request: NextRequest) {
       slotEnd: new Date(newEndTime),
       calendarAccounts: validAccounts,
       availabilityRules: validRules,
-      timezone: booking.users?.timezone || 'America/Chicago',
+      timezone: userData?.timezone || 'America/Chicago',
       minNoticeHours: settings?.min_notice || booking.event_types?.min_notice_hours || 0,
       excludeBookingId: booking.id, // Exclude the current booking from conflict check
     })
@@ -292,8 +297,8 @@ export async function POST(request: NextRequest) {
 
     // Send reschedule notification emails
     await sendRescheduleEmails({
-      hostName: booking.users?.name || 'Host',
-      hostEmail: booking.users?.email || '',
+      hostName: userData?.name || 'Host',
+      hostEmail: userData?.email || '',
       attendeeName: booking.attendee_name,
       attendeeEmail: booking.attendee_email,
       eventName: booking.event_types?.name || 'Meeting',
@@ -301,13 +306,13 @@ export async function POST(request: NextRequest) {
       oldEndTime: new Date(booking.end_time),
       newStartTime: new Date(newStartTime),
       newEndTime: new Date(newEndTime),
-      timezone: booking.users?.timezone || 'America/Chicago',
+      timezone: userData?.timezone || 'America/Chicago',
       meetLink: newMeetLink || undefined,
       bookingId: booking.id,
     })
 
     // Send webhook notification (async, non-blocking)
-    const hostId = booking.users?.id || booking.user_id
+    const hostId = userData?.id || booking.user_id
     if (hostId) {
       sendWebhook(hostId, 'booking.rescheduled', buildBookingRescheduledPayload({
         id: booking.id,
