@@ -64,6 +64,24 @@
 - Extended EventType and Booking types with payment fields
 - Note: Requires STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET env vars
 
+#### Calendar Integrations (Outlook & iCloud)
+- Created `/lib/calendar/outlookClient.ts`:
+  - Microsoft Graph API integration
+  - OAuth flow (authorization URL, token exchange, refresh)
+  - User info and calendar listing
+  - Busy times and event CRUD
+- Created OAuth routes:
+  - `/api/calendars/outlook/connect` - Initiates OAuth flow
+  - `/api/calendars/outlook/callback` - Handles OAuth callback
+- Created `/lib/calendar/icloudClient.ts`:
+  - Documentation for CalDAV approach
+  - ICS file generation utility (already working)
+  - Placeholder functions for future CalDAV implementation
+- Environment variables needed:
+  - OUTLOOK_CLIENT_ID
+  - OUTLOOK_CLIENT_SECRET
+- Note: iCloud uses CalDAV protocol, requires tsdav package for full implementation
+
 ### January 13 - Reschedule, Rate Limiting, Webhooks
 
 #### Test Suite Fixes

@@ -119,3 +119,23 @@
   - STRIPE_SECRET_KEY
   - STRIPE_WEBHOOK_SECRET  
   - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+
+### Outlook Calendar Integration
+- Uses Microsoft Graph API (v1.0)
+- OAuth 2.0 with authorization code flow
+- Required Azure AD app permissions:
+  - Calendars.ReadWrite
+  - User.Read
+  - offline_access (for refresh tokens)
+- Supports Teams meeting creation via isOnlineMeeting flag
+- Environment variables:
+  - OUTLOOK_CLIENT_ID
+  - OUTLOOK_CLIENT_SECRET
+
+### iCloud Calendar Integration
+- Apple uses CalDAV protocol, not REST API
+- Options:
+  1. CalDAV with tsdav package (requires app-specific passwords)
+  2. ICS file generation (implemented, user imports manually)
+- Current implementation: ICS file generation only
+- Full CalDAV requires user to generate app-specific password at appleid.apple.com
