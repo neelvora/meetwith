@@ -4,10 +4,22 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { createCalendarEvent, deleteCalendarEvent, updateCalendarEvent } from '@/lib/calendar/googleClient'
 import { sendRescheduleEmails } from '@/lib/email'
 import { validateSlot } from '@/lib/availability/validateSlot'
+import { checkRateLimit, getClientId, RATE_LIMITS } from '@/lib/rateLimit'
 import type { CalendarAccount, AvailabilityRule } from '@/types'
 
 // GET: Validate reschedule token and return booking info
 export async function GET(request: NextRequest) {
+  // Rate limit public token lookups
+  const clientId = getClientId(request)
+  const rateLimitResult = checkRateLimit(`reschedule:${clientId}`, RATE_LIMITS.api)
+  
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.', retryAfter: rateLimitResult.resetIn },
+      { status: 429, headers: { 'Retry-After': rateLimitResult.resetIn.toString() } }
+    )
+  }
+
   const { searchParams } = new URL(request.url)
   const token = searchParams.get('token')
 
@@ -72,6 +84,17 @@ export async function GET(request: NextRequest) {
 
 // POST: Reschedule the booking to a new time
 export async function POST(request: NextRequest) {
+  // Rate limit reschedule attempts
+  const clientId = getClientId(request)
+  const rateLimitResult = checkRateLimit(`reschedule:${clientId}`, RATE_LIMITS.booking)
+  
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.', retryAfter: rateLimitResult.resetIn },
+      { status: 429, headers: { 'Retry-After': rateLimitResult.resetIn.toString() } }
+    )
+  }
+
   try {
     const body = await request.json()
     const { token, newStartTime, newEndTime } = body

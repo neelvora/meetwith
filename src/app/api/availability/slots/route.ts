@@ -2,9 +2,30 @@ import { NextRequest, NextResponse } from 'next/server'
 import { computeAvailableSlots } from '@/lib/availability/computeSlots'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { getDefaultAvailabilityRules } from '@/lib/availability/defaults'
+import { checkRateLimit, getClientId, RATE_LIMITS } from '@/lib/rateLimit'
 import type { CalendarAccount, AvailabilityRule } from '@/types'
 
 export async function GET(request: NextRequest) {
+  // Rate limit public slot lookups
+  const clientId = getClientId(request)
+  const rateLimitResult = checkRateLimit(`slots:${clientId}`, RATE_LIMITS.slots)
+  
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { 
+        error: 'Too many requests. Please try again later.',
+        retryAfter: rateLimitResult.resetIn 
+      },
+      { 
+        status: 429,
+        headers: {
+          'Retry-After': rateLimitResult.resetIn.toString(),
+          'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+        }
+      }
+    )
+  }
+
   const { searchParams } = new URL(request.url)
   const startParam = searchParams.get('start')
   const endParam = searchParams.get('end')

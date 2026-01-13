@@ -2,9 +2,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { deleteCalendarEvent } from '@/lib/calendar/googleClient'
 import { sendCancellationEmails } from '@/lib/email'
+import { checkRateLimit, getClientId, RATE_LIMITS } from '@/lib/rateLimit'
 import type { CalendarAccount } from '@/types'
 
 export async function POST(request: NextRequest) {
+  // Rate limit cancellation attempts
+  const clientId = getClientId(request)
+  const rateLimitResult = checkRateLimit(`cancel:${clientId}`, RATE_LIMITS.booking)
+  
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: 'Too many requests. Please try again later.', retryAfter: rateLimitResult.resetIn },
+      { status: 429, headers: { 'Retry-After': rateLimitResult.resetIn.toString() } }
+    )
+  }
+
   try {
     const body = await request.json()
     const { token } = body
