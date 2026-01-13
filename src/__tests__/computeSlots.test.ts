@@ -7,6 +7,23 @@ import type { AvailabilityRule } from '@/types'
  * These tests verify the timezone handling in slot generation
  */
 
+// Helper to get the next occurrence of a specific weekday
+function getNextWeekday(weekday: number): Date {
+  const now = new Date()
+  const currentDay = now.getDay()
+  const daysUntil = (weekday - currentDay + 7) % 7 || 7 // At least 1 day in future
+  const result = new Date(now)
+  result.setDate(result.getDate() + daysUntil)
+  result.setUTCHours(0, 0, 0, 0)
+  return result
+}
+
+function toEndOfDay(date: Date): Date {
+  const result = new Date(date)
+  result.setUTCHours(23, 59, 59, 999)
+  return result
+}
+
 describe('computeAvailableSlots - Timezone Bug', () => {
   const mockAvailabilityRules: AvailabilityRule[] = [
     { id: '1', user_id: 'test', name: 'Default', weekday: 1, start_time: '09:00', end_time: '17:00', is_active: true, created_at: '' },
@@ -17,9 +34,9 @@ describe('computeAvailableSlots - Timezone Bug', () => {
   ]
 
   it('should generate slots in the host timezone', async () => {
-    // Monday, Dec 8, 2025
-    const startDate = new Date('2025-12-08T00:00:00.000Z')
-    const endDate = new Date('2025-12-08T23:59:59.000Z')
+    // Get next Monday (weekday 1)
+    const startDate = getNextWeekday(1)
+    const endDate = toEndOfDay(startDate)
 
     const slots = await computeAvailableSlots({
       userId: 'test',
@@ -57,8 +74,8 @@ describe('computeAvailableSlots - Timezone Bug', () => {
   })
 
   it('should generate last slot at 4:30 PM Chicago time for 30-min meetings', async () => {
-    const startDate = new Date('2025-12-08T00:00:00.000Z')
-    const endDate = new Date('2025-12-08T23:59:59.000Z')
+    const startDate = getNextWeekday(1)
+    const endDate = toEndOfDay(startDate)
 
     const slots = await computeAvailableSlots({
       userId: 'test',
@@ -88,8 +105,8 @@ describe('computeAvailableSlots - Timezone Bug', () => {
   })
 
   it('should generate slots for a full day availability window', async () => {
-    const startDate = new Date('2025-12-08T00:00:00.000Z')
-    const endDate = new Date('2025-12-08T23:59:59.000Z')
+    const startDate = getNextWeekday(1)
+    const endDate = toEndOfDay(startDate)
 
     const slots = await computeAvailableSlots({
       userId: 'test',

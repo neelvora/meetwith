@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { computeAvailableSlots } from '@/lib/availability/computeSlots'
 import type { AvailabilityRule, CalendarAccount } from '@/types'
 
@@ -12,6 +12,31 @@ vi.mock('@/lib/calendar/googleClient', () => ({
 
 import { getFreeBusy } from '@/lib/calendar/googleClient'
 const mockGetFreeBusy = vi.mocked(getFreeBusy)
+
+// Helper to get the next occurrence of a specific weekday
+function getNextWeekday(weekday: number): Date {
+  const now = new Date()
+  const currentDay = now.getDay()
+  const daysUntil = (weekday - currentDay + 7) % 7 || 7 // At least 1 day in future
+  const result = new Date(now)
+  result.setDate(result.getDate() + daysUntil)
+  result.setHours(0, 0, 0, 0)
+  return result
+}
+
+// Helper to format date as ISO string at midnight UTC
+function toMidnightUTC(date: Date): Date {
+  const result = new Date(date)
+  result.setUTCHours(0, 0, 0, 0)
+  return result
+}
+
+// Helper to get end of day
+function toEndOfDay(date: Date): Date {
+  const result = new Date(date)
+  result.setUTCHours(23, 59, 59, 999)
+  return result
+}
 
 function createRule(
   weekday: number,
@@ -62,9 +87,10 @@ describe('Availability Engine - computeAvailableSlots', () => {
 
   describe('Single Day Rule', () => {
     it('should generate correct number of 30-minute slots for 9 AM - 5 PM', async () => {
+      const targetDate = getNextWeekday(1) // Next Monday
       const rules = [createRule(1, '09:00', '17:00')]
-      const startDate = new Date('2025-12-08T00:00:00.000Z')
-      const endDate = new Date('2025-12-08T23:59:59.000Z')
+      const startDate = toMidnightUTC(targetDate)
+      const endDate = toEndOfDay(targetDate)
 
       const slots = await computeAvailableSlots({
         userId: 'test-user',
@@ -81,9 +107,10 @@ describe('Availability Engine - computeAvailableSlots', () => {
     })
 
     it('should generate correct number of 60-minute slots for 9 AM - 5 PM', async () => {
+      const targetDate = getNextWeekday(1) // Next Monday
       const rules = [createRule(1, '09:00', '17:00')]
-      const startDate = new Date('2025-12-08T00:00:00.000Z')
-      const endDate = new Date('2025-12-08T23:59:59.000Z')
+      const startDate = toMidnightUTC(targetDate)
+      const endDate = toEndOfDay(targetDate)
 
       const slots = await computeAvailableSlots({
         userId: 'test-user',
@@ -100,9 +127,10 @@ describe('Availability Engine - computeAvailableSlots', () => {
     })
 
     it('should generate no slots for inactive rules', async () => {
+      const targetDate = getNextWeekday(1) // Next Monday
       const rules = [createRule(1, '09:00', '17:00', false)]
-      const startDate = new Date('2025-12-08T00:00:00.000Z')
-      const endDate = new Date('2025-12-08T23:59:59.000Z')
+      const startDate = toMidnightUTC(targetDate)
+      const endDate = toEndOfDay(targetDate)
 
       const slots = await computeAvailableSlots({
         userId: 'test-user',
@@ -119,9 +147,10 @@ describe('Availability Engine - computeAvailableSlots', () => {
     })
 
     it('should generate no slots for a day without rules', async () => {
-      const rules = [createRule(2, '09:00', '17:00')]
-      const startDate = new Date('2025-12-08T00:00:00.000Z')
-      const endDate = new Date('2025-12-08T23:59:59.000Z')
+      const targetDate = getNextWeekday(1) // Next Monday
+      const rules = [createRule(2, '09:00', '17:00')] // Tuesday rule, not Monday
+      const startDate = toMidnightUTC(targetDate)
+      const endDate = toEndOfDay(targetDate)
 
       const slots = await computeAvailableSlots({
         userId: 'test-user',
@@ -140,13 +169,18 @@ describe('Availability Engine - computeAvailableSlots', () => {
 
   describe('Multiple Days', () => {
     it('should generate slots for multiple days with different hours', async () => {
+      // Get next week's Mon-Wed
+      const monday = getNextWeekday(1)
+      const wednesday = new Date(monday)
+      wednesday.setDate(wednesday.getDate() + 2)
+      
       const rules = [
-        createRule(1, '09:00', '17:00'),
-        createRule(2, '10:00', '14:00'),
-        createRule(3, '08:00', '12:00'),
+        createRule(1, '09:00', '17:00'), // Monday
+        createRule(2, '10:00', '14:00'), // Tuesday
+        createRule(3, '08:00', '12:00'), // Wednesday
       ]
-      const startDate = new Date('2025-12-08T00:00:00.000Z')
-      const endDate = new Date('2025-12-10T23:59:59.000Z')
+      const startDate = toMidnightUTC(monday)
+      const endDate = toEndOfDay(wednesday)
 
       const slots = await computeAvailableSlots({
         userId: 'test-user',
@@ -170,12 +204,16 @@ describe('Availability Engine - computeAvailableSlots', () => {
     })
 
     it('should respect each day\'s individual time window', async () => {
+      const monday = getNextWeekday(1)
+      const tuesday = new Date(monday)
+      tuesday.setDate(tuesday.getDate() + 1)
+      
       const rules = [
-        createRule(1, '09:00', '12:00'),
-        createRule(2, '14:00', '17:00'),
+        createRule(1, '09:00', '12:00'), // Monday morning
+        createRule(2, '14:00', '17:00'), // Tuesday afternoon
       ]
-      const startDate = new Date('2025-12-08T00:00:00.000Z')
-      const endDate = new Date('2025-12-09T23:59:59.000Z')
+      const startDate = toMidnightUTC(monday)
+      const endDate = toEndOfDay(tuesday)
 
       const slots = await computeAvailableSlots({
         userId: 'test-user',
