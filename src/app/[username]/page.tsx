@@ -28,7 +28,7 @@ export default async function BookingPage({ params }: BookingPageProps) {
   // Fetch user's active event types
   const { data: eventTypes } = await supabaseAdmin
     .from('event_types')
-    .select('id, slug, name, description, duration_minutes, color, sort_index')
+    .select('id, slug, name, description, duration_minutes, color, sort_index, location_type, location_value')
     .eq('user_id', user.id)
     .eq('is_active', true)
     .order('sort_index', { ascending: true })
@@ -42,6 +42,8 @@ export default async function BookingPage({ params }: BookingPageProps) {
     description: et.description || '',
     duration: et.duration_minutes,
     color: et.color || 'violet',
+    locationType: et.location_type || 'google_meet',
+    locationValue: et.location_value || '',
   }))
 
   const mappedUser = {

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Calendar, Clock, Video, Globe } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Calendar, Clock, Video, Globe, Phone, MapPin } from 'lucide-react'
 import { Card, CardContent, Button } from '@/components/ui'
 import TimeSlotPicker from './TimeSlotPicker'
 import BookingForm from './BookingForm'
@@ -14,6 +14,7 @@ interface EventType {
   description: string
   duration: number
   color: string
+  locationType?: string
 }
 
 interface BookingClientProps {
@@ -34,6 +35,15 @@ interface SelectedSlot {
   timezone: string
 }
 
+// Track analytics event (fire-and-forget, non-blocking)
+function trackEvent(username: string, eventType: string, eventData?: Record<string, unknown>) {
+  fetch('/api/analytics/track', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, eventType, eventData }),
+  }).catch(() => {}) // Silently ignore errors
+}
+
 export default function BookingClient({ username, user, eventTypes }: BookingClientProps) {
   const [step, setStep] = useState<BookingStep>('select-event')
   const [selectedEventType, setSelectedEventType] = useState<EventType | null>(null)
@@ -41,6 +51,7 @@ export default function BookingClient({ username, user, eventTypes }: BookingCli
   const [bookingId, setBookingId] = useState<string | null>(null)
   const [meetLink, setMeetLink] = useState<string | null>(null)
   const [attendeeInfo, setAttendeeInfo] = useState({ name: '', email: '' })
+  const hasTrackedPageView = useRef(false)
   const [displayTimezone, setDisplayTimezone] = useState(() => {
     // Try to detect user's timezone
     try {
@@ -50,6 +61,14 @@ export default function BookingClient({ username, user, eventTypes }: BookingCli
     }
   })
 
+  // Track page view on mount (once)
+  useEffect(() => {
+    if (!hasTrackedPageView.current) {
+      hasTrackedPageView.current = true
+      trackEvent(username, 'page_view', { eventTypesCount: eventTypes.length })
+    }
+  }, [username, eventTypes.length])
+
   function handleSelectEventType(eventType: EventType) {
     setSelectedEventType(eventType)
     setStep('select-time')
@@ -58,6 +77,12 @@ export default function BookingClient({ username, user, eventTypes }: BookingCli
   function handleSelectSlot(slot: SelectedSlot) {
     setSelectedSlot(slot)
     setDisplayTimezone(slot.timezone)
+    // Track slot selection
+    trackEvent(username, 'slot_selected', {
+      eventTypeId: selectedEventType?.id,
+      date: slot.date,
+      timezone: slot.timezone,
+    })
     setStep('enter-details')
   }
 
@@ -121,8 +146,15 @@ export default function BookingClient({ username, user, eventTypes }: BookingCli
                           {eventType.duration} min
                         </span>
                         <span className="flex items-center gap-1">
-                          <Video className="w-4 h-4" />
-                          Google Meet
+                          {eventType.locationType === 'phone' ? (
+                            <><Phone className="w-4 h-4" />Phone Call</>
+                          ) : eventType.locationType === 'in_person' ? (
+                            <><MapPin className="w-4 h-4" />In Person</>
+                          ) : eventType.locationType === 'zoom' ? (
+                            <><Video className="w-4 h-4" />Zoom</>
+                          ) : (
+                            <><Video className="w-4 h-4" />Google Meet</>
+                          )}
                         </span>
                       </div>
                     </div>

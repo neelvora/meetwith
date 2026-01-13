@@ -20,6 +20,8 @@ export interface ComputeSlotsParams {
   minNoticeHours?: number
   bufferBefore?: number
   bufferAfter?: number
+  dailyLimit?: number // Maximum bookings per day (0 = unlimited)
+  existingBookings?: Array<{ start_time: string; end_time: string }> // For daily limit counting
 }
 
 /**
@@ -212,7 +214,8 @@ function generateDaySlots(
  * 1. Fetches busy times from all connected calendars
  * 2. Generates potential slots from availability rules
  * 3. Filters out busy slots and slots in the past
- * 4. Returns final available slots
+ * 4. Enforces daily booking limit if set
+ * 5. Returns final available slots
  */
 export async function computeAvailableSlots(
   params: ComputeSlotsParams
@@ -226,6 +229,8 @@ export async function computeAvailableSlots(
     minNoticeHours = 0,
     bufferBefore = 0,
     bufferAfter = 0,
+    dailyLimit = 0,
+    existingBookings = [],
   } = params
 
   // Get all busy periods from calendars
@@ -234,6 +239,20 @@ export async function computeAvailableSlots(
     dateRange.start,
     dateRange.end
   )
+
+  // Count existing bookings per day for daily limit enforcement
+  const bookingsPerDay = new Map<string, number>()
+  if (dailyLimit > 0 && existingBookings.length > 0) {
+    for (const booking of existingBookings) {
+      const dateKey = new Date(booking.start_time).toLocaleDateString('en-US', {
+        timeZone: timezone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      })
+      bookingsPerDay.set(dateKey, (bookingsPerDay.get(dateKey) || 0) + 1)
+    }
+  }
 
   const slots: TimeSlot[] = []
   const now = new Date()
@@ -265,8 +284,28 @@ export async function computeAvailableSlots(
 
       // Check if slot is busy (with buffers)
       const isBusy = isSlotBusy(bufferStart, bufferEnd, busyPeriods)
+      
+      if (isBusy) {
+        slots.push({ ...slot, available: false })
+        continue
+      }
 
-      slots.push({ ...slot, available: !isBusy })
+      // Check daily limit if set
+      if (dailyLimit > 0) {
+        const slotDateKey = slot.start.toLocaleDateString('en-US', {
+          timeZone: timezone,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        })
+        const dayBookings = bookingsPerDay.get(slotDateKey) || 0
+        if (dayBookings >= dailyLimit) {
+          slots.push({ ...slot, available: false })
+          continue
+        }
+      }
+
+      slots.push({ ...slot, available: true })
     }
 
     // Move to next day

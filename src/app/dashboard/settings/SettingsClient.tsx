@@ -56,6 +56,9 @@ export default function SettingsClient({ initialProfile }: Props) {
   const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null)
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle')
   const [originalUsername, setOriginalUsername] = useState<string>('')
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
 
   // Debounced username availability check
   const checkUsernameAvailability = useCallback(async (username: string) => {
@@ -176,6 +179,30 @@ export default function SettingsClient({ initialProfile }: Props) {
         [key]: !prev.notifications[key],
       },
     }))
+  }
+
+  async function handleDeleteAccount() {
+    if (deleteConfirmText !== 'DELETE') return
+
+    setDeleting(true)
+    try {
+      const res = await fetch('/api/account', {
+        method: 'DELETE',
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to delete account')
+      }
+
+      // Sign out and redirect to home
+      window.location.href = '/api/auth/signout?callbackUrl=/'
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to delete account'
+      setNotification({ type: 'error', message })
+      setDeleting(false)
+      setShowDeleteModal(false)
+    }
   }
 
   return (
@@ -496,12 +523,78 @@ export default function SettingsClient({ initialProfile }: Props) {
               <p className="font-medium text-gray-900 dark:text-white">Delete Account</p>
               <p className="text-sm text-gray-500 dark:text-gray-500">Permanently delete your account and all data</p>
             </div>
-            <Button variant="secondary" className="text-red-400 border-red-500/30 hover:bg-red-500/10 w-full sm:w-auto">
+            <Button 
+              variant="secondary" 
+              className="text-red-400 border-red-500/30 hover:bg-red-500/10 w-full sm:w-auto"
+              onClick={() => setShowDeleteModal(true)}
+            >
               Delete Account
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete Account Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <Card variant="glass" className="max-w-md w-full border-red-500/30">
+            <CardHeader>
+              <CardTitle className="text-red-400">Delete Account</CardTitle>
+              <CardDescription>This action cannot be undone</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-300">
+                This will permanently delete your account and all associated data including:
+              </p>
+              <ul className="list-disc list-inside text-sm text-gray-400 space-y-1">
+                <li>All your bookings and booking history</li>
+                <li>All your event types</li>
+                <li>Your availability settings</li>
+                <li>Connected calendar accounts</li>
+                <li>Analytics data</li>
+              </ul>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Type <span className="font-mono text-red-400">DELETE</span> to confirm
+                </label>
+                <Input
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="DELETE"
+                  className="font-mono"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setShowDeleteModal(false)
+                    setDeleteConfirmText('')
+                  }}
+                  disabled={deleting}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleDeleteAccount}
+                  disabled={deleteConfirmText !== 'DELETE' || deleting}
+                  className="flex-1 bg-red-500 hover:bg-red-600 disabled:bg-red-500/50"
+                >
+                  {deleting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete My Account'
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

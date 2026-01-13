@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
   const endParam = searchParams.get('end')
   const duration = parseInt(searchParams.get('duration') || '30', 10)
   const username = searchParams.get('username')
+  const eventTypeSlug = searchParams.get('eventType')
 
   // Default to next 7 days if no dates provided
   const start = startParam ? new Date(startParam) : new Date()
@@ -22,6 +23,14 @@ export async function GET(request: NextRequest) {
   let timezone = 'America/Chicago'
 
   // If username provided, fetch that user's data (public booking page)
+  let userId: string | null = null
+  let dailyLimit = 0
+  let bufferTime = 0
+  let minNotice = 4
+  let eventBufferBefore = 0
+  let eventBufferAfter = 0
+  let existingBookings: Array<{ start_time: string; end_time: string }> = []
+
   if (username && supabaseAdmin) {
     // Get user by username
     const { data: user } = await supabaseAdmin
@@ -31,6 +40,7 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (user) {
+      userId = user.id
       timezone = user.timezone || 'America/Chicago'
       
       // Get their calendar accounts
@@ -50,6 +60,47 @@ export async function GET(request: NextRequest) {
         .eq('is_active', true)
 
       availabilityRules = (rules || []) as AvailabilityRule[]
+
+      // Get user settings for daily limit, buffer time, etc.
+      const { data: settings } = await supabaseAdmin
+        .from('user_settings')
+        .select('daily_limit, buffer_time, min_notice')
+        .eq('user_id', user.id)
+        .single()
+
+      if (settings) {
+        dailyLimit = settings.daily_limit || 0
+        bufferTime = settings.buffer_time || 0
+        minNotice = settings.min_notice || 4
+      }
+
+      // If event type slug provided, get its buffer settings
+      if (eventTypeSlug) {
+        const { data: eventType } = await supabaseAdmin
+          .from('event_types')
+          .select('buffer_before, buffer_after')
+          .eq('user_id', user.id)
+          .eq('slug', eventTypeSlug)
+          .single()
+
+        if (eventType) {
+          eventBufferBefore = eventType.buffer_before || 0
+          eventBufferAfter = eventType.buffer_after || 0
+        }
+      }
+
+      // If daily limit is set, fetch existing confirmed bookings in range
+      if (dailyLimit > 0) {
+        const { data: bookings } = await supabaseAdmin
+          .from('bookings')
+          .select('start_time, end_time')
+          .eq('user_id', user.id)
+          .eq('status', 'confirmed')
+          .gte('start_time', start.toISOString())
+          .lte('end_time', end.toISOString())
+
+        existingBookings = bookings || []
+      }
     }
   }
 
@@ -59,6 +110,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // Use event-specific buffers if set, otherwise fall back to global buffer
+    const effectiveBufferBefore = eventBufferBefore > 0 ? eventBufferBefore : bufferTime
+    const effectiveBufferAfter = eventBufferAfter > 0 ? eventBufferAfter : bufferTime
+
     const slots = await computeAvailableSlots({
       userId: username || 'default',
       calendarAccounts,
@@ -66,7 +121,11 @@ export async function GET(request: NextRequest) {
       timezone,
       dateRange: { start, end },
       slotDuration: duration,
-      minNoticeHours: 4,
+      minNoticeHours: minNotice,
+      bufferBefore: effectiveBufferBefore,
+      bufferAfter: effectiveBufferAfter,
+      dailyLimit,
+      existingBookings,
     })
 
     // Filter to only available slots

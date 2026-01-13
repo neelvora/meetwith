@@ -36,10 +36,21 @@ export async function GET() {
     .eq('id', session.user.id)
     .single()
 
+  // Get user settings
+  const { data: settings } = await supabaseAdmin
+    .from('user_settings')
+    .select('buffer_time, min_notice, daily_limit')
+    .eq('user_id', session.user.id)
+    .single()
+
   return NextResponse.json({
     availability: rules || [],
     timezone: user?.timezone || 'America/Chicago',
-    settings: { buffer_time: 0, min_notice: 4, daily_limit: 0 }
+    settings: { 
+      buffer_time: settings?.buffer_time || 0, 
+      min_notice: settings?.min_notice || 4, 
+      daily_limit: settings?.daily_limit || 0 
+    }
   })
 }
 
@@ -55,7 +66,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json()
-  const { availability, timezone } = body
+  const { availability, timezone, settings } = body
 
   try {
     // Update timezone
@@ -64,6 +75,21 @@ export async function POST(request: NextRequest) {
         .from('users')
         .update({ timezone, updated_at: new Date().toISOString() })
         .eq('id', session.user.id)
+    }
+
+    // Update settings if provided
+    if (settings) {
+      await supabaseAdmin
+        .from('user_settings')
+        .upsert({
+          user_id: session.user.id,
+          buffer_time: settings.buffer_time ?? 0,
+          min_notice: settings.min_notice ?? 4,
+          daily_limit: settings.daily_limit ?? 0,
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'user_id',
+        })
     }
 
     // Delete existing rules

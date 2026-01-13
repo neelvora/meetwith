@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json()
-  const { name, slug, duration, color, description, is_active } = body
+  const { name, slug, duration, color, description, is_active, location_type, location_value, buffer_before, buffer_after } = body
 
   // Validate required fields
   if (!name || !slug || !duration) {
@@ -76,6 +76,10 @@ export async function POST(request: NextRequest) {
       color: color || 'violet',
       description: description || '',
       is_active: is_active !== false,
+      location_type: location_type || 'google_meet',
+      location_value: location_value || null,
+      buffer_before: buffer_before || 0,
+      buffer_after: buffer_after || 0,
     })
     .select()
     .single()

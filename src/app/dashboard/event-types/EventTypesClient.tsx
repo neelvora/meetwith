@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Link as LinkIcon, Plus, Clock, Video, ExternalLink, X, Check, Loader2, Trash2, GripVertical, ChevronUp, ChevronDown, Sparkles } from 'lucide-react'
+import { Link as LinkIcon, Plus, Clock, Video, ExternalLink, X, Check, Loader2, Trash2, GripVertical, ChevronUp, ChevronDown, Sparkles, Phone, MapPin } from 'lucide-react'
 import { Button, Card, CardContent, Input } from '@/components/ui'
 
 interface EventType {
@@ -13,6 +13,10 @@ interface EventType {
   description: string
   is_active: boolean
   sort_index?: number
+  location_type?: string
+  location_value?: string
+  buffer_before?: number
+  buffer_after?: number
 }
 
 const COLOR_OPTIONS = [
@@ -24,6 +28,22 @@ const COLOR_OPTIONS = [
 ]
 
 const DURATION_OPTIONS = [15, 30, 45, 60, 90, 120]
+const BUFFER_OPTIONS = [
+  { value: 0, label: 'No buffer' },
+  { value: 5, label: '5 minutes' },
+  { value: 10, label: '10 minutes' },
+  { value: 15, label: '15 minutes' },
+  { value: 30, label: '30 minutes' },
+  { value: 60, label: '1 hour' },
+]
+
+const LOCATION_OPTIONS = [
+  { value: 'google_meet', label: 'Google Meet', icon: Video },
+  { value: 'zoom', label: 'Zoom', icon: Video },
+  { value: 'phone', label: 'Phone Call', icon: Phone },
+  { value: 'in_person', label: 'In Person', icon: MapPin },
+  { value: 'custom', label: 'Custom', icon: MapPin },
+]
 
 interface Props {
   username: string
@@ -47,6 +67,10 @@ export default function EventTypesClient({ username }: Props) {
     color: 'violet',
     description: '',
     is_active: true,
+    location_type: 'google_meet',
+    location_value: '',
+    buffer_before: 0,
+    buffer_after: 0,
   })
 
   useEffect(() => {
@@ -74,6 +98,10 @@ export default function EventTypesClient({ username }: Props) {
       color: 'violet',
       description: '',
       is_active: true,
+      location_type: 'google_meet',
+      location_value: '',
+      buffer_before: 0,
+      buffer_after: 0,
     })
     setShowModal(true)
   }
@@ -87,6 +115,10 @@ export default function EventTypesClient({ username }: Props) {
       color: event.color,
       description: event.description,
       is_active: event.is_active,
+      location_type: event.location_type || 'google_meet',
+      location_value: event.location_value || '',
+      buffer_before: event.buffer_before || 0,
+      buffer_after: event.buffer_after || 0,
     })
     setShowModal(true)
   }
@@ -526,6 +558,74 @@ export default function EventTypesClient({ username }: Props) {
                       {duration} min
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* Location Type */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Location
+                </label>
+                <div className="flex gap-2 flex-wrap mb-3">
+                  {LOCATION_OPTIONS.map((loc) => (
+                    <button
+                      key={loc.value}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, location_type: loc.value, location_value: '' }))}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                        formData.location_type === loc.value
+                          ? 'bg-violet-500 text-white'
+                          : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10'
+                      }`}
+                    >
+                      {loc.label}
+                    </button>
+                  ))}
+                </div>
+                {(formData.location_type === 'zoom' || formData.location_type === 'phone' || formData.location_type === 'custom') && (
+                  <input
+                    type="text"
+                    value={formData.location_value}
+                    onChange={(e) => setFormData(prev => ({ ...prev, location_value: e.target.value }))}
+                    placeholder={
+                      formData.location_type === 'zoom' ? 'Zoom meeting link' :
+                      formData.location_type === 'phone' ? 'Phone number' :
+                      'Custom location or address'
+                    }
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  />
+                )}
+              </div>
+
+              {/* Buffer Times */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Buffer Before
+                  </label>
+                  <select
+                    value={formData.buffer_before}
+                    onChange={(e) => setFormData(prev => ({ ...prev, buffer_before: parseInt(e.target.value) }))}
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  >
+                    {BUFFER_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Buffer After
+                  </label>
+                  <select
+                    value={formData.buffer_after}
+                    onChange={(e) => setFormData(prev => ({ ...prev, buffer_after: parseInt(e.target.value) }))}
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-300 dark:border-white/10 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                  >
+                    {BUFFER_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

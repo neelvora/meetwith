@@ -48,7 +48,7 @@ export async function PUT(
   }
 
   const body = await request.json()
-  const { name, slug, duration, color, description, is_active } = body
+  const { name, slug, duration, color, description, is_active, location_type, location_value, buffer_before, buffer_after } = body
 
   // Check if event type belongs to user
   const { data: existing } = await supabaseAdmin
@@ -84,6 +84,10 @@ export async function PUT(
   if (color !== undefined) updates.color = color
   if (description !== undefined) updates.description = description
   if (is_active !== undefined) updates.is_active = is_active
+  if (location_type !== undefined) updates.location_type = location_type
+  if (location_value !== undefined) updates.location_value = location_value
+  if (buffer_before !== undefined) updates.buffer_before = buffer_before
+  if (buffer_after !== undefined) updates.buffer_after = buffer_after
 
   const { data: eventType, error } = await supabaseAdmin
     .from('event_types')

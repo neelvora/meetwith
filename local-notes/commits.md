@@ -1,5 +1,14 @@
 # MeetWith - Commits (Grouped Intent)
 
+## Feature Audit Implementation (Jan 14, 2026)
+- Analytics tracking: page_view and slot_selected events on public booking page
+- Daily meeting limit enforcement in availability engine
+- Delete account API and confirmation UI
+- Per-event buffer times UI in event types editor
+- Event type location options (Google Meet, Zoom, Phone, In Person, Custom)
+- Reminder email infrastructure (template + cron endpoint)
+- Migrations: 009_add_user_settings.sql, 010_add_reminder_support.sql
+
 ## Public API & Integrations
 - Status endpoint for external availability badges
 - Real-time Google Calendar busy status
@@ -30,9 +39,12 @@
 - Session with database UUID
 
 ## Calendar Sync Improvements (Jan 2026)
-- Sync issue tracking in bookings table
-- Retry sync API endpoint
+- Sync issue tracking in bookings table (`external_status`, `external_error`)
+- Retry sync API endpoint (`/api/bookings/[id]/retry-sync`)
 - Dashboard UI for surfacing and fixing sync failures
+- Fix: Google calendar ID mismatch when setting default (handles email vs 'primary' ID)
+- Fix: Preserve existing refresh_token on reconnect (prevents null overwrite)
+- Fix: Surface actual Google API error in retry-sync response
 
 ## Initial Build (Dec 7-10)
 - Core scaffolding
