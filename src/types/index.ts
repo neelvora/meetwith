@@ -77,3 +77,57 @@ export interface TimeSlot {
   end: Date
   available: boolean
 }
+
+// Recurring meetings types
+export type RecurrenceType = 'daily' | 'weekly' | 'biweekly' | 'monthly'
+export type RecurrenceEndType = 'count' | 'date' | 'never'
+
+export interface RecurrenceConfig {
+  type: RecurrenceType
+  days?: number[] // For weekly: array of weekdays (0-6)
+  endType: RecurrenceEndType
+  count?: number // For count-based
+  endDate?: string // For date-based
+}
+
+export interface BookingSeries {
+  id: string
+  user_id: string
+  event_type_id?: string
+  recurrence_type: RecurrenceType
+  recurrence_days?: number[]
+  attendee_name: string
+  attendee_email: string
+  attendee_timezone: string
+  notes?: string
+  total_occurrences: number
+  active_occurrences: number
+  status: 'active' | 'cancelled' | 'completed'
+  created_at: string
+  updated_at?: string
+}
+
+export interface RecurringBookingRequest {
+  eventTypeId: string
+  recurrence: RecurrenceConfig
+  firstSlotStart: string
+  firstSlotEnd: string
+  attendeeName: string
+  attendeeEmail: string
+  attendeeTimezone: string
+  notes?: string
+}
+
+// Webhook types
+export interface Webhook {
+  id: string
+  user_id: string
+  url: string
+  secret: string
+  events: string[]
+  is_active: boolean
+  created_at: string
+  updated_at?: string
+  last_triggered_at?: string
+  failure_count?: number
+}
