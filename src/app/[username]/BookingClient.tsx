@@ -17,6 +17,19 @@ interface EventType {
   locationType?: string
 }
 
+// Color name to hex mapping (matches EventTypesClient.tsx)
+const COLOR_MAP: Record<string, string> = {
+  violet: '#8b5cf6',
+  emerald: '#10b981',
+  blue: '#3b82f6',
+  orange: '#f97316',
+  pink: '#ec4899',
+}
+
+function getColorValue(colorName: string): string {
+  return COLOR_MAP[colorName] || COLOR_MAP.violet
+}
+
 interface BookingClientProps {
   username: string
   user: {
@@ -133,7 +146,7 @@ export default function BookingClient({ username, user, eventTypes }: BookingCli
                   <div className="flex items-start gap-4">
                     <div
                       className="w-1.5 h-full min-h-[50px] rounded-full"
-                      style={{ backgroundColor: eventType.color === 'violet' ? '#8b5cf6' : eventType.color === 'blue' ? '#3b82f6' : '#8b5cf6' }}
+                      style={{ backgroundColor: getColorValue(eventType.color) }}
                     />
                     <div className="flex-1">
                       <h2 className="text-lg font-semibold text-white group-hover:text-violet-400 transition-colors">
