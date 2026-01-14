@@ -18,9 +18,9 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "MeetWith - Free AI-Powered Scheduling",
-  description: "Free scheduling made simple. Share your link, let others book time with you. No more back-and-forth emails.",
-  keywords: ["scheduling", "calendar", "booking", "meetings", "free", "appointment"],
+  title: "MeetWith - Simple AI-Powered Scheduling",
+  description: "Scheduling made simple. Share your link, let others book time with you. No more back-and-forth emails.",
+  keywords: ["scheduling", "calendar", "booking", "meetings", "appointment"],
 };
 
 export default function RootLayout({

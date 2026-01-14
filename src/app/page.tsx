@@ -88,7 +88,7 @@ export default function Home() {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 mb-8 backdrop-blur-sm">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              <span className="text-sm text-gray-600 dark:text-gray-300">Now Live • 100% Free</span>
+              <span className="text-sm text-gray-600 dark:text-gray-300">Now Live • Start Free</span>
             </div>
 
             {/* Heading */}
@@ -100,7 +100,7 @@ export default function Home() {
 
             {/* Subheading */}
             <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-              The free scheduling platform that respects your privacy. 
+              The scheduling platform that respects your privacy. 
               Connect your calendar, set your availability, share your link.
             </p>
 
@@ -132,7 +132,7 @@ export default function Home() {
               </div>
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-violet-400" />
-                <span>Free forever</span>
+                <span>No credit card required</span>
               </div>
             </div>
           </div>
@@ -296,13 +296,13 @@ export default function Home() {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 mb-4">
-                <span className="text-xs font-medium text-green-500 dark:text-green-400">FREE FOREVER</span>
+                <span className="text-xs font-medium text-green-500 dark:text-green-400">GENEROUS FREE TIER</span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-6 font-display">
-                All features included, no hidden costs
+                Everything you need to get started
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
-                We believe scheduling should be free. MeetWith includes everything you need without any premium tiers or feature gates.
+                Start with all core features included. As your needs grow, upgrade for advanced capabilities like team scheduling, payments, and priority support.
               </p>
               <Link href="/auth/signin">
                 <Button size="lg" className="group">

@@ -1,5 +1,220 @@
 # MeetWith - Decisions
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+- E2E tests with Playwright- Test coverage for UI components- TypeScript strict mode (lots of `any`)### Can Defer- [ ] Bundle size optimization- [ ] API response caching for public endpoints- [ ] Rate limiting persistence (currently in-memory)- [ ] Supabase RLS audit for multi-tenant security### Should Address## Technical Debt---- **Break-even: 6 Pro subscribers**- **Monthly cost: ~$67**- Domain: $15/yr- Sentry: Free tier- Resend: $20/mo- Supabase Pro: $25/mo- Vercel Pro: $20/mo### Break-even Analysis- **MRR: $600/mo**- 5% conversion = 50 Pro users- 1000 free users by Q2- Launch Pro tier at $12/mo### Assumptions## Revenue Projection---12. Custom domains11. Team support (design first)### Q1 202610. Pricing page9. Usage dashboard8. Branding options### This Month7. Recurring booking UI6. Connect Outlook button5. Event Type payment fields UI### Next Week4. Stripe Connect Settings UI3. Webhooks Settings UI2. Vercel Cron for reminders1. ✅ Fix "free" language (done)### This Week## Recommended Priority Order---**Impact:** Low - no user requests**Recommendation:** Not needed yet - responsive web is fine**Effort:** 4-6 weeks### 3. Full Mobile App**Impact:** High for branding-conscious users- DNS instruction UI- SSL provisioning- Vercel API integration- Domain verification flow**Includes:****Effort:** 1 week### 2. Custom Domains**Impact:** Very high - B2B market- Admin dashboard- Team availability union- Round-robin booking- Shared calendars view- Organization model + invites**Includes:****Effort:** 2-3 weeks### 1. Team/Organization Support## Larger Efforts (Multi-day)---- **Impact:** Medium - differentiation for Pro- "Powered by MeetWith" toggle (paid)- Primary color picker- Logo upload### 4. Branding Options- **Impact:** Low now, high for monetization- Prep for usage-based limits- Show calendar API calls- Show bookings this month### 3. Usage Dashboard- **Impact:** Medium - professional use case- Show "This is a recurring meeting" info- Add recurrence options to booking form### 2. Recurring Booking UI- **Impact:** High - enables paid events- Redirect to Stripe onboarding- Show connection status- Add "Connect Stripe" button to Settings### 1. Stripe Connect Settings UI## Medium Effort (Half-day each)---- **Impact:** Medium - expands user base- Routes already exist- Add button to Calendars page### 4. Connect Outlook Button- **Impact:** High - enables monetization for hosts- Display price on public booking page- Add "Paid event" toggle + price input to event form### 3. Event Type Payment Fields- **Impact:** Medium - power users can integrate- List/add/delete webhooks- Add section to Settings page### 2. Webhooks Settings UI- **Impact:** High - users get 24h reminder emails- Reminders start sending automatically- Add cron config to `vercel.json`### 1. Vercel Cron for Reminders## Quick Wins (1-2 hours each)---- **Zoom Integration** - Not planned (Google Meet works)- **Mobile App** - Not planned- **Custom Domains** - Needs Vercel config + UI- **Team/Organization Support** - Big undertaking### Not Started ❌- **Error Monitoring** - Sentry configured, live- **iCloud Calendar** - ICS files work, CalDAV placeholder### What's Scaffolded 🔧- **Reminder Emails** - Cron endpoint ready, needs Vercel cron config- **Webhooks** - API complete, no settings UI- **Outlook Calendar** - OAuth routes exist, no "Connect" button- **Recurring Meetings** - API complete, no booking form UI- **Stripe Payments** - Backend complete, no settings UI### What's Built But Needs UI ⚠️- **Cancellation/Reschedule** - Token-based self-service for guests- **Event Types** - Multiple per user, custom colors, slugs- **User Settings** - Timezone, min notice, max future days- **Availability Rules** - Per-day schedules, buffer times, daily limits- **Email Notifications** - Booking confirmations, cancellations, reschedules- **Google Calendar** - Multi-account, multi-calendar, busy/free detection- **Core Scheduling** - Public booking pages, time slot picker, calendar sync### What's Live & Working ✅## Current State Summary> Last updated: January 14, 2026## Business Model & Pricing Strategy
+
+### Philosophy
+- Start generous, monetize as users scale
+- Never paywall core scheduling functionality
+- Charge for usage/resources, not artificial feature gates
+- Make it profitable at scale, not predatory for individuals
+
+### Free Tier (Always)
+- Unlimited event types
+- Google Calendar sync (1 account)
+- Basic availability rules
+- Email confirmations
+- Cancellation/reschedule links
+- Up to ~50 bookings/month
+
+### Future Paid Tiers (When Implemented)
+**Pro ($12-15/mo):**
+- Unlimited bookings
+- Multiple calendar accounts (Google, Outlook, iCloud)
+- Custom branding (logo, colors)
+- Remove "Powered by MeetWith" 
+- Priority support
+- Webhooks (5 endpoints)
+
+**Business ($25-30/mo):**
+- Everything in Pro
+- Team/organization support
+- Paid event types (Stripe Connect)
+- Recurring meeting series
+- Unlimited webhooks
+- API access
+- Custom domain
+
+### Resource-Based Limits (Not Feature Gates)
+- Calendar API calls (polling frequency)
+- Email sends per month
+- Webhook delivery attempts
+- AI-generated descriptions (when implemented)
+
+### Language Guidelines
+- ✅ "Get Started Free" - implies free to start
+- ✅ "No credit card required" - removes friction
+- ✅ "Generous free tier" - honest about limits
+- ❌ "Free forever" - false promise
+- ❌ "100% free" - misleading
+- ❌ "No premium tiers" - false
+
 ## Architecture
 
 ### Tech Stack
