@@ -16,12 +16,12 @@
 
 ## TODO
 - [ ] Set up Vercel Cron for reminder emails (every 15 min)
-- [ ] Run migration 009_add_user_settings.sql
-- [ ] Run migration 010_add_reminder_support.sql
-- [ ] Run migration 011_add_reschedule_token.sql
-- [ ] Run migration 012_add_webhooks.sql  
-- [ ] Run migration 013_add_recurring_meetings.sql
-- [ ] Run migration 014_add_payments.sql
+- [x] Run migration 009_add_user_settings.sql ✅
+- [x] Run migration 010_add_reminder_support.sql ✅
+- [x] Run migration 011_add_reschedule_token.sql ✅
+- [x] Run migration 012_add_webhooks.sql ✅
+- [x] Run migration 013_add_recurring_meetings.sql ✅
+- [x] Run migration 014_add_payments.sql ✅
 - [ ] Add CRON_SECRET to environment variables for cron auth
 - [ ] Add SENTRY_DSN to environment variables for error monitoring
 - [ ] Add STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET for payments
@@ -52,7 +52,7 @@
 ## In Progress
 - None currently
 
-## Local Commits Ready to Push (7 total)
+## Local Commits Ready to Push (8 total)
 1. `feat: add Sentry error monitoring` - Error tracking with Sentry
 2. `feat: add recurring meetings support` - Series bookings with 17 tests
 3. `docs: update local notes with Sentry and recurring meetings progress`
@@ -60,6 +60,15 @@
 5. `docs: update notes with payment integration details`
 6. `feat: scaffold Outlook and iCloud calendar integrations`
 7. `docs: update notes with calendar integration details`
+8. `docs: update scratch notes with pending migrations and commits`
+
+## Migrations Status (All Run ✅)
+- 009_add_user_settings.sql ✅
+- 010_add_reminder_support.sql ✅
+- 011_add_reschedule_token.sql ✅
+- 012_add_webhooks.sql ✅
+- 013_add_recurring_meetings.sql ✅
+- 014_add_payments.sql ✅
 
 ## Test Status
 - All 155 tests passing
