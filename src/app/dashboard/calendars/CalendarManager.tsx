@@ -813,7 +813,7 @@ export default function CalendarManager() {
               </div>
               <p>
                 <strong className="text-gray-900 dark:text-white">Check availability:</strong> We scan your connected
-                calendars to find times when you&apos;re free. Only busy/free information is used — we
+                calendars to find times when you&apos;re free. Only busy/free information is used, and we
                 never read event details.
               </p>
             </div>
@@ -843,8 +843,8 @@ export default function CalendarManager() {
               <strong>Tip:</strong> When connecting your Google account, make sure to check <strong>both permission boxes</strong> on the consent screen:
             </p>
             <ul className="mt-2 text-sm text-amber-600/80 dark:text-amber-400/80 list-disc list-inside space-y-1">
-              <li>&quot;View and edit events on all your calendars&quot; — required to create bookings</li>
-              <li>&quot;See and download any calendar&quot; — required to check for conflicts</li>
+              <li>&quot;View and edit events on all your calendars&quot; (required to create bookings)</li>
+              <li>&quot;See and download any calendar&quot; (required to check for conflicts)</li>
             </ul>
           </div>
         </CardContent>

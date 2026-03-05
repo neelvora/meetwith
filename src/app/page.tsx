@@ -22,7 +22,7 @@ const features = [
   {
     icon: Zap,
     title: 'Lightning Fast',
-    description: 'Instant availability checks. No waiting, no lag—just fast scheduling.',
+    description: 'Instant availability checks. No waiting, no lag. Just fast scheduling.',
   },
   {
     icon: Clock,

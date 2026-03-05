@@ -72,7 +72,7 @@ export async function POST(request: Request) {
             In the meantime, feel free to reply to this email if you have any questions!
           </p>
           <p style="margin-top: 24px;">
-            – Neel<br/>
+            Neel<br/>
             <a href="https://neelvora.com" style="color: #7c3aed;">neelvora.com</a>
           </p>
         </div>
