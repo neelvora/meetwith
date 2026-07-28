@@ -114,4 +114,17 @@ export const RATE_LIMITS = {
   
   // Slots endpoint - called frequently during booking
   slots: { limit: 30, windowSec: 60 }, // 30 requests per minute
+
+  // Beta signup, abuse ceiling - counts every request, including dropped spam
+  betaSignupBurst: { limit: 20, windowSec: 60 * 60 }, // 20 requests per hour per IP
+
+  // Beta signup, accepted signups - only requests that clear the spam checks
+  // count here, so a bot cannot exhaust a shared IP's budget for real people
+  betaSignup: { limit: 3, windowSec: 60 * 60 }, // 3 signups per hour per IP
+
+  // Beta signup, site-wide circuit breaker for a spam flood
+  betaSignupGlobal: { limit: 30, windowSec: 60 * 60 }, // 30 per hour total
+
+  // Beta signup, per address - blocks repeat submissions of the same inbox
+  betaSignupEmail: { limit: 1, windowSec: 24 * 60 * 60 }, // 1 per day per email
 } as const

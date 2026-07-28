@@ -1,14 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Mail, ArrowRight, Check, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui'
 
 export function BetaSignupForm() {
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
+  // Hidden from people, so anything in here came from an automated filler
+  const [company, setCompany] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
+  const mountedAt = useRef(Date.now())
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -19,7 +22,12 @@ export function BetaSignupForm() {
       const response = await fetch('/api/beta-signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name }),
+        body: JSON.stringify({
+          email,
+          name,
+          company,
+          elapsedMs: Date.now() - mountedAt.current,
+        }),
       })
 
       if (!response.ok) {
@@ -30,6 +38,7 @@ export function BetaSignupForm() {
       setStatus('success')
       setEmail('')
       setName('')
+      setCompany('')
     } catch (error) {
       setStatus('error')
       setErrorMessage(error instanceof Error ? error.message : 'Something went wrong')
@@ -52,6 +61,22 @@ export function BetaSignupForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Honeypot: positioned off-screen and hidden from assistive tech */}
+      <div
+        aria-hidden="true"
+        style={{ position: 'absolute', left: '-9999px', width: '1px', height: '1px', overflow: 'hidden' }}
+      >
+        <label htmlFor="mw-company">Company (leave blank)</label>
+        <input
+          id="mw-company"
+          type="text"
+          name="company"
+          value={company}
+          onChange={(e) => setCompany(e.target.value)}
+          tabIndex={-1}
+          autoComplete="off"
+        />
+      </div>
       <div className="flex flex-col sm:flex-row gap-3">
         <input
           type="text"
