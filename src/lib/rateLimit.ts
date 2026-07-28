@@ -125,8 +125,10 @@ export const RATE_LIMITS = {
   // Beta signup, site-wide circuit breaker for a spam flood
   betaSignupGlobal: { limit: 30, windowSec: 60 * 60 }, // 30 per hour total
 
-  // Beta signup, per address - blocks repeat submissions of the same inbox
-  betaSignupEmail: { limit: 1, windowSec: 24 * 60 * 60 }, // 1 per day per email
+  // Beta signup, per address - caps how many confirmation emails one inbox can
+  // be sent. Not 1, because a send that fails would otherwise lock a real
+  // person out for a day; the confirm step is what stops repeat notifications.
+  betaSignupEmail: { limit: 3, windowSec: 24 * 60 * 60 }, // 3 per day per email
 
   // Beta signup, flagged-as-suspicious notifications - keeps a flood of
   // labelled spam from filling the inbox while still showing a sample of it

@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server'
-import { Resend } from 'resend'
 import { checkRateLimit, getClientId, RATE_LIMITS } from '@/lib/rateLimit'
 import {
   assessSignup,
   checkName,
-  escapeHtml,
   isDisposableEmail,
   isSameOrigin,
   isValidEmail,
@@ -12,14 +10,14 @@ import {
   normalizeEmail,
 } from '@/lib/spamGuard'
 import { verifyTurnstile } from '@/lib/turnstile'
-
-// Lazy initialize Resend to avoid build-time errors
-function getResend() {
-  if (!process.env.RESEND_API_KEY) {
-    throw new Error('RESEND_API_KEY is not configured')
-  }
-  return new Resend(process.env.RESEND_API_KEY)
-}
+import { createPendingSignup } from '@/lib/betaSignups'
+import { sendMail } from '@/lib/email/send'
+import {
+  BETA_NOTIFY_ADDRESS,
+  confirmationEmail,
+  flaggedNotificationEmail,
+} from '@/lib/email/betaSignup'
+import { resolveBaseUrl } from '@/lib/baseUrl'
 
 /**
  * Bots retry when they get an error, so anything we classify as spam gets the
@@ -120,30 +118,25 @@ export async function POST(request: Request) {
       return silentlyDrop('global-cap', clientId)
     }
 
-    // Last check before sending. It marks the address as seen, so it has to run
-    // after every gate that could still reject, or a rejected request would
-    // lock the address out of a later retry.
+    // Caps confirmation emails per address. Runs after every gate that could
+    // still reject, so a rejected request does not spend the address's budget.
     const perEmail = checkRateLimit(
       `beta-signup-email:${normalizeEmail(email)}`,
       RATE_LIMITS.betaSignupEmail
     )
     if (!perEmail.success) {
-      return silentlyDrop('duplicate-email', clientId)
+      return silentlyDrop('email-resend-cap', clientId)
     }
 
-    const safeEmail = escapeHtml(email)
-    const safeName = name ? escapeHtml(name) : ''
-
-    // Fuzzy signals. These only ever label, never reject, so a real person with
-    // an unusual name still lands in the inbox.
+    // Fuzzy signals. These never reject: a flagged request is surfaced to the
+    // inbox so a false positive can be rescued by hand, but no mail goes to the
+    // address and nothing is recorded against it.
     const assessment = assessSignup(email, name)
     if (assessment.suspicious) {
       console.warn(
         `[beta-signup] flagged (${assessment.reasons.join(', ')}) from ${clientId}`
       )
 
-      // Show a sample of the flagged traffic, then stop mailing about it. The
-      // rest stays visible in the logs rather than in the inbox.
       const flaggedQuota = checkRateLimit(
         'beta-signup:flagged',
         RATE_LIMITS.betaSignupFlagged
@@ -151,81 +144,43 @@ export async function POST(request: Request) {
       if (!flaggedQuota.success) {
         return silentlyDrop('flagged-quota', clientId)
       }
-    }
 
-    const resend = getResend()
+      await sendMail({
+        from: 'MeetWith <notifications@meetwith.dev>',
+        to: BETA_NOTIFY_ADDRESS,
+        subject: '⚠️ Likely Spam Beta Request - MeetWith',
+        html: flaggedNotificationEmail(email, name, assessment.reasons),
+      })
 
-    // Send notification email to you
-    await resend.emails.send({
-      from: 'MeetWith <notifications@meetwith.dev>',
-      to: 'neelbvora@gmail.com',
-      subject: assessment.suspicious
-        ? '⚠️ Likely Spam Beta Request - MeetWith'
-        : '🎉 New Beta Access Request - MeetWith',
-      html: `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: ${assessment.suspicious ? '#b45309' : '#7c3aed'};">
-            ${assessment.suspicious ? 'Likely Spam Beta Request' : 'New Beta Access Request!'}
-          </h2>
-          ${
-            assessment.suspicious
-              ? `<div style="background: #fef3c7; border: 1px solid #fcd34d; padding: 12px; border-radius: 8px; margin: 16px 0; color: #78350f; font-size: 14px;">
-            <p style="margin: 0 0 8px 0;"><strong>Flagged:</strong> ${escapeHtml(assessment.reasons.join(', '))}</p>
-            <p style="margin: 0;">No confirmation email was sent to this address. Do not add as a test user unless you recognise them.</p>
-          </div>`
-              : ''
-          }
-          <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
-            <p style="margin: 0 0 8px 0;"><strong>Email:</strong> ${safeEmail}</p>
-            ${safeName ? `<p style="margin: 0;"><strong>Name:</strong> ${safeName}</p>` : ''}
-          </div>
-          <p style="color: #6b7280; font-size: 14px;">
-            Add them as a test user in Google Cloud Console:<br/>
-            <a href="https://console.cloud.google.com/apis/credentials/consent" style="color: #7c3aed;">
-              Google Cloud Console → OAuth consent screen → Test users
-            </a>
-          </p>
-          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
-          <p style="color: #9ca3af; font-size: 12px;">
-            Sent from MeetWith beta signup form
-          </p>
-        </div>
-      `,
-    })
-
-    // Withhold the confirmation when the request looks like a bombing attempt.
-    // The address in that case belongs to a victim, not to whoever submitted
-    // the form, and mailing it makes MeetWith part of the attack.
-    if (assessment.suspicious) {
       return NextResponse.json({ success: true })
     }
 
-    // Send confirmation to the user
-    await resend.emails.send({
+    // Double opt-in. Nothing reaches the inbox and nobody is on any list until
+    // the address itself clicks the link, which is something a bomber cannot do
+    // because they cannot read their victim's mail.
+    const pending = await createPendingSignup(email, name)
+
+    if (pending.status === 'unavailable') {
+      return NextResponse.json(
+        { error: 'Failed to process signup' },
+        { status: 500 }
+      )
+    }
+
+    // Say nothing about an address already being on the list. Answering that
+    // truthfully would turn the form into a membership oracle.
+    if (pending.status === 'already-confirmed') {
+      console.warn(`[beta-signup] re-request for confirmed address from ${clientId}`)
+      return NextResponse.json({ success: true })
+    }
+
+    const confirmUrl = `${resolveBaseUrl(request)}/api/beta-signup/confirm?token=${pending.token}`
+
+    await sendMail({
       from: 'MeetWith <hello@meetwith.dev>',
       to: email,
-      subject: 'Welcome to the MeetWith Beta! 🚀',
-      html: `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #7c3aed;">You're on the list!</h2>
-          <p>Thanks for your interest in MeetWith${safeName ? `, ${safeName}` : ''}!</p>
-          <p>
-            We're currently in private beta. I'll review your request and add you
-            to the beta testers list shortly.
-          </p>
-          <p>
-            Once you're added, you'll be able to sign in with your Google account
-            and start scheduling meetings.
-          </p>
-          <p style="margin-top: 24px;">
-            In the meantime, feel free to reply to this email if you have any questions!
-          </p>
-          <p style="margin-top: 24px;">
-            Neel<br/>
-            <a href="https://neelvora.com" style="color: #7c3aed;">neelvora.com</a>
-          </p>
-        </div>
-      `,
+      subject: 'Confirm your MeetWith beta request',
+      html: confirmationEmail(name, confirmUrl),
     })
 
     return NextResponse.json({ success: true })

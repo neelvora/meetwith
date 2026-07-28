@@ -55,9 +55,10 @@ export function BetaSignupForm() {
         <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-4">
           <Check className="w-6 h-6 text-green-400" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">You&apos;re on the list!</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Check your email</h3>
         <p className="text-gray-600 dark:text-gray-400 text-sm">
-          Check your email for confirmation. I&apos;ll add you to the beta shortly.
+          I sent you a link to confirm the request. Click it and you&apos;re on the
+          list. It expires in 48 hours.
         </p>
       </div>
     )
@@ -122,7 +123,8 @@ export function BetaSignupForm() {
         <p className="text-red-500 dark:text-red-400 text-sm text-center">{errorMessage}</p>
       )}
       <p className="text-gray-500 text-xs text-center">
-        We&apos;re in private beta. Request access and I&apos;ll add you within 24 hours.
+        We&apos;re in private beta. Confirm the link I email you and I&apos;ll add you
+        within 24 hours.
       </p>
     </form>
   )
