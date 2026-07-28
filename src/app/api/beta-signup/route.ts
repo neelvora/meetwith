@@ -9,7 +9,11 @@ import {
   MIN_FORM_FILL_MS,
   normalizeEmail,
 } from '@/lib/spamGuard'
-import { verifyTurnstile } from '@/lib/turnstile'
+import {
+  TURNSTILE_TOKEN_FIELD,
+  turnstileRejection,
+  verifyTurnstile,
+} from '@/lib/turnstile'
 import { createPendingSignup } from '@/lib/betaSignups'
 import { sendMail } from '@/lib/email/send'
 import {
@@ -53,14 +57,13 @@ export async function POST(request: Request) {
       name: rawName,
       company: honeypot,
       elapsedMs,
-      turnstileToken,
     }: {
       email?: unknown
       name?: unknown
       company?: unknown
       elapsedMs?: unknown
-      turnstileToken?: unknown
     } = body
+    const turnstileToken = body?.[TURNSTILE_TOKEN_FIELD]
 
     // Hidden field that only an automated filler would populate
     if (typeof honeypot === 'string' && honeypot.trim() !== '') {
@@ -96,11 +99,12 @@ export async function POST(request: Request) {
       return silentlyDrop('disposable-email', clientId)
     }
 
-    // Hard gate. No-op until the Cloudflare keys are set, and fails open if
-    // Cloudflare itself is unreachable.
+    // Hard gate. Unlike the heuristics above this returns a real error rather
+    // than a silent success, because a person can legitimately fail it (expired
+    // or already-redeemed token) and needs to be told so they can retry.
     const turnstile = await verifyTurnstile(turnstileToken, clientId)
     if (!turnstile.ok) {
-      return silentlyDrop(`turnstile:${turnstile.reason}`, clientId)
+      return turnstileRejection(turnstile, `beta-signup from ${clientId}`)
     }
 
     // Past this point the request looks human, so it spends the signup budget

@@ -2,6 +2,12 @@ import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { getClientId } from '@/lib/rateLimit'
+import {
+  TURNSTILE_TOKEN_FIELD,
+  turnstileRejection,
+  verifyTurnstile,
+} from '@/lib/turnstile'
 
 function getResend() {
   if (!process.env.RESEND_API_KEY) {
@@ -13,7 +19,16 @@ function getResend() {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
-    const { feedback, email } = await request.json()
+    const body = await request.json()
+    const { feedback, email } = body
+
+    // This route reads a session but does not require one, so it is postable
+    // anonymously and mails out on every call.
+    const clientId = getClientId(request)
+    const turnstile = await verifyTurnstile(body?.[TURNSTILE_TOKEN_FIELD], clientId)
+    if (!turnstile.ok) {
+      return turnstileRejection(turnstile, `feedback from ${clientId}`)
+    }
 
     if (!feedback?.trim()) {
       return NextResponse.json({ error: 'Feedback is required' }, { status: 400 })

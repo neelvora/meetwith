@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { ArrowLeft, Loader2, CheckCircle, Calendar, Clock, Video, User, Mail } from 'lucide-react'
 import { Button, Card, CardContent, Input } from '@/components/ui'
+import { TurnstileWidget, type TurnstileHandle } from '@/components/TurnstileWidget'
 
 interface BookingFormProps {
   username: string
@@ -34,6 +35,8 @@ export default function BookingForm({
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const turnstileRef = useRef<TurnstileHandle | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -53,6 +56,7 @@ export default function BookingForm({
           attendeeEmail: email,
           attendeeTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
           notes,
+          'cf-turnstile-response': turnstileToken,
         }),
       })
 
@@ -65,6 +69,8 @@ export default function BookingForm({
       onSuccess({ id: data.bookingId, meetLink: data.meetLink, attendeeName: name, attendeeEmail: email })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
+      // The token was spent by the rejected attempt; a retry needs a fresh one
+      turnstileRef.current?.reset()
     } finally {
       setLoading(false)
     }
@@ -172,6 +178,8 @@ export default function BookingForm({
             {error}
           </div>
         )}
+
+        <TurnstileWidget onVerify={setTurnstileToken} handleRef={turnstileRef} />
 
         <Button type="submit" disabled={loading} className="w-full">
           {loading ? (

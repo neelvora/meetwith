@@ -1,11 +1,12 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { Calendar, Mail, Lock, User, AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { Button, Input } from '@/components/ui'
+import { TurnstileWidget, type TurnstileHandle } from '@/components/TurnstileWidget'
 
 function SignInForm() {
   const router = useRouter()
@@ -14,6 +15,8 @@ function SignInForm() {
   const error = searchParams.get('error')
   
   const [isSignUp, setIsSignUp] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const turnstileRef = useRef<TurnstileHandle | null>(null)
   const [loading, setLoading] = useState(false)
   const [formError, setFormError] = useState<string | null>(error === 'CredentialsSignin' ? 'Invalid email or password' : null)
   const [showPassword, setShowPassword] = useState(false)
@@ -35,13 +38,18 @@ function SignInForm() {
         const res = await fetch('/api/auth/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({
+            ...formData,
+            'cf-turnstile-response': turnstileToken,
+          }),
         })
         
         const data = await res.json()
         
         if (!res.ok) {
           setFormError(data.error || 'Failed to create account')
+          // The token was spent by the rejected attempt; a retry needs a fresh one
+          turnstileRef.current?.reset()
           setLoading(false)
           return
         }
@@ -146,6 +154,10 @@ function SignInForm() {
             {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
           </button>
         </div>
+        {isSignUp && (
+          <TurnstileWidget onVerify={setTurnstileToken} handleRef={turnstileRef} />
+        )}
+
         <Button type="submit" size="lg" className="w-full" disabled={loading}>
           {loading ? 'Please wait...' : (isSignUp ? 'Create Account' : 'Sign In')}
         </Button>

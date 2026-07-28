@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { MessageSquare, X, Send, Loader2, Check, Image as ImageIcon } from 'lucide-react'
 import { Button } from '@/components/ui'
+import { TurnstileWidget, type TurnstileHandle } from '@/components/TurnstileWidget'
 
 export function FeedbackButton() {
   const [isOpen, setIsOpen] = useState(false)
@@ -10,6 +11,8 @@ export function FeedbackButton() {
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const turnstileRef = useRef<TurnstileHandle | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -22,11 +25,16 @@ export function FeedbackButton() {
       const response = await fetch('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ feedback, email }),
+        body: JSON.stringify({
+          feedback,
+          email,
+          'cf-turnstile-response': turnstileToken,
+        }),
       })
 
       if (!response.ok) {
-        throw new Error('Failed to send feedback')
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to send feedback')
       }
 
       setStatus('success')
@@ -40,7 +48,11 @@ export function FeedbackButton() {
       }, 2000)
     } catch (error) {
       setStatus('error')
-      setErrorMessage('Failed to send feedback. Please try again.')
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Failed to send feedback. Please try again.'
+      )
+      // The token was spent by the rejected attempt; a retry needs a fresh one
+      turnstileRef.current?.reset()
     }
   }
 
@@ -132,6 +144,8 @@ export function FeedbackButton() {
                   {status === 'error' && (
                     <p className="text-red-500 dark:text-red-400 text-sm">{errorMessage}</p>
                   )}
+
+                  <TurnstileWidget onVerify={setTurnstileToken} handleRef={turnstileRef} />
 
                   <Button
                     type="submit"

@@ -12,6 +12,11 @@ import { generateAndStoreFollowUp } from '@/lib/ai/followUp'
 import { validateBookingRequest } from '@/lib/booking/validateRequest'
 import { ensureAvailabilityRules } from '@/lib/availability/defaults'
 import { sendWebhook, buildBookingCreatedPayload } from '@/lib/webhooks'
+import {
+  TURNSTILE_TOKEN_FIELD,
+  turnstileRejection,
+  verifyTurnstile,
+} from '@/lib/turnstile'
 import type { CalendarAccount, AvailabilityRule } from '@/types'
 interface BookingResponse {
   success: boolean
@@ -45,7 +50,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    
+
+    // Bot check before any calendar write or email send. This endpoint is
+    // public: the attendee booking a meeting is never signed in.
+    const turnstile = await verifyTurnstile(body?.[TURNSTILE_TOKEN_FIELD], clientId)
+    if (!turnstile.ok) {
+      return turnstileRejection(turnstile, `booking from ${clientId}`)
+    }
+
     // Validate request with comprehensive checks
     const validation = validateBookingRequest(body)
     if (!validation.valid || !validation.data) {

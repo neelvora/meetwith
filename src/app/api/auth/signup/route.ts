@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { createDefaultAvailabilityRules } from '@/lib/availability/defaults'
+import { getClientId } from '@/lib/rateLimit'
+import {
+  TURNSTILE_TOKEN_FIELD,
+  turnstileRejection,
+  verifyTurnstile,
+} from '@/lib/turnstile'
 
 export async function POST(request: NextRequest) {
   if (!supabaseAdmin) {
@@ -10,6 +16,13 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json()
   const { email, password, name } = body
+
+  // Bot check before any account is created or password is hashed
+  const clientId = getClientId(request)
+  const turnstile = await verifyTurnstile(body?.[TURNSTILE_TOKEN_FIELD], clientId)
+  if (!turnstile.ok) {
+    return turnstileRejection(turnstile, `signup from ${clientId}`)
+  }
 
   // Validate input
   if (!email || !password) {
