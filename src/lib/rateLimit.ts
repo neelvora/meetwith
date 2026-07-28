@@ -127,4 +127,8 @@ export const RATE_LIMITS = {
 
   // Beta signup, per address - blocks repeat submissions of the same inbox
   betaSignupEmail: { limit: 1, windowSec: 24 * 60 * 60 }, // 1 per day per email
+
+  // Beta signup, flagged-as-suspicious notifications - keeps a flood of
+  // labelled spam from filling the inbox while still showing a sample of it
+  betaSignupFlagged: { limit: 5, windowSec: 60 * 60 }, // 5 per hour total
 } as const

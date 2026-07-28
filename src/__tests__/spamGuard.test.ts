@@ -1,10 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import {
+  assessSignup,
   checkName,
   escapeHtml,
+  hasSuspiciousAliasing,
   isDisposableEmail,
   isSameOrigin,
   isValidEmail,
+  looksMachineGenerated,
   normalizeEmail,
 } from '@/lib/spamGuard'
 
@@ -147,5 +150,108 @@ describe('isSameOrigin', () => {
       headers: { host: 'localhost:3000', origin: 'http://localhost:3000' },
     })
     expect(isSameOrigin(request)).toBe(true)
+  })
+})
+
+/**
+ * The five names below are verbatim from the spam that hit the live form on
+ * 27-28 Jul 2026. The real-name list next to them is the precision guard: these
+ * are exactly the consonant-heavy names a naive vowel-count heuristic rejects.
+ */
+describe('looksMachineGenerated', () => {
+  const SPAM_NAMES = [
+    'Shkrac Jnhctm',
+    'Etyzvvcv Lhctfhgft',
+    'Nlagkm Asarycx',
+    'Qxvyc Qbvbsrc',
+    'Ihtg Uejtslbu',
+  ]
+
+  it.each(SPAM_NAMES)('flags the observed spam name %s', (name) => {
+    expect(looksMachineGenerated(name)).toBe(true)
+  })
+
+  const REAL_NAMES = [
+    'Neel Vora',
+    'Hans Schmidt',
+    'Erik Schwartz',
+    'Krzysztof Nowak',
+    'Wojciech Kowalski',
+    'Karol Wojtyla',
+    'Antonin Dvorak',
+    'Petra Kvitova',
+    'Novak Djokovic',
+    'Annika Sjoberg',
+    'Dennis Bergkamp',
+    'Elle Macpherson',
+    'Meredith Baxter',
+    'Zvi Rosenberg',
+    'Thanh Nguyen',
+    'Jana Trnka',
+    'Anna Szczepanski',
+    'Siobhan McLoughlin',
+    'Bartlomiej Strzelecki',
+    'Pjotr Ivanov',
+    'Xiaoling Zhang',
+    'Ngozi Okonkwo',
+  ]
+
+  it.each(REAL_NAMES)('leaves the real name %s alone', (name) => {
+    expect(looksMachineGenerated(name)).toBe(false)
+  })
+
+  it('ignores short tokens rather than guessing at initials', () => {
+    expect(looksMachineGenerated('J K Ng')).toBe(false)
+  })
+
+  it('ignores an empty name', () => {
+    expect(looksMachineGenerated('')).toBe(false)
+  })
+})
+
+describe('hasSuspiciousAliasing', () => {
+  const BOMBING_ADDRESSES = [
+    'os.epu.l.o.sa.fo.22@gmail.com',
+    't.d.ur.so.326@gmail.com',
+    'dlb.o.r.o.vies@gmail.com',
+  ]
+
+  it.each(BOMBING_ADDRESSES)('flags the scattered-dot gmail %s', (email) => {
+    expect(hasSuspiciousAliasing(email)).toBe(true)
+  })
+
+  it('allows a normally punctuated gmail', () => {
+    expect(hasSuspiciousAliasing('neel.vora@gmail.com')).toBe(false)
+    expect(hasSuspiciousAliasing('neel.b.vora@gmail.com')).toBe(false)
+    expect(hasSuspiciousAliasing('neelvora@gmail.com')).toBe(false)
+  })
+
+  it('only applies to gmail, where dots are ignored by the provider', () => {
+    expect(hasSuspiciousAliasing('a.b.c.d@example.com')).toBe(false)
+  })
+})
+
+describe('assessSignup', () => {
+  it('flags a real observed spam signup and says why', () => {
+    const result = assessSignup('os.epu.l.o.sa.fo.22@gmail.com', 'Shkrac Jnhctm')
+    expect(result.suspicious).toBe(true)
+    expect(result.reasons).toContain('gmail-dot-aliasing')
+    expect(result.reasons).toContain('machine-generated-name')
+  })
+
+  it('flags on the name alone when the domain looks ordinary', () => {
+    const result = assessSignup('stnaka@hawaii.rr.com', 'Etyzvvcv Lhctfhgft')
+    expect(result.suspicious).toBe(true)
+    expect(result.reasons).toEqual(['machine-generated-name'])
+  })
+
+  it('clears an ordinary signup', () => {
+    const result = assessSignup('neel.vora@gmail.com', 'Neel Vora')
+    expect(result.suspicious).toBe(false)
+    expect(result.reasons).toEqual([])
+  })
+
+  it('clears a signup with no name given', () => {
+    expect(assessSignup('someone@company.io', '').suspicious).toBe(false)
   })
 })

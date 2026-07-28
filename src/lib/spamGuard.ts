@@ -153,3 +153,104 @@ export function isSameOrigin(request: Request): boolean {
 
 /** Below this, the form was submitted faster than a person can fill it in. */
 export const MIN_FORM_FILL_MS = 2500
+
+/*
+ * Soft signals below. These are fuzzy, so they never drop a request: they flag
+ * it. A flagged signup still reaches the inbox, labelled, and only the outbound
+ * confirmation is withheld. That way a false positive costs a label rather than
+ * a lost lead, and the form stops relaying mail to addresses it cannot trust.
+ */
+
+const VOWELS = new Set(['a', 'e', 'i', 'o', 'u', 'y'])
+
+/**
+ * Letter pairs that do not occur in real Latin-script names. Kept deliberately
+ * short: every entry was checked against names that legitimately stack
+ * consonants (Schmidt, Schwartz, Krzysztof, Dvorak, Djokovic, Wojciech,
+ * Wojtyla, Sjoberg, Ljubljana, Bergkamp, Macpherson, Baxter, Zvi, Nguyen).
+ */
+const IMPLAUSIBLE_PAIRS = new Set([
+  'jb', 'jd', 'jf', 'jg', 'jh', 'jk', 'jl', 'jm', 'jn', 'jp', 'jq', 'jr', 'js',
+  'jv', 'jw', 'jx', 'jz',
+  'qb', 'qc', 'qd', 'qf', 'qg', 'qh', 'qj', 'qk', 'ql', 'qm', 'qn', 'qp', 'qr',
+  'qs', 'qt', 'qw', 'qx', 'qz',
+  'xb', 'xc', 'xd', 'xf', 'xg', 'xj', 'xk', 'xm', 'xn', 'xq', 'xr', 'xs', 'xv',
+  'xw', 'xz',
+  'vf', 'vp', 'vq', 'vv', 'vx', 'vz',
+  'cx', 'cv', 'cj', 'cq',
+  'hc', 'hj', 'hq', 'hv', 'hx',
+  'bx', 'bq', 'bj',
+  'fq', 'fv', 'fx', 'fj',
+  'gq', 'gx', 'gj',
+  'kq', 'kx', 'kz',
+  'mx', 'mq',
+  'pq', 'pv', 'px',
+  'tq', 'tv', 'tx',
+  'wq', 'wv', 'wx', 'wj',
+  'dq', 'dx',
+  'sx', 'lq', 'lx', 'rq', 'rx', 'nq', 'nx',
+  'zx', 'zj', 'zq',
+])
+
+/** Long runs of consonants. Treats y as a vowel, which real names rely on. */
+function longestConsonantRun(word: string): number {
+  let longest = 0
+  let current = 0
+  for (const char of word) {
+    if (VOWELS.has(char)) {
+      current = 0
+    } else {
+      current++
+      if (current > longest) longest = current
+    }
+  }
+  return longest
+}
+
+/**
+ * Detects machine-generated names like "Qbvbsrc" or "Lhctfhgft" without
+ * rejecting consonant-heavy real names.
+ */
+export function looksMachineGenerated(name: string): boolean {
+  const words = name.toLowerCase().split(/\s+/).filter((w) => /^[a-z]{5,}$/.test(w))
+
+  for (const word of words) {
+    if (longestConsonantRun(word) >= 5) return true
+
+    for (let i = 0; i < word.length - 1; i++) {
+      if (IMPLAUSIBLE_PAIRS.has(word.slice(i, i + 2))) return true
+    }
+  }
+
+  return false
+}
+
+/**
+ * Gmail ignores dots, so scattered dots are how a script generates hundreds of
+ * variants that all land in one real person's inbox. Signups like
+ * "os.epu.l.o.sa.fo.22@gmail.com" are that person being subscription-bombed,
+ * not someone asking for access, so we must not mail them.
+ */
+export function hasSuspiciousAliasing(email: string): boolean {
+  const [local, domain] = email.toLowerCase().split('@')
+  if (!local || !domain) return false
+  if (domain !== 'gmail.com' && domain !== 'googlemail.com') return false
+
+  const dots = (local.match(/\./g) || []).length
+  return dots >= 3
+}
+
+export interface SignupAssessment {
+  suspicious: boolean
+  reasons: string[]
+}
+
+/** Fuzzy scoring for a request that already cleared every hard check. */
+export function assessSignup(email: string, name: string): SignupAssessment {
+  const reasons: string[] = []
+
+  if (hasSuspiciousAliasing(email)) reasons.push('gmail-dot-aliasing')
+  if (name && looksMachineGenerated(name)) reasons.push('machine-generated-name')
+
+  return { suspicious: reasons.length > 0, reasons }
+}

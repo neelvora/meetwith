@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { checkRateLimit, getClientId, RATE_LIMITS } from '@/lib/rateLimit'
 import {
+  assessSignup,
   checkName,
   escapeHtml,
   isDisposableEmail,
@@ -10,6 +11,7 @@ import {
   MIN_FORM_FILL_MS,
   normalizeEmail,
 } from '@/lib/spamGuard'
+import { verifyTurnstile } from '@/lib/turnstile'
 
 // Lazy initialize Resend to avoid build-time errors
 function getResend() {
@@ -53,11 +55,13 @@ export async function POST(request: Request) {
       name: rawName,
       company: honeypot,
       elapsedMs,
+      turnstileToken,
     }: {
       email?: unknown
       name?: unknown
       company?: unknown
       elapsedMs?: unknown
+      turnstileToken?: unknown
     } = body
 
     // Hidden field that only an automated filler would populate
@@ -94,6 +98,13 @@ export async function POST(request: Request) {
       return silentlyDrop('disposable-email', clientId)
     }
 
+    // Hard gate. No-op until the Cloudflare keys are set, and fails open if
+    // Cloudflare itself is unreachable.
+    const turnstile = await verifyTurnstile(turnstileToken, clientId)
+    if (!turnstile.ok) {
+      return silentlyDrop(`turnstile:${turnstile.reason}`, clientId)
+    }
+
     // Past this point the request looks human, so it spends the signup budget
     const perIp = checkRateLimit(`beta-signup:${clientId}`, RATE_LIMITS.betaSignup)
     if (!perIp.success) {
@@ -123,16 +134,47 @@ export async function POST(request: Request) {
     const safeEmail = escapeHtml(email)
     const safeName = name ? escapeHtml(name) : ''
 
+    // Fuzzy signals. These only ever label, never reject, so a real person with
+    // an unusual name still lands in the inbox.
+    const assessment = assessSignup(email, name)
+    if (assessment.suspicious) {
+      console.warn(
+        `[beta-signup] flagged (${assessment.reasons.join(', ')}) from ${clientId}`
+      )
+
+      // Show a sample of the flagged traffic, then stop mailing about it. The
+      // rest stays visible in the logs rather than in the inbox.
+      const flaggedQuota = checkRateLimit(
+        'beta-signup:flagged',
+        RATE_LIMITS.betaSignupFlagged
+      )
+      if (!flaggedQuota.success) {
+        return silentlyDrop('flagged-quota', clientId)
+      }
+    }
+
     const resend = getResend()
 
     // Send notification email to you
     await resend.emails.send({
       from: 'MeetWith <notifications@meetwith.dev>',
       to: 'neelbvora@gmail.com',
-      subject: '🎉 New Beta Access Request - MeetWith',
+      subject: assessment.suspicious
+        ? '⚠️ Likely Spam Beta Request - MeetWith'
+        : '🎉 New Beta Access Request - MeetWith',
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #7c3aed;">New Beta Access Request!</h2>
+          <h2 style="color: ${assessment.suspicious ? '#b45309' : '#7c3aed'};">
+            ${assessment.suspicious ? 'Likely Spam Beta Request' : 'New Beta Access Request!'}
+          </h2>
+          ${
+            assessment.suspicious
+              ? `<div style="background: #fef3c7; border: 1px solid #fcd34d; padding: 12px; border-radius: 8px; margin: 16px 0; color: #78350f; font-size: 14px;">
+            <p style="margin: 0 0 8px 0;"><strong>Flagged:</strong> ${escapeHtml(assessment.reasons.join(', '))}</p>
+            <p style="margin: 0;">No confirmation email was sent to this address. Do not add as a test user unless you recognise them.</p>
+          </div>`
+              : ''
+          }
           <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 16px 0;">
             <p style="margin: 0 0 8px 0;"><strong>Email:</strong> ${safeEmail}</p>
             ${safeName ? `<p style="margin: 0;"><strong>Name:</strong> ${safeName}</p>` : ''}
@@ -150,6 +192,13 @@ export async function POST(request: Request) {
         </div>
       `,
     })
+
+    // Withhold the confirmation when the request looks like a bombing attempt.
+    // The address in that case belongs to a victim, not to whoever submitted
+    // the form, and mailing it makes MeetWith part of the attack.
+    if (assessment.suspicious) {
+      return NextResponse.json({ success: true })
+    }
 
     // Send confirmation to the user
     await resend.emails.send({

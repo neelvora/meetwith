@@ -66,6 +66,12 @@ EMAIL_FROM=MeetWith <bookings@yourdomain.com>
 
 # App
 APP_BASE_URL=https://www.meetwith.dev
+
+# Cloudflare Turnstile (bot protection on the public beta signup form)
+# Optional. Both must be set for the check to run; unset skips it and the
+# other spam layers still apply. Keys come from Cloudflare > Turnstile.
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=your_turnstile_site_key
+TURNSTILE_SECRET_KEY=your_turnstile_secret_key
 ```
 
 ### Database Setup

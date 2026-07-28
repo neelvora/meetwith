@@ -3,12 +3,14 @@
 import { useRef, useState } from 'react'
 import { Mail, ArrowRight, Check, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui'
+import { TurnstileWidget } from '@/components/TurnstileWidget'
 
 export function BetaSignupForm() {
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
   // Hidden from people, so anything in here came from an automated filler
   const [company, setCompany] = useState('')
+  const [turnstileToken, setTurnstileToken] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState('')
   const mountedAt = useRef(Date.now())
@@ -27,6 +29,7 @@ export function BetaSignupForm() {
           name,
           company,
           elapsedMs: Date.now() - mountedAt.current,
+          turnstileToken,
         }),
       })
 
@@ -39,6 +42,7 @@ export function BetaSignupForm() {
       setEmail('')
       setName('')
       setCompany('')
+      setTurnstileToken('')
     } catch (error) {
       setStatus('error')
       setErrorMessage(error instanceof Error ? error.message : 'Something went wrong')
@@ -94,9 +98,10 @@ export function BetaSignupForm() {
           className="flex-1 px-4 py-3 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
         />
       </div>
-      <Button 
-        type="submit" 
-        size="lg" 
+      <TurnstileWidget onVerify={setTurnstileToken} />
+      <Button
+        type="submit"
+        size="lg"
         className="w-full group"
         disabled={status === 'loading' || !email}
       >
