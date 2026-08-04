@@ -3,6 +3,7 @@ import { Resend } from 'resend'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getClientId } from '@/lib/rateLimit'
+import { escapeHtml } from '@/lib/spamGuard'
 import {
   TURNSTILE_TOKEN_FIELD,
   turnstileRejection,
@@ -38,29 +39,36 @@ export async function POST(request: Request) {
     const userEmail = email || session?.user?.email || 'Anonymous'
     const userName = session?.user?.name || 'Unknown User'
 
+    // This endpoint is postable anonymously, so treat every field as hostile
+    // before it goes into an HTML email body.
+    const safeFeedback = escapeHtml(String(feedback))
+    const safeUserName = escapeHtml(String(userName))
+    const safeUserEmail = escapeHtml(String(userEmail))
+    const safeReplyTo = email ? escapeHtml(String(email)) : ''
+
     // Send feedback email to you
     const { error: sendError } = await resend.emails.send({
       from: 'MeetWith Feedback <notifications@meetwith.dev>',
       to: 'neelbvora@gmail.com',
-      subject: `📝 New Feedback from ${userName}`,
+      subject: `📝 New Feedback from ${safeUserName}`,
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #7c3aed; margin-bottom: 20px;">New Feedback Received</h2>
           
           <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
-            <p style="margin: 0 0 8px 0;"><strong>From:</strong> ${userName}</p>
-            <p style="margin: 0 0 8px 0;"><strong>Email:</strong> ${userEmail}</p>
+            <p style="margin: 0 0 8px 0;"><strong>From:</strong> ${safeUserName}</p>
+            <p style="margin: 0 0 8px 0;"><strong>Email:</strong> ${safeUserEmail}</p>
             <p style="margin: 0;"><strong>Logged in:</strong> ${session ? 'Yes' : 'No'}</p>
           </div>
           
           <div style="background: #faf5ff; border-left: 4px solid #7c3aed; padding: 16px; border-radius: 0 8px 8px 0;">
-            <p style="margin: 0; white-space: pre-wrap; color: #1f2937;">${feedback}</p>
+            <p style="margin: 0; white-space: pre-wrap; color: #1f2937;">${safeFeedback}</p>
           </div>
           
           ${email ? `
           <div style="margin-top: 20px;">
-            <a href="mailto:${email}" style="display: inline-block; background: #7c3aed; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none;">
-              Reply to ${email}
+            <a href="mailto:${safeReplyTo}" style="display: inline-block; background: #7c3aed; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none;">
+              Reply to ${safeReplyTo}
             </a>
           </div>
           ` : ''}
