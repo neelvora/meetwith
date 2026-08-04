@@ -136,9 +136,17 @@ ALTER TABLE availability_rules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_types ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
 
--- Policies (users can only access their own data)
-CREATE POLICY users_own_data ON users FOR ALL USING (true);
-CREATE POLICY calendar_own_data ON calendar_accounts FOR ALL USING (true);
-CREATE POLICY availability_own_data ON availability_rules FOR ALL USING (true);
-CREATE POLICY event_types_own_data ON event_types FOR ALL USING (true);
-CREATE POLICY bookings_own_data ON bookings FOR ALL USING (true);
+-- Policies. All access comes from the Next.js backend using the service role,
+-- so nothing is reachable with the anon key. These match what migration
+-- 015_security_hardening.sql applies; a fresh database built from this file
+-- must not be more permissive than an existing one that has been migrated.
+CREATE POLICY "Service role manages users" ON users
+  FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "Service role manages calendar_accounts" ON calendar_accounts
+  FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "Service role manages availability_rules" ON availability_rules
+  FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "Service role manages event_types" ON event_types
+  FOR ALL USING (auth.role() = 'service_role');
+CREATE POLICY "Service role manages bookings" ON bookings
+  FOR ALL USING (auth.role() = 'service_role');
