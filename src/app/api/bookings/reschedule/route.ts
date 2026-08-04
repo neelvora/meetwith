@@ -8,6 +8,7 @@ import { checkRateLimit, getClientId, RATE_LIMITS } from '@/lib/rateLimit'
 import { sendWebhook, buildBookingRescheduledPayload } from '@/lib/webhooks'
 import type { CalendarAccount, AvailabilityRule } from '@/types'
 import { decryptToken } from '@/lib/crypto'
+import { reportEmailResult } from '@/lib/email/send'
 
 // GET: Validate reschedule token and return booking info
 export async function GET(request: NextRequest) {
@@ -297,7 +298,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Send reschedule notification emails
-    await sendRescheduleEmails({
+    const rescheduleEmails = await sendRescheduleEmails({
       hostName: userData?.name || 'Host',
       hostEmail: userData?.email || '',
       attendeeName: booking.attendee_name,
@@ -311,6 +312,7 @@ export async function POST(request: NextRequest) {
       meetLink: newMeetLink || undefined,
       bookingId: booking.id,
     })
+    reportEmailResult('booking reschedule', rescheduleEmails)
 
     // Send webhook notification (async, non-blocking)
     const hostId = userData?.id || booking.user_id

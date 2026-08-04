@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { stripe, verifyWebhookSignature } from '@/lib/payments/stripe'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { sendBookingEmails } from '@/lib/email'
+import { reportEmailResult } from '@/lib/email/send'
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET
 
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
         // Send confirmation emails
         if (booking) {
           const userData = booking.users as { name: string; email: string; timezone: string } | null
-          await sendBookingEmails({
+          const seriesEmails = await sendBookingEmails({
             hostName: userData?.name || 'Host',
             hostEmail: userData?.email || '',
             attendeeName: booking.attendee_name,
@@ -100,6 +101,7 @@ export async function POST(request: NextRequest) {
             bookingId: booking.id,
             notes: booking.notes || undefined,
           })
+          reportEmailResult('paid booking confirmation', seriesEmails)
         }
 
         console.log(`Payment completed for booking ${bookingId}`)

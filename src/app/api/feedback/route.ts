@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     const userName = session?.user?.name || 'Unknown User'
 
     // Send feedback email to you
-    await resend.emails.send({
+    const { error: sendError } = await resend.emails.send({
       from: 'MeetWith Feedback <notifications@meetwith.dev>',
       to: 'neelbvora@gmail.com',
       subject: `📝 New Feedback from ${userName}`,
@@ -72,6 +72,16 @@ export async function POST(request: Request) {
         </div>
       `,
     })
+
+    // Resend reports failures in the result rather than by throwing, so an
+    // unchecked call reports success for mail that was never delivered.
+    if (sendError) {
+      console.error('Feedback email failed to send:', sendError)
+      return NextResponse.json(
+        { error: 'Failed to send feedback' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

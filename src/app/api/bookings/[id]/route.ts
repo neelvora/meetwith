@@ -6,6 +6,7 @@ import { deleteCalendarEvent } from '@/lib/calendar/googleClient'
 import { sendCancellationEmails } from '@/lib/email'
 import type { CalendarAccount } from '@/types'
 import { decryptToken } from '@/lib/crypto'
+import { reportEmailResult } from '@/lib/email/send'
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -106,7 +107,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: 'Failed to cancel booking' }, { status: 500 })
     }
 
-    await sendCancellationEmails({
+    const cancellationEmails = await sendCancellationEmails({
       hostName: booking.users?.name || 'Host',
       hostEmail: booking.users?.email || session.user.email,
       attendeeName: booking.attendee_name,
@@ -117,6 +118,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       timezone: booking.users?.timezone || 'America/Chicago',
       cancelledBy: 'host',
     })
+    reportEmailResult('booking cancellation', cancellationEmails)
 
     return NextResponse.json({ success: true, message: 'Booking cancelled' })
   } catch (error) {

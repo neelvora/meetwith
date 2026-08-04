@@ -9,6 +9,7 @@ import { checkRateLimit, getClientId, RATE_LIMITS } from '@/lib/rateLimit'
 import { sendWebhook, buildBookingCreatedPayload } from '@/lib/webhooks'
 import type { CalendarAccount, AvailabilityRule, RecurrenceConfig } from '@/types'
 import { decryptToken } from '@/lib/crypto'
+import { reportEmailResult } from '@/lib/email/send'
 
 interface CreateRecurringRequest {
   eventTypeId: string
@@ -322,7 +323,7 @@ export async function POST(request: NextRequest) {
     if (createdBookings.length > 0) {
       const firstBooking = createdBookings[0]
       const firstDuration = Math.round((new Date(firstBooking.end_time).getTime() - new Date(firstBooking.start_time).getTime()) / 60000)
-      await sendBookingEmails({
+      const seriesEmails = await sendBookingEmails({
         hostName: userData.name || 'Host',
         hostEmail: userData.email,
         attendeeName,
@@ -336,6 +337,7 @@ export async function POST(request: NextRequest) {
         bookingId: firstBooking.id,
         notes: `This is a recurring series with ${recurringSlots.length} meetings.\n\n${notes || ''}`,
       })
+      reportEmailResult('recurring booking confirmation', seriesEmails)
     }
 
     return NextResponse.json({

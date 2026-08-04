@@ -19,6 +19,7 @@ import {
 } from '@/lib/turnstile'
 import type { CalendarAccount, AvailabilityRule } from '@/types'
 import { decryptToken } from '@/lib/crypto'
+import { reportEmailResult } from '@/lib/email/send'
 interface BookingResponse {
   success: boolean
   bookingId: string
@@ -365,6 +366,7 @@ Manage this booking at https://www.meetwith.dev/dashboard
         notes: notes || undefined,
         bookingId: booking?.id || response.bookingId,
       })
+      reportEmailResult('booking confirmation', emailResult)
 
       console.log('Booking created:', {
         bookingId: booking?.id,

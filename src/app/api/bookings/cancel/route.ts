@@ -6,6 +6,7 @@ import { checkRateLimit, getClientId, RATE_LIMITS } from '@/lib/rateLimit'
 import { sendWebhook, buildBookingCancelledPayload } from '@/lib/webhooks'
 import type { CalendarAccount } from '@/types'
 import { decryptToken } from '@/lib/crypto'
+import { reportEmailResult } from '@/lib/email/send'
 
 export async function POST(request: NextRequest) {
   // Rate limit cancellation attempts
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to cancel booking' }, { status: 500 })
     }
 
-    await sendCancellationEmails({
+    const cancellationEmails = await sendCancellationEmails({
       hostName: booking.users?.name || 'Host',
       hostEmail: booking.users?.email || '',
       attendeeName: booking.attendee_name,
@@ -112,6 +113,7 @@ export async function POST(request: NextRequest) {
       timezone: booking.users?.timezone || 'America/Chicago',
       cancelledBy: 'attendee',
     })
+    reportEmailResult('booking cancellation', cancellationEmails)
 
     // Send webhook notification (async, non-blocking)
     if (booking.users?.id) {
