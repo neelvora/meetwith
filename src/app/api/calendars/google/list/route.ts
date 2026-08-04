@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { listCalendars as listGoogleCalendars } from '@/lib/calendar/googleClient'
 import type { CalendarAccount } from '@/types'
+import { decryptToken } from '@/lib/crypto'
 
 export async function GET(request: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -34,8 +35,8 @@ export async function GET(request: NextRequest) {
       provider: account.provider,
       provider_account_id: account.provider_account_id,
       account_email: account.account_email,
-      access_token: account.access_token,
-      refresh_token: account.refresh_token || undefined,
+      access_token: decryptToken(account.access_token),
+      refresh_token: decryptToken(account.refresh_token) || undefined,
       expires_at: account.expires_at || undefined,
       calendar_id: account.calendar_id || 'primary',
       is_primary: account.is_primary || false,

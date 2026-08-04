@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { createCalendarEvent } from '@/lib/calendar/googleClient'
 import type { CalendarAccount } from '@/types'
+import { decryptToken } from '@/lib/crypto'
 
 interface RouteContext {
   params: Promise<{ id: string }>
@@ -75,8 +76,8 @@ export async function POST(request: NextRequest, context: RouteContext) {
       provider: calendarAccount.provider,
       provider_account_id: calendarAccount.provider_account_id,
       account_email: calendarAccount.account_email,
-      access_token: calendarAccount.access_token,
-      refresh_token: calendarAccount.refresh_token || undefined,
+      access_token: decryptToken(calendarAccount.access_token),
+      refresh_token: decryptToken(calendarAccount.refresh_token) || undefined,
       expires_at: calendarAccount.expires_at || undefined,
       scope: calendarAccount.scope || undefined,
       calendar_id: calendarAccount.calendar_id || 'primary',

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { encryptToken } from '@/lib/crypto'
 
 /**
  * OAuth callback for connecting additional Google accounts
@@ -118,7 +119,7 @@ export async function GET(request: NextRequest) {
       provider: 'google',
       provider_account_id: userInfo.id || userInfo.email,
       account_email: userInfo.email,
-      access_token: tokens.access_token,
+      access_token: encryptToken(tokens.access_token),
       expires_at: tokens.expires_in 
         ? Math.floor(Date.now() / 1000) + tokens.expires_in 
         : null,
@@ -132,7 +133,7 @@ export async function GET(request: NextRequest) {
 
     // Only set refresh_token if we got one - otherwise keep existing
     if (tokens.refresh_token) {
-      accountData.refresh_token = tokens.refresh_token
+      accountData.refresh_token = encryptToken(tokens.refresh_token)
     }
 
     // Store the calendar account in database using the DB user ID

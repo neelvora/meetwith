@@ -74,6 +74,21 @@ APP_BASE_URL=https://www.meetwith.dev
 # TURNSTILE_SECRET the protected forms reject every submission.
 # Protects: beta signup, public booking, account signup, feedback.
 TURNSTILE_SECRET=your_turnstile_secret
+
+# Encryption at rest for stored OAuth tokens (32 bytes)
+# Generate with: openssl rand -base64 32
+# Without it tokens are stored in plaintext and a warning is logged.
+# Losing this key after tokens are encrypted means users must reconnect
+# their calendars, so keep a copy somewhere safe.
+ENCRYPTION_KEY=your_encryption_key
+```
+
+After setting `ENCRYPTION_KEY` for the first time, encrypt any tokens already
+in the database:
+
+```bash
+node --env-file=.env.local scripts/encrypt-tokens.mjs          # dry run
+node --env-file=.env.local scripts/encrypt-tokens.mjs --apply  # write
 ```
 
 ### Database Setup

@@ -1,5 +1,13 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { decryptAccountTokens, encryptToken } from '@/lib/crypto'
 import type { CalendarAccount } from '@/types'
+
+/*
+ * Contract for calendar_accounts: tokens are encrypted in the database and
+ * plaintext everywhere else. Anything that writes a token encrypts it here,
+ * and anything that hands a row back to a caller decrypts it first, so no
+ * caller downstream ever has to know which form it is holding.
+ */
 
 interface StoreAccountParams {
   userId: string
@@ -39,8 +47,8 @@ export async function storeCalendarAccount({
         provider,
         provider_account_id: providerAccountId,
         account_email: accountEmail,
-        access_token: accessToken,
-        refresh_token: refreshToken,
+        access_token: encryptToken(accessToken),
+        refresh_token: encryptToken(refreshToken),
         expires_at: expiresAt,
         scope,
         calendar_id: 'primary',
@@ -60,7 +68,7 @@ export async function storeCalendarAccount({
     return null
   }
 
-  return data as CalendarAccount
+  return decryptAccountTokens(data as CalendarAccount)
 }
 
 /**
@@ -83,7 +91,7 @@ export async function getCalendarAccounts(userId: string): Promise<CalendarAccou
     return []
   }
 
-  return (data || []) as CalendarAccount[]
+  return ((data || []) as CalendarAccount[]).map(decryptAccountTokens)
 }
 
 /**
@@ -107,7 +115,7 @@ export async function getAvailabilityCalendars(userId: string): Promise<Calendar
     return []
   }
 
-  return (data || []) as CalendarAccount[]
+  return ((data || []) as CalendarAccount[]).map(decryptAccountTokens)
 }
 
 /**
@@ -137,7 +145,7 @@ export async function updateCalendarAccount(
     return null
   }
 
-  return data as CalendarAccount
+  return decryptAccountTokens(data as CalendarAccount)
 }
 
 /**
@@ -206,7 +214,7 @@ export async function refreshAccessToken(account: CalendarAccount): Promise<Cale
     const { data, error } = await supabaseAdmin
       .from('calendar_accounts')
       .update({
-        access_token: tokens.access_token,
+        access_token: encryptToken(tokens.access_token),
         expires_at: expiresAt,
         updated_at: new Date().toISOString(),
       })
@@ -219,7 +227,7 @@ export async function refreshAccessToken(account: CalendarAccount): Promise<Cale
       return null
     }
 
-    return data as CalendarAccount
+    return decryptAccountTokens(data as CalendarAccount)
   } catch (error) {
     console.error('Error refreshing access token:', error)
     return null

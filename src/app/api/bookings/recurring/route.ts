@@ -8,6 +8,7 @@ import { generateRecurringSlots, validateRecurrenceConfig, describeRecurrence } 
 import { checkRateLimit, getClientId, RATE_LIMITS } from '@/lib/rateLimit'
 import { sendWebhook, buildBookingCreatedPayload } from '@/lib/webhooks'
 import type { CalendarAccount, AvailabilityRule, RecurrenceConfig } from '@/types'
+import { decryptToken } from '@/lib/crypto'
 
 interface CreateRecurringRequest {
   eventTypeId: string
@@ -126,8 +127,8 @@ export async function POST(request: NextRequest) {
       provider: ca.provider,
       provider_account_id: ca.provider_account_id,
       account_email: ca.account_email,
-      access_token: ca.access_token,
-      refresh_token: ca.refresh_token || undefined,
+      access_token: decryptToken(ca.access_token),
+      refresh_token: decryptToken(ca.refresh_token) || undefined,
       expires_at: ca.expires_at || undefined,
       scope: ca.scope || undefined,
       calendar_id: ca.calendar_id || 'primary',
@@ -228,8 +229,8 @@ export async function POST(request: NextRequest) {
             provider: writeCalendar.provider,
             provider_account_id: writeCalendar.provider_account_id,
             account_email: writeCalendar.account_email,
-            access_token: writeCalendar.access_token,
-            refresh_token: writeCalendar.refresh_token || undefined,
+            access_token: decryptToken(writeCalendar.access_token),
+            refresh_token: decryptToken(writeCalendar.refresh_token) || undefined,
             expires_at: writeCalendar.expires_at || undefined,
             scope: writeCalendar.scope || undefined,
             calendar_id: writeCalendar.calendar_id || 'primary',

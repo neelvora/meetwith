@@ -5,6 +5,7 @@ import { sendCancellationEmails } from '@/lib/email'
 import { checkRateLimit, getClientId, RATE_LIMITS } from '@/lib/rateLimit'
 import { sendWebhook, buildBookingCancelledPayload } from '@/lib/webhooks'
 import type { CalendarAccount } from '@/types'
+import { decryptToken } from '@/lib/crypto'
 
 export async function POST(request: NextRequest) {
   // Rate limit cancellation attempts
@@ -63,8 +64,8 @@ export async function POST(request: NextRequest) {
           provider: calendarAccount.provider,
           provider_account_id: calendarAccount.provider_account_id,
           account_email: calendarAccount.account_email,
-          access_token: calendarAccount.access_token,
-          refresh_token: calendarAccount.refresh_token || undefined,
+          access_token: decryptToken(calendarAccount.access_token),
+          refresh_token: decryptToken(calendarAccount.refresh_token) || undefined,
           expires_at: calendarAccount.expires_at || undefined,
           scope: calendarAccount.scope || undefined,
           calendar_id: calendarAccount.calendar_id || 'primary',

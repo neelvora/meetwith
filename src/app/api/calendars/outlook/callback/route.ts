@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { 
-  exchangeOutlookCode, 
-  getOutlookUser, 
-  getOutlookCalendars 
+import { encryptToken } from '@/lib/crypto'
+import {
+  exchangeOutlookCode,
+  getOutlookUser,
+  getOutlookCalendars
 } from '@/lib/calendar/outlookClient'
 
 /**
@@ -95,8 +96,8 @@ export async function GET(request: NextRequest) {
       await supabaseAdmin
         .from('calendar_accounts')
         .update({
-          access_token: tokens.accessToken,
-          refresh_token: tokens.refreshToken,
+          access_token: encryptToken(tokens.accessToken),
+          refresh_token: encryptToken(tokens.refreshToken),
           expires_at: expiresAt,
           account_email: outlookUser.email,
           calendar_id: defaultCalendar.id,
@@ -113,8 +114,8 @@ export async function GET(request: NextRequest) {
           provider: 'outlook',
           provider_account_id: outlookUser.id,
           account_email: outlookUser.email,
-          access_token: tokens.accessToken,
-          refresh_token: tokens.refreshToken,
+          access_token: encryptToken(tokens.accessToken),
+          refresh_token: encryptToken(tokens.refreshToken),
           expires_at: expiresAt,
           calendar_id: defaultCalendar.id,
           calendar_name: defaultCalendar.name,

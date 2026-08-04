@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
+import { encryptToken } from '@/lib/crypto'
 
 export async function GET() {
   const session = await getServerSession(authOptions)
@@ -78,8 +79,8 @@ export async function POST(request: NextRequest) {
         provider: 'google',
         provider_account_id: session.user.email,
         account_email: session.user.email,
-        access_token: session.accessToken || '',
-        refresh_token: session.refreshToken || null,
+        access_token: encryptToken(session.accessToken || ''),
+        refresh_token: encryptToken(session.refreshToken || null),
         expires_at: session.expiresAt || null,
         calendar_id: calendarId,
         calendar_name: calendarName || calendarId,

@@ -18,6 +18,7 @@ import {
   verifyTurnstile,
 } from '@/lib/turnstile'
 import type { CalendarAccount, AvailabilityRule } from '@/types'
+import { decryptToken } from '@/lib/crypto'
 interface BookingResponse {
   success: boolean
   bookingId: string
@@ -141,8 +142,8 @@ export async function POST(request: NextRequest) {
         provider: ca.provider,
         provider_account_id: ca.provider_account_id,
         account_email: ca.account_email,
-        access_token: ca.access_token,
-        refresh_token: ca.refresh_token || undefined,
+        access_token: decryptToken(ca.access_token),
+        refresh_token: decryptToken(ca.refresh_token) || undefined,
         expires_at: ca.expires_at || undefined,
         scope: ca.scope || undefined,
         calendar_id: ca.calendar_id || 'primary',
@@ -227,8 +228,8 @@ export async function POST(request: NextRequest) {
           provider: calendarAccount.provider,
           provider_account_id: calendarAccount.provider_account_id,
           account_email: calendarAccount.account_email,
-          access_token: calendarAccount.access_token,
-          refresh_token: calendarAccount.refresh_token || undefined,
+          access_token: decryptToken(calendarAccount.access_token),
+          refresh_token: decryptToken(calendarAccount.refresh_token) || undefined,
           expires_at: calendarAccount.expires_at || undefined,
           scope: calendarAccount.scope || undefined,
           calendar_id: calendarAccount.calendar_id || 'primary',
