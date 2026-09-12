@@ -1,19 +1,35 @@
 # MeetWith
 
-An open source, AI-powered scheduling platform. Alternative to Calendly.
+An open source scheduling app. You connect a Google Calendar, set the hours you are
+free, and share a booking link.
 
-**Live at: [meetwith.dev](https://www.meetwith.dev)**
+Running at [meetwith.dev](https://www.meetwith.dev), in private beta. Testers are added
+to the Google sign-in list by hand, so access starts with a request from the landing
+page. The code here runs on its own if you supply your own keys.
 
 ## Features
 
-- 🗓️ **Multi-Calendar Sync** - Connect Google Calendar for availability checking
-- 📅 **Public Booking Pages** - Share your link, let others book time with you
-- ✅ **Smart Availability** - Respects your calendar busy times and weekly rules
-- 📧 **Email Notifications** - Automated confirmations to host and attendee
-- 🎥 **Google Meet Integration** - Auto-creates video call links for bookings
-- 🔒 **Privacy-First** - Self-hostable, your data stays yours
-- ⚡ **Modern Stack** - Next.js 16, Supabase, TypeScript
-- 🎨 **Beautiful UI** - Glass morphism design, dark mode, fully mobile responsive
+- **Google Calendar** - Connect one or more Google accounts and pick which calendars to
+  check. Availability reads busy times through the free/busy API, not event details.
+- **Public booking page** - Your page is at `/username`. It lists your event types,
+  shows times in the visitor's timezone, and takes a booking without an account.
+- **Availability rules** - Hours per day of the week, buffers before and after meetings,
+  minimum notice, how far out people can book, and a cap on bookings per day.
+- **Email notifications** - Confirmations to host and attendee, a reminder in the 24
+  hours before the meeting, and cancellation and reschedule notices. Sent with Resend.
+- **Google Meet links** - Created on the calendar event and included in both emails.
+- **Optional AI helpers** - With `OPENAI_API_KEY` set, gpt-4o-mini drafts event type
+  descriptions, a follow-up email after a booking, and tips about your availability
+  settings. Without the key these are off.
+- **Self-hostable** - Next.js 16, Supabase, TypeScript, MIT licensed.
+
+### Not finished
+
+Stripe payments, webhooks, recurring bookings, and rescheduling have working API routes
+but no UI, so they cannot be used from the app. Attendees have no cancel or reschedule
+link: the token is stored on the booking and never sent out, so cancelling is the host's
+job from the dashboard. Outlook has OAuth routes and no connect button. iCloud is ICS
+export only. Team scheduling is not started.
 
 ## Getting Started
 
@@ -189,6 +205,12 @@ const { available } = await res.json()
 - [x] Google Meet integration
 - [x] Booking management dashboard
 - [x] Mobile responsive design
+- [ ] Cancel and reschedule links for attendees
+- [ ] Payments UI on top of the Stripe routes
+- [ ] Webhooks settings UI
+- [ ] Recurring booking UI
+- [ ] Outlook connect button
+- [ ] Team scheduling
 - [ ] AI meeting prep
 - [ ] Zoom integration
 - [ ] iCloud Calendar support
@@ -196,7 +218,7 @@ const { available } = await res.json()
 
 ## License
 
-MIT License - feel free to use this for your own projects!
+MIT License. Use it for your own projects.
 
 ## Author
 
