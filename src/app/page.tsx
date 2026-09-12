@@ -1,73 +1,71 @@
 import Link from 'next/link'
-import { Calendar, Sparkles, Shield, Zap, Clock, Users, ArrowRight, Check, Play, Globe, Video, Mail } from 'lucide-react'
+import { Calendar, Shield, Clock, Users, ArrowRight, Check, Globe, Video, Mail } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { BetaSignupForm } from '@/components/BetaSignupForm'
 
 const features = [
   {
     icon: Calendar,
-    title: 'Google Calendar Sync',
-    description: 'Connect your Google Calendar in seconds. We check for conflicts so you never double-book.',
+    title: 'Google Calendar',
+    description: 'Sign in with Google and pick which calendars to check. MeetWith reads busy times from them, so a slot disappears when something else is already on it.',
   },
   {
-    icon: Sparkles,
-    title: 'AI Smart Scheduling',
-    description: 'AI learns your preferences and suggests optimal meeting times. No more back-and-forth.',
-  },
-  {
-    icon: Shield,
-    title: 'Privacy First',
-    description: 'Your data stays private and secure. We never share or sell your information.',
-  },
-  {
-    icon: Zap,
-    title: 'Lightning Fast',
-    description: 'Instant availability checks. No waiting, no lag. Just fast scheduling.',
+    icon: Globe,
+    title: 'Your booking page',
+    description: 'Your page is meetwith.dev/yourname. It lists your event types and open times, and visitors see those times in their own timezone.',
   },
   {
     icon: Clock,
-    title: 'Smart Availability',
-    description: 'Set complex rules: buffer times, working hours, meeting limits per day.',
+    title: 'Availability rules',
+    description: 'Set the hours you are free on each day of the week, buffers before and after meetings, how much notice you need, how far out people can book, and a cap on bookings per day.',
+  },
+  {
+    icon: Mail,
+    title: 'Emails',
+    description: 'Confirmations go to you and the attendee as soon as a booking is made, and a reminder follows in the 24 hours before the meeting. Cancelling from your dashboard emails the attendee and removes the event from your calendar.',
+  },
+  {
+    icon: Video,
+    title: 'Google Meet links',
+    description: 'Every booking gets a Google Meet link. It goes on the calendar event and into both confirmation emails.',
   },
   {
     icon: Users,
-    title: 'Team Features',
-    description: 'Coming soon: Round-robin assignments, collective availability, and team booking pages.',
+    title: 'Not built yet',
+    description: 'Team scheduling, paid bookings, and Outlook or iCloud calendars are not finished. Google is the only calendar MeetWith connects to right now.',
   },
 ]
 
 const steps = [
   {
     icon: Calendar,
-    title: 'Connect Your Calendar',
-    description: 'Link your Google Calendar in seconds. We only check for conflicts.',
+    title: 'Connect your calendar',
+    description: 'Sign in with Google and pick the calendars to check. MeetWith reads busy times from them and writes your bookings back.',
   },
   {
     icon: Clock,
-    title: 'Set Your Availability',
-    description: 'Define when you\'re free. Buffer times, daily limits, minimum notice.',
+    title: 'Set your availability',
+    description: 'Pick your hours for each day of the week, plus buffers between meetings, minimum notice, and a daily cap.',
   },
   {
     icon: Globe,
-    title: 'Share Your Link',
-    description: 'Send your personal booking link. meetwith.dev/yourname',
+    title: 'Share your link',
+    description: 'Your page is meetwith.dev/yourname. Anyone with the link can book without making an account.',
   },
   {
     icon: Video,
-    title: 'Meet & Connect',
-    description: 'Google Meet links auto-generated. Calendar invites sent automatically.',
+    title: 'Take the booking',
+    description: 'The visitor picks a time and leaves their name and email. The meeting lands on your calendar with a Google Meet link.',
   },
 ]
 
-const benefits = [
-  'Unlimited booking links',
-  'Automatic Google Meet links',
-  'Email notifications',
-  'Timezone detection',
-  'Works on any device',
-  'Custom availability',
-  'Calendar sync',
-  'No credit card required',
+const freeTier = [
+  'Unlimited event types',
+  'One Google Calendar account',
+  'Availability rules',
+  'Email confirmations',
+  'Cancellation and reschedule links',
+  'Around 50 bookings a month',
 ]
 
 export default function Home() {
@@ -82,57 +80,57 @@ export default function Home() {
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 dark:bg-purple-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-violet-600/5 dark:bg-violet-600/10 rounded-full blur-3xl" />
         </div>
-        
+
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
           <div className="text-center">
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 mb-8 backdrop-blur-sm">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              <span className="text-sm text-gray-600 dark:text-gray-300">Now Live • Start Free</span>
+              <div className="w-2 h-2 bg-violet-400 rounded-full animate-pulse" />
+              <span className="text-sm text-gray-600 dark:text-gray-300">Private beta • Access by request</span>
             </div>
 
             {/* Heading */}
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold mb-6 tracking-tight font-display">
-              <span className="text-gray-900 dark:text-white">Schedule meetings</span>
+              <span className="text-gray-900 dark:text-white">Let people book time</span>
               <br />
-              <span className="gradient-text">in seconds, not hours</span>
+              <span className="gradient-text">on your calendar</span>
             </h1>
 
             {/* Subheading */}
             <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-              The scheduling platform that respects your privacy. 
-              Connect your calendar, set your availability, share your link.
+              MeetWith is a scheduling app I built and run. You connect a Google Calendar,
+              set the hours you are free, and share a link like meetwith.dev/yourname.
+              It is in private beta, so access goes out by request.
             </p>
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/auth/signin">
+              <Link href="#beta">
                 <Button size="lg" className="w-full sm:w-auto group">
-                  Get Started Free
+                  Request beta access
                   <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <Link href="#demo" className="w-full sm:w-auto">
+              <Link href="/auth/signin" className="w-full sm:w-auto">
                 <Button variant="secondary" size="lg" className="w-full sm:w-auto">
-                  <Play className="w-4 h-4 mr-2" />
-                  See How It Works
+                  Sign in
                 </Button>
               </Link>
             </div>
 
-            {/* Trust badges */}
+            {/* Facts */}
             <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-sm text-gray-500 dark:text-gray-500">
               <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-green-400" />
-                <span>Privacy-first</span>
+                <Shield className="w-4 h-4 text-violet-400" />
+                <span>Access by request</span>
               </div>
               <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-yellow-400" />
-                <span>Lightning fast</span>
+                <Calendar className="w-4 h-4 text-violet-400" />
+                <span>Google Calendar only</span>
               </div>
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-violet-400" />
-                <span>No credit card required</span>
+                <Check className="w-4 h-4 text-green-400" />
+                <span>Free during the beta</span>
               </div>
             </div>
           </div>
@@ -223,10 +221,10 @@ export default function Home() {
               <span className="text-xs font-medium text-violet-500 dark:text-violet-400">HOW IT WORKS</span>
             </div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4 font-display">
-              Scheduling in 4 simple steps
+              Four steps
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Get up and running in under 2 minutes. No complex setup required.
+              You do the first three once. The fourth happens every time someone books.
             </p>
           </div>
 
@@ -263,10 +261,10 @@ export default function Home() {
               <span className="text-xs font-medium text-violet-500 dark:text-violet-400">FEATURES</span>
             </div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4 font-display">
-              Everything you need
+              What MeetWith does
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              A modern scheduling platform with features that actually matter.
+              Everything here works in the beta today. What does not is in the last card.
             </p>
           </div>
 
@@ -290,36 +288,43 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Benefits List */}
+      {/* Pricing */}
       <section className="py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 mb-4">
-                <span className="text-xs font-medium text-green-500 dark:text-green-400">GENEROUS FREE TIER</span>
+                <span className="text-xs font-medium text-green-500 dark:text-green-400">PRICING</span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-6 font-display">
-                Everything you need to get started
+                Free during the beta
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
-                Start with all core features included. As your needs grow, upgrade for advanced capabilities like team scheduling, payments, and priority support.
+                There is no billing in the app today. When paid plans do arrive, the plan is
+                to charge for usage, like extra calendar accounts and higher booking volume,
+                and to keep core scheduling on the free tier.
               </p>
-              <Link href="/auth/signin">
+              <Link href="#beta">
                 <Button size="lg" className="group">
-                  Start Scheduling
+                  Request beta access
                   <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              {benefits.map((benefit) => (
-                <div key={benefit} className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10">
-                  <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
-                    <Check className="w-3.5 h-3.5 text-green-500 dark:text-green-400" />
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white mb-4">
+                What the free tier is meant to cover
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                {freeTier.map((item) => (
+                  <div key={item} className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10">
+                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
+                      <Check className="w-3.5 h-3.5 text-green-500 dark:text-green-400" />
+                    </div>
+                    <span className="text-sm text-gray-900 dark:text-white">{item}</span>
                   </div>
-                  <span className="text-sm text-gray-900 dark:text-white">{benefit}</span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -329,19 +334,20 @@ export default function Home() {
       <section id="beta" className="py-24 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-violet-500/10 dark:from-violet-500/20 via-violet-500/5 to-transparent" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-violet-500/10 dark:bg-violet-500/20 rounded-full blur-3xl" />
-        
+
         <div className="relative max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-500/10 border border-violet-500/20 mb-6">
             <div className="w-2 h-2 bg-violet-400 rounded-full animate-pulse" />
             <span className="text-sm text-violet-600 dark:text-violet-300">Private Beta</span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-6 font-display">
-            Ready to simplify your scheduling?
+            Request access
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 mb-10 max-w-xl mx-auto">
-            We&apos;re currently in private beta. Request access and I&apos;ll add you to the testers list.
+            MeetWith is in private beta. I add each tester to the Google sign-in list by
+            hand, so access starts with a request.
           </p>
-          
+
           {/* Beta Signup Form */}
           <div className="max-w-lg mx-auto">
             <BetaSignupForm />
