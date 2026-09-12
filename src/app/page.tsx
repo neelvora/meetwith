@@ -3,6 +3,9 @@ import { Calendar, Shield, Clock, Users, ArrowRight, Check, Globe, Video, Mail }
 import { Button } from '@/components/ui'
 import { BetaSignupForm } from '@/components/BetaSignupForm'
 
+// The mockup calendar shows the real month, so the page is rebuilt hourly
+export const revalidate = 3600
+
 const features = [
   {
     icon: Calendar,
@@ -69,6 +72,12 @@ const freeTier = [
 ]
 
 export default function Home() {
+  const now = new Date()
+  const monthLabel = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const leadingBlanks = new Date(now.getFullYear(), now.getMonth(), 1).getDay()
+  const today = now.getDate()
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950">
       {/* Hero Section */}
@@ -135,7 +144,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Demo preview mockup */}
+          {/* Booking page mockup */}
           <div className="mt-16 sm:mt-20 relative">
             <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-gray-950 via-transparent to-transparent z-10 pointer-events-none" />
             <div className="relative mx-auto max-w-4xl">
@@ -159,7 +168,7 @@ export default function Home() {
                     {/* Calendar */}
                     <div className="rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 sm:p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">January 2025</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">{monthLabel}</span>
                         <div className="flex gap-1">
                           <div className="w-6 h-6 rounded bg-gray-200 dark:bg-white/10" />
                           <div className="w-6 h-6 rounded bg-gray-200 dark:bg-white/10" />
@@ -171,20 +180,26 @@ export default function Home() {
                         ))}
                       </div>
                       <div className="grid grid-cols-7 gap-1">
-                        {Array.from({ length: 31 }, (_, i) => (
-                          <div
-                            key={i}
-                            className={`aspect-square rounded flex items-center justify-center text-xs ${
-                              i === 14
-                                ? 'bg-violet-500 text-white'
-                                : i > 14 && i < 20
-                                ? 'bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 cursor-pointer'
-                                : 'text-gray-400 dark:text-gray-600'
-                            }`}
-                          >
-                            {i + 1}
-                          </div>
+                        {Array.from({ length: leadingBlanks }, (_, i) => (
+                          <div key={`blank-${i}`} className="aspect-square" />
                         ))}
+                        {Array.from({ length: daysInMonth }, (_, i) => {
+                          const day = i + 1
+                          return (
+                            <div
+                              key={day}
+                              className={`aspect-square rounded flex items-center justify-center text-xs ${
+                                day === today
+                                  ? 'bg-violet-500 text-white'
+                                  : day > today && day <= today + 5
+                                  ? 'bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 cursor-pointer'
+                                  : 'text-gray-400 dark:text-gray-600'
+                              }`}
+                            >
+                              {day}
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
                     {/* Time slots */}
