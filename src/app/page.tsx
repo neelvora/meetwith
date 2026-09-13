@@ -1,76 +1,82 @@
 import Link from 'next/link'
-import { Calendar, Sparkles, Shield, Zap, Clock, Users, ArrowRight, Check, Play, Globe, Video, Mail } from 'lucide-react'
+import { Calendar, Shield, Clock, Users, ArrowRight, Check, Globe, Video, Mail } from 'lucide-react'
 import { Button } from '@/components/ui'
 import { BetaSignupForm } from '@/components/BetaSignupForm'
+
+// The mockup calendar shows the real month, so the page is rebuilt hourly
+export const revalidate = 3600
 
 const features = [
   {
     icon: Calendar,
-    title: 'Google Calendar Sync',
-    description: 'Connect your Google Calendar in seconds. We check for conflicts so you never double-book.',
+    title: 'Google Calendar',
+    description: 'Sign in with Google and pick the calendars to check. Anything already on them blocks that time.',
   },
   {
-    icon: Sparkles,
-    title: 'AI Smart Scheduling',
-    description: 'AI learns your preferences and suggests optimal meeting times. No more back-and-forth.',
-  },
-  {
-    icon: Shield,
-    title: 'Privacy First',
-    description: 'Your data stays private and secure. We never share or sell your information.',
-  },
-  {
-    icon: Zap,
-    title: 'Lightning Fast',
-    description: 'Instant availability checks. No waiting, no lag. Just fast scheduling.',
+    icon: Globe,
+    title: 'Your booking page',
+    description: 'meetwith.dev/yourname lists your event types and open times, shown in the visitor\'s own timezone.',
   },
   {
     icon: Clock,
-    title: 'Smart Availability',
-    description: 'Set complex rules: buffer times, working hours, meeting limits per day.',
+    title: 'Availability rules',
+    description: 'Hours for each day of the week, buffers before and after meetings, minimum notice, how far out people can book, and a daily cap.',
+  },
+  {
+    icon: Mail,
+    title: 'Emails',
+    description: 'You and your attendee both get a confirmation right away and a reminder the day before. Cancel from your dashboard and the attendee gets an email while the event comes off your calendar.',
+  },
+  {
+    icon: Video,
+    title: 'Google Meet links',
+    description: 'Every booking gets a Google Meet link, on the calendar event and in both emails.',
   },
   {
     icon: Users,
-    title: 'Team Features',
-    description: 'Coming soon: Round-robin assignments, collective availability, and team booking pages.',
+    title: 'Not built yet',
+    description: 'Team scheduling, paid bookings, and Outlook or iCloud calendars. Google is the only calendar MeetWith connects to right now.',
   },
 ]
 
 const steps = [
   {
     icon: Calendar,
-    title: 'Connect Your Calendar',
-    description: 'Link your Google Calendar in seconds. We only check for conflicts.',
+    title: 'Connect your calendar',
+    description: 'Sign in with Google and pick the calendars you want checked.',
   },
   {
     icon: Clock,
-    title: 'Set Your Availability',
-    description: 'Define when you\'re free. Buffer times, daily limits, minimum notice.',
+    title: 'Set your availability',
+    description: 'Choose your hours for each day, buffers between meetings, and how much notice you need.',
   },
   {
     icon: Globe,
-    title: 'Share Your Link',
-    description: 'Send your personal booking link. meetwith.dev/yourname',
+    title: 'Share your link',
+    description: 'Your booking page is meetwith.dev/yourname. Nobody needs an account to book.',
   },
   {
     icon: Video,
-    title: 'Meet & Connect',
-    description: 'Google Meet links auto-generated. Calendar invites sent automatically.',
+    title: 'Get booked',
+    description: 'They pick a time and leave a name and email. The meeting goes on your calendar with a Google Meet link.',
   },
 ]
 
-const benefits = [
-  'Unlimited booking links',
-  'Automatic Google Meet links',
-  'Email notifications',
-  'Timezone detection',
-  'Works on any device',
-  'Custom availability',
-  'Calendar sync',
-  'No credit card required',
+const freeTier = [
+  'Unlimited event types',
+  'One Google Calendar account',
+  'Availability rules',
+  'Email confirmations',
+  'Around 50 bookings a month',
 ]
 
 export default function Home() {
+  const now = new Date()
+  const monthLabel = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()
+  const leadingBlanks = new Date(now.getFullYear(), now.getMonth(), 1).getDay()
+  const today = now.getDate()
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950">
       {/* Hero Section */}
@@ -82,62 +88,61 @@ export default function Home() {
           <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 dark:bg-purple-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-violet-600/5 dark:bg-violet-600/10 rounded-full blur-3xl" />
         </div>
-        
+
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
           <div className="text-center">
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 mb-8 backdrop-blur-sm">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-              <span className="text-sm text-gray-600 dark:text-gray-300">Now Live • Start Free</span>
+              <div className="w-2 h-2 bg-violet-400 rounded-full animate-pulse" />
+              <span className="text-sm text-gray-600 dark:text-gray-300">Private beta</span>
             </div>
 
             {/* Heading */}
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold mb-6 tracking-tight font-display">
-              <span className="text-gray-900 dark:text-white">Schedule meetings</span>
+              <span className="text-gray-900 dark:text-white">Let people book time</span>
               <br />
-              <span className="gradient-text">in seconds, not hours</span>
+              <span className="gradient-text">on your calendar</span>
             </h1>
 
             {/* Subheading */}
             <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-              The scheduling platform that respects your privacy. 
-              Connect your calendar, set your availability, share your link.
+              Connect your Google Calendar, set the hours you are free, and share your link.
+              MeetWith is in private beta right now. Ask for access below and I will get you in.
             </p>
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/auth/signin">
+              <Link href="#beta">
                 <Button size="lg" className="w-full sm:w-auto group">
-                  Get Started Free
+                  Request access
                   <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
-              <Link href="#demo" className="w-full sm:w-auto">
+              <Link href="/auth/signin" className="w-full sm:w-auto">
                 <Button variant="secondary" size="lg" className="w-full sm:w-auto">
-                  <Play className="w-4 h-4 mr-2" />
-                  See How It Works
+                  Sign in
                 </Button>
               </Link>
             </div>
 
-            {/* Trust badges */}
+            {/* Facts */}
             <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-sm text-gray-500 dark:text-gray-500">
               <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-green-400" />
-                <span>Privacy-first</span>
+                <Shield className="w-4 h-4 text-violet-400" />
+                <span>Private beta</span>
               </div>
               <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-yellow-400" />
-                <span>Lightning fast</span>
+                <Calendar className="w-4 h-4 text-violet-400" />
+                <span>Works with Google Calendar</span>
               </div>
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-violet-400" />
-                <span>No credit card required</span>
+                <Check className="w-4 h-4 text-green-400" />
+                <span>Free while in beta</span>
               </div>
             </div>
           </div>
 
-          {/* Demo preview mockup */}
+          {/* Booking page mockup */}
           <div className="mt-16 sm:mt-20 relative">
             <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-gray-950 via-transparent to-transparent z-10 pointer-events-none" />
             <div className="relative mx-auto max-w-4xl">
@@ -161,7 +166,7 @@ export default function Home() {
                     {/* Calendar */}
                     <div className="rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 sm:p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <span className="text-sm font-medium text-gray-900 dark:text-white">January 2025</span>
+                        <span className="text-sm font-medium text-gray-900 dark:text-white">{monthLabel}</span>
                         <div className="flex gap-1">
                           <div className="w-6 h-6 rounded bg-gray-200 dark:bg-white/10" />
                           <div className="w-6 h-6 rounded bg-gray-200 dark:bg-white/10" />
@@ -173,20 +178,26 @@ export default function Home() {
                         ))}
                       </div>
                       <div className="grid grid-cols-7 gap-1">
-                        {Array.from({ length: 31 }, (_, i) => (
-                          <div
-                            key={i}
-                            className={`aspect-square rounded flex items-center justify-center text-xs ${
-                              i === 14
-                                ? 'bg-violet-500 text-white'
-                                : i > 14 && i < 20
-                                ? 'bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 cursor-pointer'
-                                : 'text-gray-400 dark:text-gray-600'
-                            }`}
-                          >
-                            {i + 1}
-                          </div>
+                        {Array.from({ length: leadingBlanks }, (_, i) => (
+                          <div key={`blank-${i}`} className="aspect-square" />
                         ))}
+                        {Array.from({ length: daysInMonth }, (_, i) => {
+                          const day = i + 1
+                          return (
+                            <div
+                              key={day}
+                              className={`aspect-square rounded flex items-center justify-center text-xs ${
+                                day === today
+                                  ? 'bg-violet-500 text-white'
+                                  : day > today && day <= today + 5
+                                  ? 'bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20 cursor-pointer'
+                                  : 'text-gray-400 dark:text-gray-600'
+                              }`}
+                            >
+                              {day}
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
                     {/* Time slots */}
@@ -223,10 +234,10 @@ export default function Home() {
               <span className="text-xs font-medium text-violet-500 dark:text-violet-400">HOW IT WORKS</span>
             </div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4 font-display">
-              Scheduling in 4 simple steps
+              How it works
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Get up and running in under 2 minutes. No complex setup required.
+              Set it up once, then share your link.
             </p>
           </div>
 
@@ -263,10 +274,10 @@ export default function Home() {
               <span className="text-xs font-medium text-violet-500 dark:text-violet-400">FEATURES</span>
             </div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4 font-display">
-              Everything you need
+              What it does today
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              A modern scheduling platform with features that actually matter.
+              Here is what works in the beta right now.
             </p>
           </div>
 
@@ -290,36 +301,43 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Benefits List */}
+      {/* Pricing */}
       <section className="py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 mb-4">
-                <span className="text-xs font-medium text-green-500 dark:text-green-400">GENEROUS FREE TIER</span>
+                <span className="text-xs font-medium text-green-500 dark:text-green-400">PRICING</span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-6 font-display">
-                Everything you need to get started
+                Free while in beta
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
-                Start with all core features included. As your needs grow, upgrade for advanced capabilities like team scheduling, payments, and priority support.
+                There is no billing in the app today. When paid plans arrive, core scheduling
+                stays free, and the paid tiers will cover things like extra calendar accounts
+                and higher booking volume.
               </p>
-              <Link href="/auth/signin">
+              <Link href="#beta">
                 <Button size="lg" className="group">
-                  Start Scheduling
+                  Request access
                   <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              {benefits.map((benefit) => (
-                <div key={benefit} className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10">
-                  <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
-                    <Check className="w-3.5 h-3.5 text-green-500 dark:text-green-400" />
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white mb-4">
+                The free tier will cover
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                {freeTier.map((item) => (
+                  <div key={item} className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10">
+                    <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
+                      <Check className="w-3.5 h-3.5 text-green-500 dark:text-green-400" />
+                    </div>
+                    <span className="text-sm text-gray-900 dark:text-white">{item}</span>
                   </div>
-                  <span className="text-sm text-gray-900 dark:text-white">{benefit}</span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -329,19 +347,19 @@ export default function Home() {
       <section id="beta" className="py-24 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-violet-500/10 dark:from-violet-500/20 via-violet-500/5 to-transparent" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-violet-500/10 dark:bg-violet-500/20 rounded-full blur-3xl" />
-        
+
         <div className="relative max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-500/10 border border-violet-500/20 mb-6">
             <div className="w-2 h-2 bg-violet-400 rounded-full animate-pulse" />
             <span className="text-sm text-violet-600 dark:text-violet-300">Private Beta</span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-6 font-display">
-            Ready to simplify your scheduling?
+            Request access
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 mb-10 max-w-xl mx-auto">
-            We&apos;re currently in private beta. Request access and I&apos;ll add you to the testers list.
+            MeetWith is in private beta. Request access and I will add you.
           </p>
-          
+
           {/* Beta Signup Form */}
           <div className="max-w-lg mx-auto">
             <BetaSignupForm />

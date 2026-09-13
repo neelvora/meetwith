@@ -18,8 +18,8 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "MeetWith - Simple AI-Powered Scheduling",
-  description: "Scheduling made simple. Share your link, let others book time with you. No more back-and-forth emails.",
+  title: "MeetWith - Simple scheduling for Google Calendar",
+  description: "Share a booking link and people pick a time that is open on your Google Calendar. MeetWith is in private beta.",
   keywords: ["scheduling", "calendar", "booking", "meetings", "appointment"],
 };
 
