@@ -3,9 +3,8 @@
 An open source scheduling app. You connect a Google Calendar, set the hours you are
 free, and share a booking link.
 
-Running at [meetwith.dev](https://www.meetwith.dev), in private beta. Testers are added
-to the Google sign-in list by hand, so access starts with a request from the landing
-page. The code here runs on its own if you supply your own keys.
+[meetwith.dev](https://www.meetwith.dev) is running as a private beta. Ask for access on
+the landing page and I will add you. The code runs on its own with your own keys.
 
 ## Features
 

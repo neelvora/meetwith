@@ -18,8 +18,8 @@ const plusJakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "MeetWith - Booking links for your Google Calendar",
-  description: "Connect a Google Calendar, set the hours you are free, and share a link like meetwith.dev/yourname. In private beta, access by request.",
+  title: "MeetWith - Simple scheduling for Google Calendar",
+  description: "Share a booking link and people pick a time that is open on your Google Calendar. MeetWith is in private beta.",
   keywords: ["scheduling", "calendar", "booking", "meetings", "appointment"],
 };
 

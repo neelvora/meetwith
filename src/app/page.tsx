@@ -10,32 +10,32 @@ const features = [
   {
     icon: Calendar,
     title: 'Google Calendar',
-    description: 'Sign in with Google and pick which calendars to check. MeetWith reads busy times from them, so a slot disappears when something else is already on it.',
+    description: 'Sign in with Google and pick the calendars to check. Anything already on them blocks that time.',
   },
   {
     icon: Globe,
     title: 'Your booking page',
-    description: 'Your page is meetwith.dev/yourname. It lists your event types and open times, and visitors see those times in their own timezone.',
+    description: 'meetwith.dev/yourname lists your event types and open times, shown in the visitor\'s own timezone.',
   },
   {
     icon: Clock,
     title: 'Availability rules',
-    description: 'Set the hours you are free on each day of the week, buffers before and after meetings, how much notice you need, how far out people can book, and a cap on bookings per day.',
+    description: 'Hours for each day of the week, buffers before and after meetings, minimum notice, how far out people can book, and a daily cap.',
   },
   {
     icon: Mail,
     title: 'Emails',
-    description: 'Confirmations go to you and the attendee as soon as a booking is made, and a reminder follows in the 24 hours before the meeting. Cancelling from your dashboard emails the attendee and removes the event from your calendar.',
+    description: 'You and your attendee both get a confirmation right away and a reminder the day before. Cancel from your dashboard and the attendee gets an email while the event comes off your calendar.',
   },
   {
     icon: Video,
     title: 'Google Meet links',
-    description: 'Every booking gets a Google Meet link. It goes on the calendar event and into both confirmation emails.',
+    description: 'Every booking gets a Google Meet link, on the calendar event and in both emails.',
   },
   {
     icon: Users,
     title: 'Not built yet',
-    description: 'Team scheduling, paid bookings, and Outlook or iCloud calendars are not finished. Google is the only calendar MeetWith connects to right now.',
+    description: 'Team scheduling, paid bookings, and Outlook or iCloud calendars. Google is the only calendar MeetWith connects to right now.',
   },
 ]
 
@@ -43,22 +43,22 @@ const steps = [
   {
     icon: Calendar,
     title: 'Connect your calendar',
-    description: 'Sign in with Google and pick the calendars to check. MeetWith reads busy times from them and writes your bookings back.',
+    description: 'Sign in with Google and pick the calendars you want checked.',
   },
   {
     icon: Clock,
     title: 'Set your availability',
-    description: 'Pick your hours for each day of the week, plus buffers between meetings, minimum notice, and a daily cap.',
+    description: 'Choose your hours for each day, buffers between meetings, and how much notice you need.',
   },
   {
     icon: Globe,
     title: 'Share your link',
-    description: 'Your page is meetwith.dev/yourname. Anyone with the link can book without making an account.',
+    description: 'Your booking page is meetwith.dev/yourname. Nobody needs an account to book.',
   },
   {
     icon: Video,
-    title: 'Take the booking',
-    description: 'The visitor picks a time and leaves their name and email. The meeting lands on your calendar with a Google Meet link.',
+    title: 'Get booked',
+    description: 'They pick a time and leave a name and email. The meeting goes on your calendar with a Google Meet link.',
   },
 ]
 
@@ -67,7 +67,6 @@ const freeTier = [
   'One Google Calendar account',
   'Availability rules',
   'Email confirmations',
-  'Cancellation and reschedule links',
   'Around 50 bookings a month',
 ]
 
@@ -95,7 +94,7 @@ export default function Home() {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 mb-8 backdrop-blur-sm">
               <div className="w-2 h-2 bg-violet-400 rounded-full animate-pulse" />
-              <span className="text-sm text-gray-600 dark:text-gray-300">Private beta • Access by request</span>
+              <span className="text-sm text-gray-600 dark:text-gray-300">Private beta</span>
             </div>
 
             {/* Heading */}
@@ -107,16 +106,15 @@ export default function Home() {
 
             {/* Subheading */}
             <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-              MeetWith is a scheduling app I built and run. You connect a Google Calendar,
-              set the hours you are free, and share a link like meetwith.dev/yourname.
-              It is in private beta, so access goes out by request.
+              Connect your Google Calendar, set the hours you are free, and share your link.
+              MeetWith is in private beta right now. Ask for access below and I will get you in.
             </p>
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="#beta">
                 <Button size="lg" className="w-full sm:w-auto group">
-                  Request beta access
+                  Request access
                   <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
@@ -131,15 +129,15 @@ export default function Home() {
             <div className="mt-12 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-sm text-gray-500 dark:text-gray-500">
               <div className="flex items-center gap-2">
                 <Shield className="w-4 h-4 text-violet-400" />
-                <span>Access by request</span>
+                <span>Private beta</span>
               </div>
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-violet-400" />
-                <span>Google Calendar only</span>
+                <span>Works with Google Calendar</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-green-400" />
-                <span>Free during the beta</span>
+                <span>Free while in beta</span>
               </div>
             </div>
           </div>
@@ -236,10 +234,10 @@ export default function Home() {
               <span className="text-xs font-medium text-violet-500 dark:text-violet-400">HOW IT WORKS</span>
             </div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4 font-display">
-              Four steps
+              How it works
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              You do the first three once. The fourth happens every time someone books.
+              Set it up once, then share your link.
             </p>
           </div>
 
@@ -276,10 +274,10 @@ export default function Home() {
               <span className="text-xs font-medium text-violet-500 dark:text-violet-400">FEATURES</span>
             </div>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4 font-display">
-              What MeetWith does
+              What it does today
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Everything here works in the beta today. What does not is in the last card.
+              Here is what works in the beta right now.
             </p>
           </div>
 
@@ -312,23 +310,23 @@ export default function Home() {
                 <span className="text-xs font-medium text-green-500 dark:text-green-400">PRICING</span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-6 font-display">
-                Free during the beta
+                Free while in beta
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
-                There is no billing in the app today. When paid plans do arrive, the plan is
-                to charge for usage, like extra calendar accounts and higher booking volume,
-                and to keep core scheduling on the free tier.
+                There is no billing in the app today. When paid plans arrive, core scheduling
+                stays free, and the paid tiers will cover things like extra calendar accounts
+                and higher booking volume.
               </p>
               <Link href="#beta">
                 <Button size="lg" className="group">
-                  Request beta access
+                  Request access
                   <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
             </div>
             <div>
               <p className="text-sm font-medium text-gray-900 dark:text-white mb-4">
-                What the free tier is meant to cover
+                The free tier will cover
               </p>
               <div className="grid grid-cols-2 gap-4">
                 {freeTier.map((item) => (
@@ -359,8 +357,7 @@ export default function Home() {
             Request access
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-400 mb-10 max-w-xl mx-auto">
-            MeetWith is in private beta. I add each tester to the Google sign-in list by
-            hand, so access starts with a request.
+            MeetWith is in private beta. Request access and I will add you.
           </p>
 
           {/* Beta Signup Form */}
