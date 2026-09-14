@@ -26,6 +26,9 @@ export interface CalendarAccount {
   is_primary: boolean
   include_in_availability: boolean
   write_to_calendar: boolean
+  disconnected_at?: string | null
+  last_error?: string | null
+  last_refresh_at?: string | null
   created_at: string
   updated_at?: string
 }

@@ -31,6 +31,9 @@ CREATE TABLE IF NOT EXISTS calendar_accounts (
   is_primary BOOLEAN DEFAULT false,
   include_in_availability BOOLEAN DEFAULT true, -- Check this calendar for conflicts
   write_to_calendar BOOLEAN DEFAULT false, -- Create new events on this calendar
+  disconnected_at TIMESTAMPTZ, -- Set on the first failed refresh, cleared on reconnect
+  last_error TEXT, -- What Google said when the refresh failed
+  last_refresh_at TIMESTAMPTZ, -- Last time the tokens were known to work
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id, provider, provider_account_id, calendar_id)
