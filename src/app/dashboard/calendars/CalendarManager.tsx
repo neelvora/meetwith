@@ -8,6 +8,14 @@ import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent } fro
 import type { CalendarAccount } from '@/types'
 import type { GoogleCalendar } from '@/lib/calendar/googleClient'
 
+function formatSince(timestamp: string): string {
+  return new Date(timestamp).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
 interface SavedCalendar {
   id: string
   calendar_id: string
@@ -446,13 +454,34 @@ export default function CalendarManager() {
                         )}
                       </h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{account.account_email}</p>
+                      {account.disconnected_at && (
+                        <p className="text-sm text-amber-600 dark:text-amber-400 mt-1" title={account.last_error || undefined}>
+                          Disconnected since {formatSince(account.disconnected_at)}.{' '}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleReauthenticate(account.account_email)
+                            }}
+                            className="underline hover:no-underline"
+                          >
+                            Reconnect
+                          </button>
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-3 self-end sm:self-auto">
-                    <div className="flex items-center gap-1.5 text-sm text-green-500 dark:text-green-400">
-                      <Check className="w-4 h-4" />
-                      <span className="hidden sm:inline">Connected</span>
-                    </div>
+                    {account.disconnected_at ? (
+                      <div className="flex items-center gap-1.5 text-sm text-amber-600 dark:text-amber-400">
+                        <AlertCircle className="w-4 h-4" />
+                        <span className="hidden sm:inline">Disconnected</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-sm text-green-500 dark:text-green-400">
+                        <Check className="w-4 h-4" />
+                        <span className="hidden sm:inline">Connected</span>
+                      </div>
+                    )}
                     {expandedAccount === account.id ? (
                       <ChevronUp className="w-5 h-5 text-gray-400" />
                     ) : (
