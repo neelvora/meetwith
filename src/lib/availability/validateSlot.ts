@@ -141,7 +141,8 @@ function getTimeStringInTimezone(date: Date, timezone: string): string {
  * Get busy periods from calendars for the slot's time range
  *
  * Mirrors the lookup in computeSlots: a disconnected account or a failed read
- * stops the lookup and is reported, because contributing nothing reads as free.
+ * makes the lookup unreadable, because contributing nothing reads as free.
+ * Every account is still read so each dead one gets recorded.
  */
 async function getBusyPeriods(
   accounts: CalendarAccount[],
@@ -149,32 +150,34 @@ async function getBusyPeriods(
   end: Date
 ): Promise<{ busy: FreeBusyTimeSlot[]; unreadable: boolean }> {
   const allBusy: FreeBusyTimeSlot[] = []
+  let unreadable = false
 
   for (const account of accounts) {
     if (!account.include_in_availability) continue
 
     if (account.disconnected_at) {
-      return { busy: [], unreadable: true }
+      unreadable = true
+      continue
     }
 
     const calendarId = account.calendar_id || 'primary'
     const freeBusy = await getFreeBusy(account, [calendarId], start, end)
 
     if (!freeBusy?.calendars) {
-      return { busy: [], unreadable: true }
+      unreadable = true
+      continue
     }
 
     for (const calData of Object.values(freeBusy.calendars)) {
       if (calData.errors && calData.errors.length > 0) {
-        return { busy: [], unreadable: true }
-      }
-      if (calData.busy) {
+        unreadable = true
+      } else if (calData.busy) {
         allBusy.push(...calData.busy)
       }
     }
   }
 
-  return { busy: allBusy, unreadable: false }
+  return { busy: unreadable ? [] : allBusy, unreadable }
 }
 
 /**

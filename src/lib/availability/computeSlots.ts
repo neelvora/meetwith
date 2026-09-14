@@ -37,8 +37,10 @@ interface BusyLookup {
  * Get all busy periods from connected calendars
  *
  * A calendar we cannot read is not an empty calendar. Any account that is
- * marked disconnected, or whose free/busy read fails, stops the lookup instead
- * of contributing nothing, because contributing nothing reads as fully free.
+ * marked disconnected, or whose free/busy read fails, makes the whole lookup
+ * unreadable instead of contributing nothing, because contributing nothing
+ * reads as fully free. Every account is still read, so each dead one gets
+ * recorded and the owner hears about all of them at once.
  */
 async function getBusyPeriods(
   accounts: CalendarAccount[],
@@ -46,29 +48,35 @@ async function getBusyPeriods(
   end: Date
 ): Promise<BusyLookup> {
   const allBusy: FreeBusyTimeSlot[] = []
+  let unreadableAccountId: string | undefined
 
   for (const account of accounts) {
     if (!account.include_in_availability) continue
 
     if (account.disconnected_at) {
-      return { busy: [], unreadableAccountId: account.id }
+      unreadableAccountId ??= account.id
+      continue
     }
 
     const calendarId = account.calendar_id || 'primary'
     const freeBusy = await getFreeBusy(account, [calendarId], start, end)
 
     if (!freeBusy?.calendars) {
-      return { busy: [], unreadableAccountId: account.id }
+      unreadableAccountId ??= account.id
+      continue
     }
 
     for (const calData of Object.values(freeBusy.calendars)) {
       if (calData.errors && calData.errors.length > 0) {
-        return { busy: [], unreadableAccountId: account.id }
-      }
-      if (calData.busy) {
+        unreadableAccountId ??= account.id
+      } else if (calData.busy) {
         allBusy.push(...calData.busy)
       }
     }
+  }
+
+  if (unreadableAccountId) {
+    return { busy: [], unreadableAccountId }
   }
 
   // Sort and merge overlapping busy periods

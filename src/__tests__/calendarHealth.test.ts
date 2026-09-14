@@ -118,6 +118,21 @@ describe('availability when a calendar cannot be read', () => {
     expect(result.slots).toHaveLength(0)
   })
 
+  it('still reads every other account when one is unreadable, so each dead one is recorded', async () => {
+    mockGetFreeBusy.mockResolvedValue(null)
+
+    const result = await computeAvailability(
+      paramsFor([
+        createAccount({ id: 'cal-dead-1' }),
+        createAccount({ id: 'cal-dead-2' }),
+        createAccount({ id: 'cal-3' }),
+      ])
+    )
+
+    expect(result.paused).toBe(true)
+    expect(mockGetFreeBusy).toHaveBeenCalledTimes(3)
+  })
+
   it('ignores a broken account that is excluded from availability', async () => {
     const result = await computeAvailability(
       paramsFor([
