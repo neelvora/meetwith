@@ -1,5 +1,6 @@
 import type { AvailabilityRule, CalendarAccount } from '@/types'
 import { getFreeBusy, type FreeBusyTimeSlot } from '../calendar/googleClient'
+import { BOOKING_PAUSED_REASON } from './computeSlots'
 
 export interface ValidateSlotParams {
   slotStart: Date
@@ -74,9 +75,21 @@ export async function validateSlot({
     }
   }
 
-  // Check for calendar conflicts
-  const busyPeriods = await getBusyPeriods(calendarAccounts, slotStart, slotEnd)
-  
+  // Check for calendar conflicts. A calendar we cannot read is not a free
+  // calendar, so the booking is refused rather than confirmed blind.
+  const { busy: busyPeriods, unreadable } = await getBusyPeriods(
+    calendarAccounts,
+    slotStart,
+    slotEnd
+  )
+
+  if (unreadable) {
+    return {
+      valid: false,
+      reason: BOOKING_PAUSED_REASON,
+    }
+  }
+
   if (isSlotBusy(slotStart, slotEnd, busyPeriods)) {
     return {
       valid: false,
@@ -126,30 +139,42 @@ function getTimeStringInTimezone(date: Date, timezone: string): string {
 
 /**
  * Get busy periods from calendars for the slot's time range
+ *
+ * Mirrors the lookup in computeSlots: a disconnected account or a failed read
+ * stops the lookup and is reported, because contributing nothing reads as free.
  */
 async function getBusyPeriods(
   accounts: CalendarAccount[],
   start: Date,
   end: Date
-): Promise<FreeBusyTimeSlot[]> {
+): Promise<{ busy: FreeBusyTimeSlot[]; unreadable: boolean }> {
   const allBusy: FreeBusyTimeSlot[] = []
 
   for (const account of accounts) {
     if (!account.include_in_availability) continue
 
+    if (account.disconnected_at) {
+      return { busy: [], unreadable: true }
+    }
+
     const calendarId = account.calendar_id || 'primary'
     const freeBusy = await getFreeBusy(account, [calendarId], start, end)
 
-    if (freeBusy?.calendars) {
-      for (const calData of Object.values(freeBusy.calendars)) {
-        if (calData.busy) {
-          allBusy.push(...calData.busy)
-        }
+    if (!freeBusy?.calendars) {
+      return { busy: [], unreadable: true }
+    }
+
+    for (const calData of Object.values(freeBusy.calendars)) {
+      if (calData.errors && calData.errors.length > 0) {
+        return { busy: [], unreadable: true }
+      }
+      if (calData.busy) {
+        allBusy.push(...calData.busy)
       }
     }
   }
 
-  return allBusy
+  return { busy: allBusy, unreadable: false }
 }
 
 /**

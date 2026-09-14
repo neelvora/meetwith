@@ -387,8 +387,9 @@ export async function refreshAccessToken(account: CalendarAccount): Promise<Cale
     const tokens = await response.json()
 
     if (!response.ok) {
-      console.error('Token refresh failed:', tokens)
-      await markDisconnected(account, describeTokenError(tokens))
+      const reason = describeTokenError(tokens)
+      console.error('Token refresh failed:', reason)
+      await markDisconnected(account, reason)
       return null
     }
 

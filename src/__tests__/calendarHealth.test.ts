@@ -5,6 +5,7 @@ import {
   computeAvailability,
   computeAvailableSlots,
 } from '@/lib/availability/computeSlots'
+import { validateSlot } from '@/lib/availability/validateSlot'
 import type { AvailabilityRule, CalendarAccount } from '@/types'
 
 vi.mock('@/lib/calendar/googleClient', () => ({
@@ -170,5 +171,78 @@ describe('calendarDisconnectedEmail', () => {
     })
     expect(html).not.toContain('<script>')
     expect(html).toContain('&lt;script&gt;')
+  })
+})
+
+describe('booking-time validation when a calendar cannot be read', () => {
+  function slotFor(accounts: CalendarAccount[]) {
+    const day = getNextWeekday(1)
+    const slotStart = new Date(day)
+    slotStart.setUTCHours(16, 0, 0, 0) // 11:00 Central during daylight time
+    const slotEnd = new Date(slotStart)
+    slotEnd.setUTCMinutes(slotEnd.getUTCMinutes() + 30)
+    return {
+      slotStart,
+      slotEnd,
+      calendarAccounts: accounts,
+      availabilityRules: rules,
+      timezone: 'America/Chicago',
+    }
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockGetFreeBusy.mockResolvedValue({ calendars: { primary: { busy: [] } } })
+  })
+
+  it('accepts the slot when the calendar reads back free', async () => {
+    const result = await validateSlot(slotFor([createAccount()]))
+
+    expect(result.valid).toBe(true)
+  })
+
+  it('refuses the slot on a disconnected account without calling Google', async () => {
+    const result = await validateSlot(
+      slotFor([createAccount({ disconnected_at: '2026-09-07T21:57:00Z' })])
+    )
+
+    expect(result.valid).toBe(false)
+    expect(result.reason).toBe(BOOKING_PAUSED_REASON)
+    expect(mockGetFreeBusy).not.toHaveBeenCalled()
+  })
+
+  it('refuses the slot when the free/busy read fails', async () => {
+    mockGetFreeBusy.mockResolvedValue(null)
+
+    const result = await validateSlot(slotFor([createAccount()]))
+
+    expect(result.valid).toBe(false)
+    expect(result.reason).toBe(BOOKING_PAUSED_REASON)
+  })
+
+  it('refuses the slot when Google reports a calendar error', async () => {
+    mockGetFreeBusy.mockResolvedValue({
+      calendars: { primary: { busy: [], errors: [{ domain: 'global', reason: 'notFound' }] } },
+    })
+
+    const result = await validateSlot(slotFor([createAccount()]))
+
+    expect(result.valid).toBe(false)
+    expect(result.reason).toBe(BOOKING_PAUSED_REASON)
+  })
+
+  it('ignores a disconnected account that is excluded from availability', async () => {
+    const result = await validateSlot(
+      slotFor([
+        createAccount({
+          id: 'cal-2',
+          disconnected_at: '2026-09-07T21:57:00Z',
+          include_in_availability: false,
+        }),
+        createAccount(),
+      ])
+    )
+
+    expect(result.valid).toBe(true)
   })
 })
