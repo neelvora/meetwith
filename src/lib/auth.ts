@@ -5,6 +5,13 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import bcrypt from 'bcryptjs'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { createDefaultAvailabilityRules } from '@/lib/availability/defaults'
+import { upsertGoogleCalendarAccount } from '@/lib/calendar/storeAccount'
+
+/** True when the grant covers the calendar itself, not just the profile. */
+function grantsCalendarAccess(scope?: string): boolean {
+  if (!scope) return false
+  return scope.includes('calendar.readonly') || scope.includes('calendar.events')
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -117,7 +124,35 @@ export const authOptions: NextAuthOptions = {
           }
         }
       }
-      
+
+      // A Google sign-in asks for the same calendar grant the dashboard's
+      // connect flow does, so record it against calendar_accounts. Without
+      // this a reconnect from the login screen looks like it worked and
+      // changes nothing.
+      if (
+        account?.provider === 'google' &&
+        account.access_token &&
+        account.refresh_token &&
+        grantsCalendarAccess(account.scope) &&
+        token.dbUserId &&
+        token.email
+      ) {
+        try {
+          await upsertGoogleCalendarAccount({
+            userId: token.dbUserId as string,
+            providerAccountId: account.providerAccountId,
+            accountEmail: token.email as string,
+            accessToken: account.access_token,
+            refreshToken: account.refresh_token,
+            expiresAt: typeof account.expires_at === 'number' ? account.expires_at : null,
+            scope: account.scope || null,
+          })
+        } catch (error) {
+          // Sign-in must still work even when this write does not
+          console.error('Error storing calendar account on sign-in:', error)
+        }
+      }
+
       return token
     },
     async session({ session, token }) {

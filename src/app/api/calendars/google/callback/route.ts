@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/server'
-import { encryptToken } from '@/lib/crypto'
+import { upsertGoogleCalendarAccount } from '@/lib/calendar/storeAccount'
 
 /**
  * OAuth callback for connecting additional Google accounts
@@ -100,56 +100,24 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/dashboard/calendars?error=user_not_found', request.url))
     }
 
-    // Check if user already has any calendar accounts with write_to_calendar enabled
-    const { data: existingWriteCalendar } = await supabaseAdmin
-      .from('calendar_accounts')
-      .select('id')
-      .eq('user_id', dbUser.id)
-      .eq('write_to_calendar', true)
-      .single()
-
-    // If no write calendar exists, this will be set as the default
-    const shouldSetAsDefault = !existingWriteCalendar
-
-    // Build update object - only include refresh_token if we got a new one
-    // Google only returns refresh_token on first auth or when prompt=consent is used
-    // But sometimes it still doesn't return one, so preserve existing token
-    const accountData: Record<string, unknown> = {
-      user_id: dbUser.id,
-      provider: 'google',
-      provider_account_id: userInfo.id || userInfo.email,
-      account_email: userInfo.email,
-      access_token: encryptToken(tokens.access_token),
-      expires_at: tokens.expires_in 
-        ? Math.floor(Date.now() / 1000) + tokens.expires_in 
+    const stored = await upsertGoogleCalendarAccount({
+      userId: dbUser.id,
+      providerAccountId: userInfo.id || userInfo.email,
+      accountEmail: userInfo.email,
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token,
+      expiresAt: tokens.expires_in
+        ? Math.floor(Date.now() / 1000) + tokens.expires_in
         : null,
       scope: tokens.scope || null,
-      calendar_id: 'primary',
-      calendar_name: `${userInfo.email} - Primary`,
-      is_primary: false,
-      include_in_availability: true,
-      write_to_calendar: shouldSetAsDefault,
-    }
+    })
 
-    // Only set refresh_token if we got one - otherwise keep existing
-    if (tokens.refresh_token) {
-      accountData.refresh_token = encryptToken(tokens.refresh_token)
-    }
-
-    // Store the calendar account in database using the DB user ID
-    const { error: upsertError } = await supabaseAdmin
-      .from('calendar_accounts')
-      .upsert(accountData, {
-        onConflict: 'user_id,provider,provider_account_id,calendar_id',
-      })
-
-    if (upsertError) {
-      console.error('Error storing calendar account:', upsertError)
+    if (!stored) {
       return NextResponse.redirect(new URL('/dashboard/calendars?error=db_error', request.url))
     }
 
     // Success! Redirect back to calendars page with appropriate message
-    const redirectUrl = shouldSetAsDefault 
+    const redirectUrl = stored.setAsDefault
       ? '/dashboard/calendars?connected=true&default=true'
       : '/dashboard/calendars?connected=true'
     return NextResponse.redirect(new URL(redirectUrl, request.url))

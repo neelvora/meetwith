@@ -74,6 +74,83 @@ export async function storeCalendarAccount({
   return decryptAccountTokens(data as CalendarAccount)
 }
 
+export interface GoogleAccountConnection {
+  userId: string
+  providerAccountId: string
+  accountEmail: string
+  accessToken: string
+  refreshToken?: string | null
+  expiresAt?: number | null
+  scope?: string | null
+}
+
+/**
+ * The single place a connected Google account is written. Both the dashboard's
+ * OAuth callback and an ordinary Google sign-in land here, so a reconnect
+ * counts whichever door it came through.
+ *
+ * Returns whether this account newly became the default write calendar, or
+ * null if the write failed.
+ */
+export async function upsertGoogleCalendarAccount(
+  connection: GoogleAccountConnection
+): Promise<{ setAsDefault: boolean } | null> {
+  if (!supabaseAdmin) {
+    console.warn('Supabase not configured - skipping calendar account storage')
+    return null
+  }
+
+  const { data: writeCalendars } = await supabaseAdmin
+    .from('calendar_accounts')
+    .select('provider_account_id')
+    .eq('user_id', connection.userId)
+    .eq('write_to_calendar', true)
+
+  const holders = (writeCalendars || []) as Array<{ provider_account_id: string }>
+  const setAsDefault = holders.length === 0
+  // Whoever the user already picked keeps it, including this account on a reconnect
+  const keepsDefault = holders.some(
+    (row) => row.provider_account_id === connection.providerAccountId
+  )
+
+  const accountData: Record<string, unknown> = {
+    user_id: connection.userId,
+    provider: 'google',
+    provider_account_id: connection.providerAccountId,
+    account_email: connection.accountEmail,
+    access_token: encryptToken(connection.accessToken),
+    expires_at: connection.expiresAt ?? null,
+    scope: connection.scope ?? null,
+    calendar_id: 'primary',
+    calendar_name: `${connection.accountEmail} - Primary`,
+    is_primary: false,
+    include_in_availability: true,
+    write_to_calendar: setAsDefault || keepsDefault,
+    disconnected_at: null,
+    last_error: null,
+    last_refresh_at: new Date().toISOString(),
+  }
+
+  // Google only returns a refresh token on a fresh consent, so writing null
+  // over an existing one is how an account loses the ability to refresh at all
+  if (connection.refreshToken) {
+    accountData.refresh_token = encryptToken(connection.refreshToken)
+  }
+
+  const { error } = await supabaseAdmin
+    .from('calendar_accounts')
+    .upsert(accountData, {
+      onConflict: 'user_id,provider,provider_account_id,calendar_id',
+    })
+
+  if (error) {
+    console.error('Error storing calendar account:', error)
+    return null
+  }
+
+  return { setAsDefault }
+}
+
 /**
  * Get all calendar accounts for a user
  */
