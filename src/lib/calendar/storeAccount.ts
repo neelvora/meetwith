@@ -148,7 +148,46 @@ export async function upsertGoogleCalendarAccount(
     return null
   }
 
+  await shareTokensWithSiblingRows(connection, accountData)
+
   return { setAsDefault }
+}
+
+/**
+ * Picking a specific calendar from an account stores it as its own row with a
+ * copy of that account's tokens, so a reconnect that only touched the primary
+ * row would leave those copies dead. Every row for the same Google account
+ * gets the fresh grant.
+ */
+async function shareTokensWithSiblingRows(
+  connection: GoogleAccountConnection,
+  accountData: Record<string, unknown>
+): Promise<void> {
+  if (!supabaseAdmin) return
+
+  const shared: Record<string, unknown> = {
+    access_token: accountData.access_token,
+    expires_at: accountData.expires_at,
+    scope: accountData.scope,
+    disconnected_at: null,
+    last_error: null,
+    last_refresh_at: accountData.last_refresh_at,
+    updated_at: new Date().toISOString(),
+  }
+  if (accountData.refresh_token) {
+    shared.refresh_token = accountData.refresh_token
+  }
+
+  const { error } = await supabaseAdmin
+    .from('calendar_accounts')
+    .update(shared)
+    .eq('user_id', connection.userId)
+    .eq('provider', 'google')
+    .eq('account_email', connection.accountEmail)
+
+  if (error) {
+    console.error('Error sharing the new grant with the account\'s other calendars:', error)
+  }
 }
 
 /**
