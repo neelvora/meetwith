@@ -25,6 +25,8 @@ interface TimeSlotPickerProps {
   onBook: (slot: { date: string; start: string; end: string; timezone: string }) => void
 }
 
+const BOOKING_PAUSED_FALLBACK = 'Booking is paused while a calendar reconnects.'
+
 const COMMON_TIMEZONES = [
   { value: 'America/New_York', label: 'Eastern Time (ET)' },
   { value: 'America/Chicago', label: 'Central Time (CT)' },
@@ -50,6 +52,7 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
     return new Date(today.setDate(diff))
   })
   const [slots, setSlots] = useState<SlotsByDate>({})
+  const [pausedReason, setPausedReason] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null)
@@ -77,6 +80,7 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
       )
       const data = await res.json()
       setSlots(data.slots || {})
+      setPausedReason(data.paused ? data.reason || BOOKING_PAUSED_FALLBACK : null)
     } catch (error) {
       console.error('Error fetching slots:', error)
     } finally {
@@ -169,27 +173,45 @@ export default function TimeSlotPicker({ username, eventType, onBack, onBook }: 
 
   const hasAnySlots = Object.values(slots).some(daySlots => daySlots.length > 0)
 
+  const header = (
+    <div className="flex items-center gap-4">
+      <button
+        onClick={onBack}
+        className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+      >
+        <ChevronLeft className="w-5 h-5 text-gray-400" />
+      </button>
+      <div>
+        <h2 className="text-xl font-semibold text-white">{eventType.name}</h2>
+        <p className="text-sm text-gray-400 flex items-center gap-2">
+          <Clock className="w-4 h-4" />
+          {eventType.duration} min
+          <span className="mx-1">•</span>
+          <Video className="w-4 h-4" />
+          Google Meet
+        </p>
+      </div>
+    </div>
+  )
+
+  // Nothing here can be trusted while a calendar is unreadable, so the picker
+  // is replaced rather than shown empty
+  if (!loading && pausedReason) {
+    return (
+      <div className="space-y-6">
+        {header}
+        <Card variant="glass" className="border-amber-500/20">
+          <CardContent className="py-6 text-center">
+            <p className="text-gray-400">{pausedReason}</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={onBack}
-          className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-        >
-          <ChevronLeft className="w-5 h-5 text-gray-400" />
-        </button>
-        <div>
-          <h2 className="text-xl font-semibold text-white">{eventType.name}</h2>
-          <p className="text-sm text-gray-400 flex items-center gap-2">
-            <Clock className="w-4 h-4" />
-            {eventType.duration} min
-            <span className="mx-1">•</span>
-            <Video className="w-4 h-4" />
-            Google Meet
-          </p>
-        </div>
-      </div>
+      {header}
 
       {/* Timezone Selector */}
       <div className="relative">

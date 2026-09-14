@@ -24,33 +24,55 @@ export interface ComputeSlotsParams {
   existingBookings?: Array<{ start_time: string; end_time: string }> // For daily limit counting
 }
 
+/** Shown to a visitor when we cannot see the host's calendar. */
+export const BOOKING_PAUSED_REASON = 'Booking is paused while a calendar reconnects.'
+
+interface BusyLookup {
+  busy: FreeBusyTimeSlot[]
+  /** Set when one of the connected calendars could not be read at all. */
+  unreadableAccountId?: string
+}
+
 /**
  * Get all busy periods from connected calendars
+ *
+ * A calendar we cannot read is not an empty calendar. Any account that is
+ * marked disconnected, or whose free/busy read fails, stops the lookup instead
+ * of contributing nothing, because contributing nothing reads as fully free.
  */
 async function getBusyPeriods(
   accounts: CalendarAccount[],
   start: Date,
   end: Date
-): Promise<FreeBusyTimeSlot[]> {
+): Promise<BusyLookup> {
   const allBusy: FreeBusyTimeSlot[] = []
 
   for (const account of accounts) {
     if (!account.include_in_availability) continue
 
+    if (account.disconnected_at) {
+      return { busy: [], unreadableAccountId: account.id }
+    }
+
     const calendarId = account.calendar_id || 'primary'
     const freeBusy = await getFreeBusy(account, [calendarId], start, end)
 
-    if (freeBusy?.calendars) {
-      for (const calData of Object.values(freeBusy.calendars)) {
-        if (calData.busy) {
-          allBusy.push(...calData.busy)
-        }
+    if (!freeBusy?.calendars) {
+      return { busy: [], unreadableAccountId: account.id }
+    }
+
+    for (const calData of Object.values(freeBusy.calendars)) {
+      if (calData.errors && calData.errors.length > 0) {
+        return { busy: [], unreadableAccountId: account.id }
+      }
+      if (calData.busy) {
+        allBusy.push(...calData.busy)
       }
     }
   }
 
   // Sort and merge overlapping busy periods
-  return mergeBusyPeriods(allBusy)
+  return { busy: mergeBusyPeriods(allBusy) }
 }
 
 /**
@@ -207,6 +229,13 @@ function generateDaySlots(
   return slots
 }
 
+export interface AvailabilityResult {
+  slots: TimeSlot[]
+  /** True when a calendar could not be read, so no slot can be trusted. */
+  paused: boolean
+  reason?: string
+}
+
 /**
  * Compute available time slots for booking
  * 
@@ -216,10 +245,12 @@ function generateDaySlots(
  * 3. Filters out busy slots and slots in the past
  * 4. Enforces daily booking limit if set
  * 5. Returns final available slots
+ *
+ * Returns no slots at all when a connected calendar cannot be read.
  */
-export async function computeAvailableSlots(
+export async function computeAvailability(
   params: ComputeSlotsParams
-): Promise<TimeSlot[]> {
+): Promise<AvailabilityResult> {
   const {
     calendarAccounts,
     availabilityRules,
@@ -234,11 +265,18 @@ export async function computeAvailableSlots(
   } = params
 
   // Get all busy periods from calendars
-  const busyPeriods = await getBusyPeriods(
+  const { busy: busyPeriods, unreadableAccountId } = await getBusyPeriods(
     calendarAccounts,
     dateRange.start,
     dateRange.end
   )
+
+  if (unreadableAccountId) {
+    console.warn(
+      `[availability] holding bookings: calendar account ${unreadableAccountId} could not be read`
+    )
+    return { slots: [], paused: true, reason: BOOKING_PAUSED_REASON }
+  }
 
   // Count existing bookings per day for daily limit enforcement
   const bookingsPerDay = new Map<string, number>()
@@ -312,6 +350,16 @@ export async function computeAvailableSlots(
     currentDate.setDate(currentDate.getDate() + 1)
   }
 
+  return { slots, paused: false }
+}
+
+/**
+ * Slots with their availability flags, for callers that do not need the reason
+ */
+export async function computeAvailableSlots(
+  params: ComputeSlotsParams
+): Promise<TimeSlot[]> {
+  const { slots } = await computeAvailability(params)
   return slots
 }
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { computeAvailableSlots } from '@/lib/availability/computeSlots'
+import { computeAvailability } from '@/lib/availability/computeSlots'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { getDefaultAvailabilityRules } from '@/lib/availability/defaults'
 import { checkRateLimit, getClientId, RATE_LIMITS } from '@/lib/rateLimit'
@@ -135,7 +135,7 @@ export async function GET(request: NextRequest) {
     const effectiveBufferBefore = eventBufferBefore > 0 ? eventBufferBefore : bufferTime
     const effectiveBufferAfter = eventBufferAfter > 0 ? eventBufferAfter : bufferTime
 
-    const slots = await computeAvailableSlots({
+    const { slots, paused, reason } = await computeAvailability({
       userId: username || 'default',
       calendarAccounts,
       availabilityRules,
@@ -148,6 +148,22 @@ export async function GET(request: NextRequest) {
       dailyLimit,
       existingBookings,
     })
+
+    // A calendar we could not read means no slot here can be trusted, so the
+    // page gets the reason instead of an empty grid it would read as "busy"
+    if (paused) {
+      return NextResponse.json({
+        slots: {},
+        totalAvailable: 0,
+        paused: true,
+        reason,
+        dateRange: {
+          start: start.toISOString(),
+          end: end.toISOString(),
+        },
+        duration,
+      })
+    }
 
     // Filter to only available slots
     const availableSlots = slots.filter((s) => s.available)
