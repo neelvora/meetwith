@@ -1,5 +1,8 @@
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { decryptAccountTokens, encryptToken } from '@/lib/crypto'
+import { appBaseUrl } from '@/lib/baseUrl'
+import { sendMail } from '@/lib/email/send'
+import { calendarDisconnectedEmail } from '@/lib/email/calendarHealth'
 import type { CalendarAccount } from '@/types'
 
 /*
@@ -170,12 +173,123 @@ export async function deleteCalendarAccount(accountId: string): Promise<boolean>
   return true
 }
 
+const MAX_REASON_LENGTH = 200
+
+/** What Google named as the problem. Never anything token-shaped. */
+function describeTokenError(body: unknown): string {
+  const payload = (body ?? {}) as { error?: unknown; error_description?: unknown }
+  const code = typeof payload.error === 'string' ? payload.error : 'unknown_error'
+  const detail =
+    typeof payload.error_description === 'string' ? payload.error_description : ''
+  return (detail ? `${code}: ${detail}` : code).slice(0, MAX_REASON_LENGTH)
+}
+
+function toShortReason(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error)
+  return message.slice(0, MAX_REASON_LENGTH)
+}
+
+/** Keeps the newest error on an account that is already known to be down. */
+async function recordRefreshError(
+  account: CalendarAccount,
+  reason: string
+): Promise<void> {
+  if (!supabaseAdmin) return
+
+  const { error } = await supabaseAdmin
+    .from('calendar_accounts')
+    .update({ last_error: reason, updated_at: new Date().toISOString() })
+    .eq('id', account.id)
+
+  if (error) {
+    console.error('Error recording calendar refresh failure:', error)
+  }
+}
+
+/**
+ * First failure wins. The update only matches a row whose disconnected_at is
+ * still null, so the timestamp keeps meaning "since" and the owner gets one
+ * email per outage rather than one per request.
+ */
+async function markDisconnected(
+  account: CalendarAccount,
+  reason: string
+): Promise<void> {
+  if (!supabaseAdmin) return
+
+  const { data, error } = await supabaseAdmin
+    .from('calendar_accounts')
+    .update({
+      disconnected_at: new Date().toISOString(),
+      last_error: reason,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', account.id)
+    .is('disconnected_at', null)
+    .select('user_id, account_email, disconnected_at')
+
+  if (error) {
+    console.error('Error recording calendar disconnect:', error)
+    return
+  }
+
+  const transitioned = (data || [])[0] as
+    | { user_id: string; account_email?: string | null; disconnected_at: string }
+    | undefined
+
+  if (!transitioned) {
+    await recordRefreshError(account, reason)
+    return
+  }
+
+  await alertOwner(transitioned)
+}
+
+/** Delivery failures are logged. A missed alert must not fail the refresh. */
+async function alertOwner(account: {
+  user_id: string
+  account_email?: string | null
+  disconnected_at: string
+}): Promise<void> {
+  if (!supabaseAdmin) return
+
+  try {
+    const { data: owner } = await supabaseAdmin
+      .from('users')
+      .select('email, timezone')
+      .eq('id', account.user_id)
+      .single()
+
+    if (!owner?.email) {
+      console.error('Calendar disconnected but no owner email on file:', account.user_id)
+      return
+    }
+
+    const accountEmail = account.account_email || 'a connected Google account'
+
+    await sendMail({
+      from: 'MeetWith <notifications@meetwith.dev>',
+      to: owner.email,
+      subject: `Reconnect your calendar: ${accountEmail}`,
+      html: calendarDisconnectedEmail({
+        accountEmail,
+        disconnectedAt: new Date(account.disconnected_at),
+        calendarsUrl: `${appBaseUrl()}/dashboard/calendars`,
+        timezone: owner.timezone || undefined,
+      }),
+    })
+  } catch (error) {
+    console.error('Error sending calendar disconnect alert:', error)
+  }
+}
+
 /**
  * Refresh an expired access token using the refresh token
  */
 export async function refreshAccessToken(account: CalendarAccount): Promise<CalendarAccount | null> {
   if (!account.refresh_token) {
     console.error('No refresh token available for account:', account.id)
+    await markDisconnected(account, 'no_refresh_token')
     return null
   }
 
@@ -197,6 +311,7 @@ export async function refreshAccessToken(account: CalendarAccount): Promise<Cale
 
     if (!response.ok) {
       console.error('Token refresh failed:', tokens)
+      await markDisconnected(account, describeTokenError(tokens))
       return null
     }
 
@@ -216,6 +331,9 @@ export async function refreshAccessToken(account: CalendarAccount): Promise<Cale
       .update({
         access_token: encryptToken(tokens.access_token),
         expires_at: expiresAt,
+        last_refresh_at: new Date().toISOString(),
+        disconnected_at: null,
+        last_error: null,
         updated_at: new Date().toISOString(),
       })
       .eq('id', account.id)
@@ -230,6 +348,10 @@ export async function refreshAccessToken(account: CalendarAccount): Promise<Cale
     return decryptAccountTokens(data as CalendarAccount)
   } catch (error) {
     console.error('Error refreshing access token:', error)
+    // A request that never completed is a network problem, not proof the grant
+    // is gone, so it records what happened without starting the disconnected
+    // clock. Availability still holds bookings, because the read itself failed.
+    await recordRefreshError(account, toShortReason(error))
     return null
   }
 }

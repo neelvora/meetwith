@@ -5,7 +5,10 @@
  * attacker-controlled, and trusting it would let someone point a confirmation
  * link at a domain they own.
  */
-export function resolveBaseUrl(request: Request): string {
+
+const FALLBACK_ORIGIN = 'https://www.meetwith.dev'
+
+function configuredOrigin(): string | null {
   for (const configured of [process.env.APP_BASE_URL, process.env.NEXTAUTH_URL]) {
     if (!configured) continue
     try {
@@ -14,6 +17,17 @@ export function resolveBaseUrl(request: Request): string {
       // Ignore a malformed env value and try the next one
     }
   }
+  return null
+}
+
+/** For links built where there is no request to fall back to, such as a token refresh. */
+export function appBaseUrl(): string {
+  return configuredOrigin() ?? FALLBACK_ORIGIN
+}
+
+export function resolveBaseUrl(request: Request): string {
+  const configured = configuredOrigin()
+  if (configured) return configured
 
   // Local development, where nothing is configured
   const host = request.headers.get('host')
@@ -24,5 +38,5 @@ export function resolveBaseUrl(request: Request): string {
     return `${protocol}://${host}`
   }
 
-  return 'https://www.meetwith.dev'
+  return FALLBACK_ORIGIN
 }
